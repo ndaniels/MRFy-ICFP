@@ -1,0 +1,211 @@
+
+\documentclass[preprint]{sigplanconf}
+
+% The following \documentclass options may be useful:
+%
+% 10pt          To set in 10-point type instead of 9-point.
+% 11pt          To set in 11-point type instead of 9-point.
+% authoryear    To obtain author/year citation style instead of numeric.
+
+\usepackage{amsmath}
+
+\begin{document}
+
+\conferenceinfo{ICFP '12}{date, City.} 
+\copyrightyear{2012} 
+\copyrightdata{[to be supplied]} 
+
+\titlebanner{banner above paper title}        % These are ignored unless
+\preprintfooter{short description of paper}   % 'preprint' option specified.
+
+\title{Experience Report: Haskell in Computational Biology}
+\subtitle{Subtitle Text, if any}
+
+\authorinfo{Noah M. Daniels \and Andrew Gallant \and Norman Ramsey}
+           {Department of Computer Science, Tufts University}
+           {\{ndaniels, agallant, nr\}@cs.tufts.edu}
+
+
+\maketitle
+
+\begin{abstract}
+This is the text of the abstract.
+\end{abstract}
+
+\category{CR-number}{subcategory}{third-level}
+
+\terms
+term1, term2
+
+\keywords
+keyword1, keyword2
+
+\section{Introduction}
+
+We address this paper to computational biologists who may have an interest in 
+functional programming, but this is not an advocacy paper. We do not argue that 
+computational biologists \textit{should} use functional programming. Rather, 
+argue that computational biologists \textit{can} successfully develop software 
+in Haskell, and what to expect if they do.
+
+We also address this paper to the functional programming community, in the 
+hopes that our experiences will be enlightening. We believe that our 
+experiences can provide lessons about outreach and education.
+
+
+\subsection{Problem Domain}
+
+Computational biologists write software to solve problems on large genomic or 
+proteomic data sets. Traditionally, these software programs fall into two 
+categories: those with high-performance computing needs are typically 
+implemented in C++, while the remainder are typically implemented in Perl, 
+Python, Ruby, or R. Recently, we have developed a program in Haskell which 
+implements a novel algorithm for solving the remote homology detection problem. 
+During this process, we have wondered: would the algorithm be easily expressed 
+in Haskell? Would we be able to achieve acceptable runtime performance? How 
+would our experience compare with our past experiences developing and 
+maintaining computational biology software in C++, Ruby, and Python? What would 
+be our greatest challenges? In this paper, we briefly explain the remote 
+homology detection problem and our algorithm, and then attempt to answer the 
+above questions.
+
+As a brief refresher in the standard dogma of genetics, recall that genes 
+(strands of deoxyribonucleic acid (DNA), which are sequences of the nucleotides 
+adenosine, cytosine, guanine, and thymine, represented by the letters A, C, G, 
+and T) are transcribed into ribonucleic acid (RNA). Some RNA is then translated 
+into the 20 naturally-occuring amino acids, which form peptide chains -- 
+proteins -- which fold into complex structures in the cell. These proteins are 
+cellular machinery, performing the varied functions an organism needs to 
+survive. Since the dawn of the human genome project in 1990, the cost of 
+sequencing an entire genome has dropped exponentially. Recently, the doubling 
+time for genomic data has been one year, in contrast to the eighteen month 
+doubling time of Moore's law. However, determining what newly sequenced genes 
+actually do -- when they become proteins, what structures those proteins fold 
+into, and what functions they perform -- has not kept pace. Determining the 
+atomic coordinates of a newly discovered protein may require as much as two 
+graduate-student-years in a lab!
+
+The problem of taking a newly found protein sequence about which only the 
+sequence is known, and determining what existing proteins of known structure 
+and function most closely resemble that new protein, is known as homology 
+detection. When proteins of similar sequence can be found, this problem is 
+largely solved. To solve the homology detection problem, computational 
+biologists have developed fast, approximate methods for determining the 
+structure and function of proteins based on their sequence. The most popular 
+software for homology detection is called HMMER, which uses a hidden Markov 
+model to capture evolutionary change.
+
+However, when there are no known proteins of similar sequence, only 
+evolutionarily distant proteins that may share similar structure, this problem 
+is called remote homology detection. Hidden Markov model approaches begin to 
+fail as sequence similarity falls off. Recently, Markov random field 
+approaches, which capture non-local interactions in the protein structure, have 
+shown to perform well. However, these approaches face the challenge of 
+increased computational complexity; the SMURF program exhibits exponential time 
+complexity, while SMURFLite (work by one of the authors) bounds the exponent by 
+simplifying the Markov random field's dependency graph. We have implemented a 
+stochastic search approach to Markov random fields, called MRFy.
+
+The algorithm underlying MRFy grew out of an understanding of the limitations 
+of the SMURF (Structural Motifs Using Random Fields) algorithm, which used 
+multidimensional dynamic programming to compute the optimal parse of a query 
+sequence onto a Markov random field.
+
+
+TODO: (add explanation of MRFy architecture and algorithm)
+
+\subsection{Our Background}
+
+All three authors are members of the Tufts University Department of Computer 
+Science. Noah Daniels has taken a graduate seminar in advanced functional 
+programming, which included some Haskell, and spent ten years in industry as a 
+professional programmer in languages such as Ruby, C, and C++. Andrew Gallant 
+has taken a programming language heavily focused on functional programming, but 
+with no Haskell. Norman Ramsey is the local expert, but he wrote no code for 
+this project.
+
+
+\section{What we did}
+
+\subsection{Beautiful code}
+MRFy contains two distinct algorithms: the classical Viterbi dynamic 
+programming algorithm for hidden Markov models, and a stochastic search 
+algorithm for placing beta strand positions. This stochastic search algorithm 
+implements several search heuristics: random-mutation hill climbing, simulated 
+annealing, multistart simulated annealing, and a genetic algorithm.
+
+
+The Viterbi algorithm~\cite{Viterbi:1967} comprises a set of recurrence 
+relations that seek to maximize the probability of an observed sequence (in 
+this case, of amino acid ``letters'') begin emitted by a particular 
+finite-state automaton (the hidden Markov model). The particular states of this 
+finite-state automaton map to the recurrence relations, and in this instance 
+derive from what is known in the computational biology community as a 
+\textit{profile} hidden Markov model. The Viterbi algorithm in this instance 
+recurses on ``match,'' ``insertion,'' and ``deletion'' states. To be efficient, 
+the Viterbi algorithm relies on dynamic programming, or memoization, and the 
+resulting asymptotic complexity is $O(|M|\times|N|)$, when $M$ is the sequence 
+of distinct states (nodes in the automaton's graph) and $N$ is the sequence of 
+letters in the protein sequence. In our particular problem domain, both $M$ and 
+$N$ routinely contain several hundred to a few thousand elements.
+
+
+We implemented the Viterbi algorithm in two distinct ways. We first wrote a 
+bottom-up dynamic programming version, which began with the first node of the 
+hidden Markov model and first observation and built up the three-dimensional 
+array of possible paths through the model. The array containing the paths 
+served as the memoization table. We next wrote a top-down dynamic programming 
+version, which began with the last node of the model and the last observation, 
+and applied structural recursion down to the base cases involving the first 
+node or first observation (or both). In this second approach, we used the 
+Data.Memocombinators library to provide the memoization container (again, a 
+three-dimensional array). We determined that the run-time performances of both 
+approaches were virtually indistinguishable, and we also noted that the 
+top-down version quite faithfully resembled the recurrence relations found in a 
+textbook~\cite{durbin} or the HMMER literature~\cite{eddy}. We chose to keep 
+the top-down version, which later proved to be wise when we had to track down a 
+bug in one of our base cases. This bug was observed as a missing state in the 
+alignment our program displayed, and we quickly discovered that one of our base 
+cases was missing this state: it was returning an empty list as the base of the 
+path, rather than a list containing a single node. In this, we were grateful 
+for the resemblance between the mathematical description of the algorithm and 
+the top-down dynamic programming approach in Haskell, which resulted in 
+perspicuous code.
+
+breadcrumb: HOFs for search.
+
+
+
+
+
+
+
+\subsection{Ugly code}
+
+
+
+
+\appendix
+\section{Appendix Title}
+
+This is the text of the appendix, if you need one.
+
+\acks
+
+Acknowledgments, if needed.
+
+% We recommend abbrvnat bibliography style.
+
+\bibliographystyle{abbrvnat}
+
+% The bibliography should be embedded for final submission.
+
+\begin{thebibliography}{}
+\softraggedright
+
+\bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
+P. Q. Smith, and X. Y. Jones. ...reference text...
+
+\end{thebibliography}
+
+\end{document}
