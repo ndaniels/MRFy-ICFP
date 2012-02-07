@@ -61,13 +61,13 @@ categories: those with high-performance computing needs are typically
 implemented in C++, while the remainder are typically implemented in Perl, 
 Python, Ruby, or R. Recently, we have developed a program in Haskell which 
 implements a novel algorithm for solving the remote homology detection problem. 
-During this process, we have wondered: would the algorithm be easily expressed 
-in Haskell? Would we be able to achieve acceptable runtime performance? How 
-would our experience compare with our past experiences developing and 
-maintaining computational biology software in C++, Ruby, and Python? What would 
-be our greatest challenges? In this paper, we briefly explain the remote 
-homology detection problem and our algorithm, and then attempt to answer the 
-above questions.
+While designing the algorithm, we wondered: would the algorithm be easily 
+expressed in Haskell? Would we be able to achieve acceptable runtime 
+performance? How would our experience compare with our past experiences 
+developing and maintaining computational biology software in C++, Ruby, and 
+Python? What would be our greatest challenges? In this paper, we briefly 
+explain the remote homology detection problem and our algorithm, and then 
+attempt to answer the above questions.
 
 As a brief refresher in the standard dogma of genetics, recall that genes 
 (strands of deoxyribonucleic acid (DNA), which are sequences of the nucleotides 
@@ -120,10 +120,9 @@ All three authors are members of the Tufts University Department of Computer
 Science. Noah Daniels has taken a graduate seminar in advanced functional 
 programming, which included some Haskell, and spent ten years in industry as a 
 professional programmer in languages such as Ruby, C, and C++. Andrew Gallant 
-has taken a programming language heavily focused on functional programming, but 
-with no Haskell. Norman Ramsey is the local expert, but he wrote no code for 
-this project.
-
+has taken a programming languages course heavily focused on functional 
+programming, but with no Haskell. Norman Ramsey is the local expert, but he 
+wrote no code for this project.
 
 \section{What we did}
 
@@ -137,7 +136,7 @@ annealing, multistart simulated annealing, and a genetic algorithm.
 
 The Viterbi algorithm~\cite{Viterbi:1967} comprises a set of recurrence 
 relations that seek to maximize the probability of an observed sequence (in 
-this case, of amino acid ``letters'') begin emitted by a particular 
+this case, of amino acid ``letters'') being emitted by a particular 
 finite-state automaton (the hidden Markov model). The particular states of this 
 finite-state automaton map to the recurrence relations, and in this instance 
 derive from what is known in the computational biology community as a 
