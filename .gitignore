@@ -1,0 +1,4 @@
+*.aux
+*.synctex
+*.synctex.gz
+.DS_Store
