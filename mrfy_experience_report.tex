@@ -157,7 +157,7 @@ served as the memoization table. We next wrote a top-down dynamic programming
 version, which began with the last node of the model and the last observation, 
 and applied structural recursion down to the base cases involving the first 
 node or first observation (or both). In this second approach, we used the 
-Data.Memocombinators library to provide the memoization container (again, a 
+\texttt{Data.Memocombinators} library to provide the memoization container (again, a 
 three-dimensional array). We determined that the run-time performances of both 
 approaches were virtually indistinguishable, and we also noted that the 
 top-down version quite faithfully resembled the recurrence relations found in a 
@@ -180,17 +180,18 @@ found this to be easy and pleasant thanks to Haskell's support of higher order
 functions.
 
 We wrote a basic search function in only twenty-five lines of code; as one of 
-its parameters we provide a SearchStrategy data type, which we use to define 
-specific search techniques. We require a SearchStrategy to define four 
-functions: mutate, accept, terminate, and initialize; we use the Haskell module 
-system to allow sharing of some of these functions between different search 
-strategies. For example, both \textit{random mutation hill climb} and 
-\textit{simulated annealing} use the same initialize and mutate functions, but 
-very different accept functions. In all, we implemented four search strategies: 
-\textit{random mutation hill climb}, \textit{simulated annealing}, 
-\textit{multistart simulated annealing}, and \textit{genetic algorithm}. We 
-found the implementation of the search function and search strategies to be 
-pleasant, and the resulting code to be simple and elegant.
+its parameters we provide a \texttt{SearchStrategy} data type, which we use to 
+define specific search techniques. We require a \texttt{SearchStrategy} to 
+define four functions: \texttt{mutate}, \texttt{accept}, \texttt{terminate}, 
+and \texttt{initialize}; we use the Haskell module system to allow sharing of 
+some of these functions between different search strategies. For example, both 
+\textit{random mutation hill climb} and \textit{simulated annealing} use the 
+same initialize and mutate functions, but very different accept functions. In 
+all, we implemented four search strategies: \textit{random mutation hill 
+climb}, \textit{simulated annealing}, \textit{multistart simulated annealing}, 
+and \textit{genetic algorithm}. We found the implementation of the search 
+function and search strategies to be pleasant, and the resulting code to be 
+simple and elegant.
 
 In MRFy, the Viterbi function is called several times (once for each 
 non-beta-strand region) for each search generation. Furthermore, in a 
@@ -198,11 +199,11 @@ population-based search such as \textit{multistart simulated annealing}, the
 scoring function (which itself calls Viterbi) is called many times per 
 generation. Beyond traditional profiling, we found parallelization to be an 
 obvious way to improve runtime performance. We found this to be trivial thanks 
-to the Control.Parallel library. We pass the Viterbi function to a map over all 
+to the \texttt{Control.Parallel} library. We pass the Viterbi function to a map over all 
 non-beta-strand regions of the model and query sequence, and these regions are 
 independent of one another. Similarly, we pass the scoring function to a map 
 over the population of potential solutions, which are also independent. We 
-merely substituted ``parmap rseq'' for map. MRFy now efficiently uses all six 
+merely substituted \texttt{parmap rseq} for map. MRFy now efficiently uses all six 
 cores on an AMD workstation for a non-population-based simulated annealing 
 search, and all forty-eight cores on a compute server for population-based 
 searches.
