@@ -209,17 +209,51 @@ search, and all forty-eight cores on a compute server for population-based
 searches.
 
 
-
-
-
-
-
-
-
 \subsection{Ugly code}
 
+Despite the beauty of some of the code we were able to write, we found several 
+instances where the easiest path seemed to be to write ugly code. The first of 
+these relates to the otherwise elegant Viterbi function. Our stochastic search 
+approach calls the Viterbi function a tremendous number of times, and most of 
+the program's runtime is spent in this function. However, the Viterbi algorithm 
+retains not just a score (the probability of the sequence given a state path) 
+but also the state path itself. We implemented this state path as a list of 
+\texttt{Int}, and every step in the recursion conses a new element onto the 
+list. However, at each step of the stochastic search, we discard the state 
+path; we are searching to optimize score only. We only need the state path at 
+the termination of the search, when we wish the program to output an alignment 
+of the query sequence to the Markov random field model. We found that 
+optimizing the Viterbi function by removing this state path entirely improved 
+runtime performance by nearly 50\%. However, we still needed the Viterbi 
+function to provide a state path when we called it after search finally 
+terminated. Thus, we wondered how to implement the Viterbi function so that a 
+state path was optional.
+
+In order to determine if this optimization was even worthwhile, we first wrote 
+a quick and dirty approach that is shameful in any language, but easy: we 
+duplicated code. We copied \texttt{viterbi} to produce a \texttt{viterbiF} 
+which did not retain state path. Next, however, we wondered how to avoid code 
+duplication. Clearly, littering the code with conditionals would produce code 
+that was ugly as well as less efficient. We knew how we would solve this 
+problem in other languages; we would have used macros in Lisp, or 
+metaprogramming via \texttt{eval} in Ruby, to produce two versions of the 
+function from one prototype. We struggled, however, to solve this problem 
+idiomatically in Haskell.
+
+
+breadcrumb: solution
+ 
+Profiling: only top-level cost centers can be added automatically
+ - had to pollute our code with cost center annotations
+ - perhaps a better way to do this?
+ 
+Awkwardness of trace and no backtraces led us to write ugly wrappers around Vector.slice and Vector.!
+
+
+\section{Barriers}
+
 - profiling
-- 
+- debugging
 
 
 \appendix
