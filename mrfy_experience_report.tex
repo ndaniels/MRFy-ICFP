@@ -148,6 +148,8 @@ of distinct states (nodes in the automaton's graph) and $N$ is the sequence of
 letters in the protein sequence. In our particular problem domain, both $M$ and 
 $N$ routinely contain several hundred to a few thousand elements.
 
+[insert Viterbi recurrence relations]
+
 
 We implemented the Viterbi algorithm in two distinct ways. We first wrote a 
 bottom-up dynamic programming version, which began with the first node of the 
@@ -171,6 +173,8 @@ for the resemblance between the mathematical description of the algorithm and
 the top-down dynamic programming approach in Haskell, which resulted in 
 perspicuous code.
 
+[part of Viterbi code]
+
 Just as the Viterbi algorithm is one major component of MRFy, stochastic search 
 is the other. In designing MRFy, we did not know in advance what sort of 
 stochastic search technique would converge the fastest, or give us the best 
@@ -179,7 +183,7 @@ different search strategies so that we could experiment with all of them. We
 found this to be easy and pleasant thanks to Haskell's support of higher order 
 functions.
 
-We wrote a basic search function in only twenty-five lines of code; as one of 
+We wrote a basic search function in only twenty-two lines of code; as one of 
 its parameters we provide a \texttt{SearchStrategy} data type, which we use to 
 define specific search techniques. We require a \texttt{SearchStrategy} to 
 define four functions: \texttt{mutate}, \texttt{accept}, \texttt{terminate}, 
@@ -192,6 +196,8 @@ climb}, \textit{simulated annealing}, \textit{multistart simulated annealing},
 and \textit{genetic algorithm}. We found the implementation of the search 
 function and search strategies to be pleasant, and the resulting code to be 
 simple and elegant.
+
+[listing for search function, and constructor for SearchStrategy]
 
 In MRFy, the Viterbi function is called several times (once for each 
 non-beta-strand region) for each search generation. Furthermore, in a 
