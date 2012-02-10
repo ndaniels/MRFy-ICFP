@@ -1,0 +1,106 @@
+Andrew's experience notes
+=========================
+
+Pros
+====
+
+Viterbi
+-------
+Writing an implementation of Viterbi was extremely natural in Haskell. In 
+particular, the Haskell syntax makes it extremely easy to match each case in 
+the Viterbi function with the corresponding mathematical recurrence relation 
+case. When debugging the logic of our implementation, this made things 
+considerably easier than in a standard imperative language.
+
+In particular, this was magnified due to the fact that our Viterbi 
+implementation had to handle so many different base cases with differing 
+behavior.
+
+Stochastic search
+-----------------
+Most forms of stochastic search actually have a very similar paradigm. Namely,
+a set of initial guesses is formed, those guesses can be mutated, a new set of 
+guesses must be scored and either accepted if it performed well or rejected if 
+not, and finally, there must be some sort of termination condition.
+
+These four logical chunks---initial guess, mutation, acceptance and 
+termination---were realized intuitively in Haskell as first class functions in 
+a record type called 'SearchStrategy'. With this grouping of first class 
+functions, we created a single higher-order search function that can accept any 
+one of a number of search strategies, where each search strategy has its own 
+unique SearchStrategy type. In fact, we were able to use Haskell's module 
+system to avoid redundant code and reuse functions in common to different 
+search strategies.
+
+(N.B. In an imperative language with OO features like Ruby/Python, we probably 
+would have used some sort of class heirarchy to get this done. I feel like this 
+probably would have been a more verbose and overall less satisfactory approach, 
+but I'm finding it difficult to figure out how to articulate that.)
+
+Well-typed programs don't go wrong
+----------------------------------
+We found that using Haskell cut down significantly on the number of run-time 
+errors. (In fact, run-time errors were almost exclusively reserved to some 
+variant of bad indexing.) Because of Haskell's strong and static typing system,
+many logical errors are squashed at compile time when GHC informed us of a type 
+error. This makes debugging easier in some respects and allows us to be a 
+little bit more confident about the correctness of our code.
+
+It's *fun* writing in Haskell
+-----------------------------
+There is a certain allure about writing elegant code with an elegant language. 
+While the brain processing required to write Haskell is still extremely high 
+for me, I've found the results to be immensely satisfying.
+
+(N.B. This is another difficult one to articulate, but I really think some form 
+of "Oooo, writing code in a strong/staticly typed language is pretty" should 
+probably make it into our experience report.)
+
+It's fast
+---------
+Haskell gives us the benefits of a higher-level language most commonly seen in 
+interpreted languages, but at the same time gives us speed comparable to that 
+of C or Java.
+
+(N.B. Maybe this shouldn't be included, but I do really like the notion that
+Haskell is high-level but also fast...)
+
+
+Cons
+====
+
+Run-time errors
+---------------
+The lack of any kind of back trace when getting run time errors (like out of 
+bounds errors) makes them incredibly difficult debug. We had to resort to ugly 
+trace statements to figure out where the errors were occurring in the code.
+
+Input parsing
+-------------
+Input parsing was a bit cumbersome in that many of the types suited to hold the 
+input data had to be reconstructed or modified in some way before actually 
+using them in our program. In an imperative language, a lot of this can be done 
+as one is reading the input---but with Haskell we had to traverse our data 
+structures several times before it was in consummable form. (This isn't too 
+much of a negative since the input cost is insignificant relative to the 
+algorithmic cost of MRFy.)
+
+Compilation
+-----------
+Compiling an optimized version of MRFy required a decent machine. In fact, my 
+machine at Tufts---having only 2GB of memory and a dual core 
+processor---couldn't handle it all. (It runs out of memory.) I had to resort to 
+remotely compiling MRFy on my machine went home.
+
+Development time
+----------------
+Since both of us working on MRFy are inexperienced functional programmers, the 
+amount of time and brain processing to do tasks that would be otherwise trivial 
+in an imperative language was quite large. We found that in many cases, we had 
+to rethink our data structures and how they were formed---mostly due to a lack 
+of mutable memory in pure functions. (I think I worded this right, please 
+correct me if I'm wrong. Perhaps an example would be good, but I can't think of 
+a specific one off the top of my head.) Therefore, it has taken us much longer 
+to develop MRFy than it probably would have taken us in C. (Especially 
+Ruby/Python, but it wouldn't be good for MRFy to be implemented in an 
+interpreted language.)
