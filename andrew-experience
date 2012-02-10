@@ -51,6 +51,8 @@ many logical errors are squashed at compile time when GHC informed us of a type
 error. This makes debugging easier in some respects and allows us to be a 
 little bit more confident about the correctness of our code.
 
+{NMD note: I have something similar in my index cards: our errors were either compile-time (type check) errors, or bad indexing runtime errors. Contrast that with segfaults, failed malloc, etc. in SMURF.)}
+
 It's *fun* writing in Haskell
 -----------------------------
 There is a certain allure about writing elegant code with an elegant language. 
