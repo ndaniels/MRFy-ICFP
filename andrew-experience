@@ -37,6 +37,11 @@ would have used some sort of class heirarchy to get this done. I feel like this
 probably would have been a more verbose and overall less satisfactory approach, 
 but I'm finding it difficult to figure out how to articulate that.)
 
+{NMD note: it would have been more verbose and clumsy because we'd be using a 
+system meant for encapsulating data as well as functions on those data; here we 
+ONLY wanted to encapsulate functions}
+
+
 Well-typed programs don't go wrong
 ----------------------------------
 We found that using Haskell cut down significantly on the number of run-time 
@@ -56,6 +61,10 @@ for me, I've found the results to be immensely satisfying.
 of "Oooo, writing code in a strong/staticly typed language is pretty" should 
 probably make it into our experience report.)
 
+{NMD note: I think it's entirely appropriate to express our enjoyment at 
+programming in Haskell, even if it may only be due to a change of scenery!}
+
+
 It's fast
 ---------
 Haskell gives us the benefits of a higher-level language most commonly seen in 
@@ -64,6 +73,11 @@ of C or Java.
 
 (N.B. Maybe this shouldn't be included, but I do really like the notion that
 Haskell is high-level but also fast...)
+
+{NMD note: I think it's important to note in the introduction that we 
+considered Haskell precisely because it's comparable to C/Java in performance 
+(along with ML)}
+
 
 
 Cons
@@ -85,12 +99,23 @@ structures several times before it was in consummable form. (This isn't too
 much of a negative since the input cost is insignificant relative to the 
 algorithmic cost of MRFy.)
 
+{NMD note: we should focus on the programming irritation here. Not sure how 
+much is just due to PADS, but some is clearly due to difficulties dealing with 
+an externally specified representation (beta pairs) which could be a challenge 
+for others as well}
+
+
 Compilation
 -----------
 Compiling an optimized version of MRFy required a decent machine. In fact, my 
 machine at Tufts---having only 2GB of memory and a dual core 
 processor---couldn't handle it all. (It runs out of memory.) I had to resort to 
 remotely compiling MRFy on my machine went home.
+
+{NMD note: this is mostly Pads' fault due to using Template Haskell, I think. 
+Still worth pointing out: compile times are unfavorable compared to gcc}
+
+
 
 Development time
 ----------------
@@ -104,3 +129,9 @@ a specific one off the top of my head.) Therefore, it has taken us much longer
 to develop MRFy than it probably would have taken us in C. (Especially 
 Ruby/Python, but it wouldn't be good for MRFy to be implemented in an 
 interpreted language.)
+
+{NMD note: I shudder to imagine the uncaught incorrectnesses we would have seen 
+in a dynamic language, but that aside, I think we should focus on the example 
+of handling a poorly represented but external (not under our control) input 
+format, namely the beta pairs.}
+
