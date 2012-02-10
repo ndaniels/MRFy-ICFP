@@ -39,7 +39,7 @@ but I'm finding it difficult to figure out how to articulate that.)
 
 {NMD note: it would have been more verbose and clumsy because we'd be using a 
 system meant for encapsulating data as well as functions on those data; here we 
-ONLY wanted to encapsulate functions}
+ONLY wanted to encapsulate functions; the data did not change}
 
 
 Well-typed programs don't go wrong
@@ -90,6 +90,8 @@ Run-time errors
 The lack of any kind of back trace when getting run time errors (like out of 
 bounds errors) makes them incredibly difficult debug. We had to resort to ugly 
 trace statements to figure out where the errors were occurring in the code.
+
+{NMD note: this and the wrapper functions are in my gripe notes, too!}
 
 Input parsing
 -------------
