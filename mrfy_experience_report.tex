@@ -8,6 +8,10 @@
 % authoryear    To obtain author/year citation style instead of numeric.
 
 \usepackage{amsmath}
+\usepackage{listings}
+\lstset{
+    tabsize = 2
+    }
 
 \begin{document}
 
@@ -174,6 +178,9 @@ the top-down dynamic programming approach in Haskell, which resulted in
 perspicuous code.
 
 [part of Viterbi code]
+\begin{figure*}
+\lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
+\end{figure*}
 
 Just as the Viterbi algorithm is one major component of MRFy, stochastic search 
 is the other. In designing MRFy, we did not know in advance what sort of 
@@ -246,16 +253,33 @@ metaprogramming via \texttt{eval} in Ruby, to produce two versions of the
 function from one prototype. We struggled, however, to solve this problem 
 idiomatically in Haskell.
 
+Rather than attempt to use \texttt{TemplateHaskell} to generate two versions of 
+the Viterbi function, we wrote a higher-order function type \texttt{type 
+ScorePathCons a = a -> [a] -> [a]} and two functions conforming to that type. 
+Then, depending on whether \texttt{viterbi} was called with \texttt{consPath} 
+or \texttt{consNoPath} as a parameter, the path would or would not be 
+allocated. We found this higher-order function approach to be simple in code 
+and in concept, and it imposes negligible run-time overhead as compared to 
+having two distinct functions.
 
-breadcrumb: solution
+\lstinputlisting[label=scorepathcons,caption=ScorePathCons]{scorepathcons.hs}
+
+Another source of ugliness resulted from adding cost-center annotations when we 
+wished to profile our code. GHC will happily add cost centers to top-level 
+functions, but much of our program relies on sub-functions. We found that 
+manually adding \texttt{\{-SCC -\}} annotations to dozens of guard clauses and 
+sub-functions harmed the readability of our program, such that we felt 
+compelled to remove all such annotations as soon as we could. In our prior 
+experience with profiling tools such as kcachegrind, simply compiling with 
+debug symbols -- rather than manually annotating many lines of code -- allowed 
+the profiling tools to provide us enough information. Without these 
+annotations, both call-site and allocation profiles are relatively useless in 
+GHC. Perhaps a compile-time flag that would auto-annotate every equation -- 
+even if the resulting cost center is simply named with a line number -- would 
+make this task easier.
+
+The final source of ugliness in our code came from attempts at debugging run-time errors. MRFy relies on a source of input data -- the paired beta strands in the Markov random field -- which is represented in an awkward manner by the original SMURF program, and which is outside our control. Rather than represent beta strands directly, SMURF represents pairings of residues, leaving us to infer and reconstruct beta strands. This task was difficult due to unclear invariants around overlapping, doubly-paired beta strands (and it would have been difficult in any programming language; the difficulty was one of representation). However, the debugging tools in GHC caused us some difficulties in determining the sources of run-time errors. We used \texttt{trace} extensively, but this style of ``\texttt{printf} debugging'' littered our code. Being initially unaware of the backtrace feature of the GHC profiler, we wrote wrappers around \texttt{Vector.slice} and \texttt{Vector.!} which themselves called trace, which at least kept our ``\texttt{printf} debugging'' less cluttered. Nonetheless, we struggled with these runtime errors due to an awkward representation, and wished for debugging tools such as we might find in gdb, which would allow us to examine the stack when a backtrace occurs.
  
-Profiling: only top-level cost centers can be added automatically
- - had to pollute our code with cost center annotations
- - perhaps a better way to do this?
- 
-Awkwardness of trace and no backtraces led us to write ugly wrappers around Vector.slice and Vector.!
-
-
 \section{Barriers}
 
 - profiling
