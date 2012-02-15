@@ -10,6 +10,7 @@
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{listings}
+\usepackage{graphicx}
 \lstset{
     tabsize = 2,
     basicstyle = \ttfamily,
@@ -63,19 +64,21 @@ experiences can provide lessons about outreach and education.
 
 \subsection{Problem Domain}
 
-Computational biologists write software to solve problems on large genomic or 
-proteomic data sets. Traditionally, these software programs fall into two 
-categories: those with high-performance computing needs are typically 
-implemented in C++, while the remainder are typically implemented in Perl, 
-Python, Ruby, or R. Recently, we have developed a program in Haskell which 
-implements a novel algorithm for solving the remote homology detection problem. 
-While designing the algorithm, we wondered: would the algorithm be easily 
-expressed in Haskell? Would we be able to achieve acceptable runtime 
-performance? How would our experience compare with our past experiences 
-developing and maintaining computational biology software in C++, Ruby, and 
-Python? What would be our greatest challenges? In this paper, we briefly 
-explain the remote homology detection problem and our algorithm, and then 
-attempt to answer the above questions.
+Computational biologists write software that answers questions about large data 
+sets involving sequences of nucleic acids (genomic data) or sequences of amino 
+acids (proteomic data). This software comes in two varieties. The first variety 
+is \textit{high performance software}, where performance is a top priority; 
+this kind of software is usually written in a programming language like C or 
+C++. The second variety is software where performance is not a top priority; 
+this kind of software written in higher-level languages that emphasize 
+convenience and programmer productivity, such as Perl, Python, Ruby, or R.
+
+In this Experience Report, we show that the Haskell programming language is an 
+excellent alternative for computational biologists: a Haskell program can 
+perform comparably to a C++ program while being as flexible and easy to 
+understand as a program written in an interpreted language. Our experience is 
+based on an implementation of a novel algorithm for finding remote homologs to 
+newly discovered proteins. We call this program MRFy.
 
 As a brief refresher in the standard dogma of genetics, recall that genes 
 (strands of deoxyribonucleic acid (DNA), which are sequences of the nucleotides 
@@ -84,14 +87,16 @@ and T) are transcribed into ribonucleic acid (RNA). Some RNA is then translated
 into the 20 naturally-occuring amino acids, which form peptide chains -- 
 proteins -- which fold into complex structures in the cell. These proteins are 
 cellular machinery, performing the varied functions an organism needs to 
-survive. Since the dawn of the human genome project in 1990, the cost of 
-sequencing an entire genome has dropped exponentially. Recently, the doubling 
-time for genomic data has been one year, in contrast to the eighteen month 
-doubling time of Moore's law. However, determining what newly sequenced genes 
-actually do -- when they become proteins, what structures those proteins fold 
-into, and what functions they perform -- has not kept pace. Determining the 
-atomic coordinates of a newly discovered protein may require as much as two 
-graduate-student-years in a lab!
+survive. 
+
+However, determining what newly sequenced genes actually do -- when they become 
+proteins, what structures those proteins fold into, and what functions they 
+perform -- has not kept pace. Determining the atomic coordinates of a newly 
+discovered protein may require as much as two graduate-student-years in a lab! 
+Fortunately, determining the full structure of a protein is not always 
+necessary. Often, we can identify well-known proteins of similar sequence or 
+structure to a new protein, and thus make educated guesses as to the structure 
+and function of the new protein.
 
 The problem of taking a newly found protein sequence about which only the 
 sequence is known, and determining what existing proteins of known structure 
@@ -108,19 +113,41 @@ evolutionarily distant proteins that may share similar structure, this problem
 is called remote homology detection. Hidden Markov model approaches begin to 
 fail as sequence similarity falls off. Recently, Markov random field 
 approaches, which capture non-local interactions in the protein structure, have 
-shown to perform well. However, these approaches face the challenge of 
+been shown to perform well. However, these approaches face the challenge of 
 increased computational complexity; the SMURF program exhibits exponential time 
 complexity, while SMURFLite (work by one of the authors) bounds the exponent by 
-simplifying the Markov random field's dependency graph. We have implemented a 
-stochastic search approach to Markov random fields, called MRFy.
+simplifying the Markov random field's dependency graph. MRFy is a 
+stochastic search approach to Markov random fields.
 
-The algorithm underlying MRFy grew out of an understanding of the limitations 
-of the SMURF (Structural Motifs Using Random Fields) algorithm, which used 
-multidimensional dynamic programming to compute the optimal parse of a query 
-sequence onto a Markov random field.
+SMURF, SMURFLite, and MRFy all attempt to compute the optimal parse, or 
+alignment, of a protein sequence onto the directed graph representing a Markov 
+random field (see Figure \ref{mrf}). The algorithm underlying MRFy grew out of 
+an understanding of the limitations of the SMURF (Structural Motifs Using 
+Random Fields) algorithm, which used multidimensional dynamic programming to 
+compute the optimal parse of a query sequence onto a Markov random field. 
+Rather than attempt to compute exactly the optimal parse, MRFy treats the 
+non-local interactions (which correspond to hydrogen-bonded ``beta strands'' in 
+the protein) as ``beads'' which can be slid along a string. In this analogy, 
+the string is the sequence of amino acids of the query protein. A given 
+placement of these beads corresponds to an assignment of particular amino acid 
+residues being hydrogen bonded to other particular amino acid residues, and 
+thus MRFy computes a probability based on observed frequencies of residues 
+hydrogen bonding in beta strands~\cite{betawrappro}. In between these beta 
+strands, the Markov random field is in fact a traditional hidden Markov model, 
+whose optimal solution can be easily computed via dynamic programming (known as 
+the Viterbi algorithm). MRFy performs a stochastic search to place these beta 
+strands, based on an objective function that combines the probability computed 
+by the Viterbi algorithm with that computed from the paired, hydrogen-bonded 
+residues in the beta strands.
 
 
-TODO: (add explanation of MRFy architecture and algorithm)
+
+\begin{figure}
+\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}}
+\caption{The directed graph representing the states of a MRFy Markov random field finite state
+automaton}\label{mrf}
+\end{figure}
+
 
 \subsection{Our Background}
 
