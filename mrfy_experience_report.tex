@@ -8,12 +8,16 @@
 % authoryear    To obtain author/year citation style instead of numeric.
 
 \usepackage{amsmath}
+\usepackage{array}
 \usepackage{listings}
 \lstset{
-    tabsize = 2
-    }
+    tabsize = 2,
+    basicstyle = \ttfamily,
+    language = Haskell
+    }    
 
 \begin{document}
+
 
 \conferenceinfo{ICFP '12}{date, City.} 
 \copyrightyear{2012} 
@@ -152,7 +156,25 @@ of distinct states (nodes in the automaton's graph) and $N$ is the sequence of
 letters in the protein sequence. In our particular problem domain, both $M$ and 
 $N$ routinely contain several hundred to a few thousand elements.
 
-[insert Viterbi recurrence relations]
+\begin{eqnarray}    
+V_{j}^{M}(i) = \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
+\begin{array}{l l}
+V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}M_{j}},\\
+V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}M_{j}},\\
+V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
+\end{array} \right.\nonumber\\
+V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
+\begin{array}{l l}
+V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}I_{j}},\\
+V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}I_{j}},\\
+\end{array} \right.\nonumber\\
+V_{j}^{D}(i) = max \left\{
+\begin{array}{l l}
+V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}D_{j}},\\
+V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}D_{j}}\\
+\end{array} \right.\nonumber\\
+\end{eqnarray}\label{viterbi_eqn}
+
 
 
 We implemented the Viterbi algorithm in two distinct ways. We first wrote a 
@@ -163,21 +185,21 @@ served as the memoization table. We next wrote a top-down dynamic programming
 version, which began with the last node of the model and the last observation, 
 and applied structural recursion down to the base cases involving the first 
 node or first observation (or both). In this second approach, we used the 
-\texttt{Data.Memocombinators} library to provide the memoization container (again, a 
-three-dimensional array). We determined that the run-time performances of both 
-approaches were virtually indistinguishable, and we also noted that the 
-top-down version quite faithfully resembled the recurrence relations found in a 
-textbook~\cite{durbin} or the HMMER literature~\cite{eddy}. We chose to keep 
-the top-down version, which later proved to be wise when we had to track down a 
-bug in one of our base cases. This bug was observed as a missing state in the 
-alignment our program displayed, and we quickly discovered that one of our base 
-cases was missing this state: it was returning an empty list as the base of the 
-path, rather than a list containing a single node. In this, we were grateful 
-for the resemblance between the mathematical description of the algorithm and 
-the top-down dynamic programming approach in Haskell, which resulted in 
-perspicuous code.
+\texttt{Data.Memocombinators} library to provide the memoization container 
+(again, a three-dimensional array). We determined that the run-time 
+performances of both approaches were virtually indistinguishable, and we also 
+noted that the top-down version quite faithfully resembled the recurrence 
+relations found in a textbook~\cite{durbin} or the HMMER literature~\cite{eddy} 
+(see Equation \ref{viterbi_eqn}). We chose to keep the top-down version, which 
+later proved to be wise when we had to track down a bug in one of our base 
+cases. This bug was observed as a missing state in the alignment our program 
+displayed, and we quickly discovered that one of our base cases was missing 
+this state: it was returning an empty list as the base of the path, rather than 
+a list containing a single node. In this, we were grateful for the resemblance 
+between the mathematical description of the algorithm and the top-down dynamic 
+programming approach in Haskell, which resulted in perspicuous code.
 
-[part of Viterbi code]
+
 \begin{figure*}
 \lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
 \end{figure*}
@@ -202,9 +224,16 @@ all, we implemented four search strategies: \textit{random mutation hill
 climb}, \textit{simulated annealing}, \textit{multistart simulated annealing}, 
 and \textit{genetic algorithm}. We found the implementation of the search 
 function and search strategies to be pleasant, and the resulting code to be 
-simple and elegant.
+simple and elegant. In an imperative language with object orientation like Ruby 
+or Python, we likely would have used a class hierarchy to accomplish this. We 
+feel that this would have required more code, because object orientation is 
+meant for encapsulating data as well as functions on those data; here we only 
+wanted to encapsulate functions, as the data did not change.
 
-[listing for search function, and constructor for SearchStrategy]
+
+\begin{figure*}
+\lstinputlisting[label=search,caption=Search]{search_simple.hs}
+\end{figure*}
 
 In MRFy, the Viterbi function is called several times (once for each 
 non-beta-strand region) for each search generation. Furthermore, in a 
@@ -223,6 +252,7 @@ searches.
 
 
 \subsection{Ugly code}
+
 
 Despite the beauty of some of the code we were able to write, we found several 
 instances where the easiest path seemed to be to write ugly code. The first of 
@@ -254,8 +284,8 @@ function from one prototype. We struggled, however, to solve this problem
 idiomatically in Haskell.
 
 Rather than attempt to use \texttt{TemplateHaskell} to generate two versions of 
-the Viterbi function, we wrote a higher-order function type \texttt{type 
-ScorePathCons a = a -> [a] -> [a]} and two functions conforming to that type. 
+the Viterbi function, we wrote a higher-order function type 
+\lstinline!type ScorePathCons a = a -> [a] -> [a]! and two functions conforming to that type. 
 Then, depending on whether \texttt{viterbi} was called with \texttt{consPath} 
 or \texttt{consNoPath} as a parameter, the path would or would not be 
 allocated. We found this higher-order function approach to be simple in code 
@@ -278,13 +308,68 @@ GHC. Perhaps a compile-time flag that would auto-annotate every equation --
 even if the resulting cost center is simply named with a line number -- would 
 make this task easier.
 
-The final source of ugliness in our code came from attempts at debugging run-time errors. MRFy relies on a source of input data -- the paired beta strands in the Markov random field -- which is represented in an awkward manner by the original SMURF program, and which is outside our control. Rather than represent beta strands directly, SMURF represents pairings of residues, leaving us to infer and reconstruct beta strands. This task was difficult due to unclear invariants around overlapping, doubly-paired beta strands (and it would have been difficult in any programming language; the difficulty was one of representation). However, the debugging tools in GHC caused us some difficulties in determining the sources of run-time errors. We used \texttt{trace} extensively, but this style of ``\texttt{printf} debugging'' littered our code. Being initially unaware of the backtrace feature of the GHC profiler, we wrote wrappers around \texttt{Vector.slice} and \texttt{Vector.!} which themselves called trace, which at least kept our ``\texttt{printf} debugging'' less cluttered. Nonetheless, we struggled with these runtime errors due to an awkward representation, and wished for debugging tools such as we might find in gdb, which would allow us to examine the stack when a backtrace occurs.
+The final source of ugliness in our code came from attempts at debugging 
+run-time errors. MRFy relies on a source of input data -- the paired beta 
+strands in the Markov random field -- which is represented in an awkward manner 
+by the original SMURF program, and which is outside our control. Rather than 
+represent beta strands directly, SMURF represents pairings of residues, leaving 
+us to infer and reconstruct beta strands. This task was difficult due to 
+unclear invariants around overlapping, doubly-paired beta strands (and it would 
+have been difficult in any programming language; the difficulty was one of 
+representation). However, the debugging tools in GHC caused us some 
+difficulties in determining the sources of run-time errors. We used 
+\texttt{trace} extensively, but this style of ``\texttt{printf} debugging'' 
+littered our code. Being initially unaware of the backtrace feature of the GHC 
+profiler, we wrote wrappers around \texttt{Vector.slice} and \texttt{Vector.!} 
+which themselves called trace, which at least kept our ``\texttt{printf} 
+debugging'' less cluttered. Nonetheless, we struggled with these runtime errors 
+due to an awkward representation, and wished for debugging tools such as we 
+might find in gdb, which would allow us to examine the stack when a backtrace 
+occurs.
  
-\section{Barriers}
+ 
+\section{Our previous code base compared}
+
+ - SMURF bad
+ - HMMER good
+ 
+\section{State of the practice}
+
+\subsection{Our group then}
+ - Modifying Formatt took nearly a year
+ - mutable data structures hard to repurpose
+ - one enhancement deemed infeasible
+ - C++ failures most commonly segfaults, memory errors, heap exhaustion
+
+\subsection{Our group now}
+ - Higher order functions militate towards more flexibility
+ - Haskell failures are usually typecheck failures; at worst runtime errors around bounds checking
+ - MRFy about 3 months of part-time work
+
+\subsection{Computational biology at large}
+ - some good software, like HMMER
+
+\section{What we think about it}
+
+\subsection{Barriers}
 
 - profiling
 - debugging
+ [ talk about profiling and debugging problems where?]
+[ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ]
 
+\subsection{What you must know to succeed}
+- Ecosystem is loaded with tools that look promising but either are no longer maintained or are not ready for prime time (Pads, Backtrace)
+
+\subsection{Evaluation}
+- What does the local expert do? Do you have to have one?
+
+- To the FP community: Those who want us to abandon our old tools for debugging imperative code have not provided a clear path to follow (both intellectually, and via software tools).
+
+- No obvious body of knowledge on code improvement.
+
+- The ecosystem contains tools that look promising and work great: Data.Memocombinators, Quickcheck, Parallel Strategies. How to tell what's good? How did we discover what's good?
+- Profiler can produce backtraces, but this was hard to discover.
 
 \appendix
 \section{Appendix Title}
