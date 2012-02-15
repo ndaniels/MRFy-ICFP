@@ -1,10 +1,9 @@
 viterbi :: Alphabet -> QuerySequence -> HMM -> (Score, StatePath)
-viterbi alpha query hmm =
-    flipSnd $ DL.minimum $
-    [viterbi' mat (numNodes - 1) (seqlen - 1),
-     viterbi' ins (numNodes - 1) (seqlen - 1),
-     viterbi' del (numNodes - 1) (seqlen - 1)
-    ]
+viterbi alpha query hmm = flipSnd $ DL.minimum $
+                        [viterbi' mat (numNodes - 1) (seqlen - 1),
+                         viterbi' ins (numNodes - 1) (seqlen - 1),
+                         viterbi' del (numNodes - 1) (seqlen - 1)
+                        ]
   where viterbi' state node obs = Memo.memo3 (Memo.arrayRange (mat, end)) 
                                   (Memo.arrayRange (0, numNodes))
                                   (Memo.arrayRange (0, seqlen)) 
