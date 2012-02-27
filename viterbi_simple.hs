@@ -1,3 +1,22 @@
+type HMM = V.Vector HmmNode
+type EmissionProbabilities = V.Vector Double
+data HmmNode = 
+     HmmNode { nodeNum :: Int
+             , matchEmissions :: EmissionProbabilities
+             , annotations :: Maybe EmissionAnnotationSet
+             , insertionEmissions :: EmissionProbabilities
+             , transitions :: TransitionProbabilities
+             }
+data TransitionProbabilities = 
+     TransitionProbabilities { m_m :: TransitionProbability
+                             , m_i :: TransitionProbability
+                             , m_d :: TransitionProbability
+                             , i_m :: TransitionProbability
+                             , i_i :: TransitionProbability
+                             , d_m :: TransitionProbability
+                             , d_d :: TransitionProbability
+                             }
+
 viterbi :: Alphabet -> QuerySequence -> HMM -> (Score, StatePath)
 viterbi alpha query hmm = flipSnd $ DL.minimum $
                         [viterbi' mat (numNodes - 1) (seqlen - 1),
@@ -15,9 +34,9 @@ viterbi alpha query hmm = flipSnd $ DL.minimum $
                             where (score, path) = viterbi' prev (n - 1) (o - 1)
                                   eProb = eProb' (mEmissions $ hmm ! n) (res o)
                         in minimum $ [
-                            transition m_m mat,
-                            transition i_m ins,
-                            transition d_m del
+                            trans m_m mat,
+                            trans i_m ins,
+                            trans d_m del
                             ]
           -- consume an observation but not a node
           | s == ins = let trans t prev =
@@ -25,14 +44,26 @@ viterbi alpha query hmm = flipSnd $ DL.minimum $
                             where (score, path) = viterbi' prev n (o - 1)
                                   eProb = eProb' (iEmissions $ hmm ! n) (res o)
                         in minimum [
-                            transition m_i mat,
-                            transition i_i ins
+                            trans m_i mat,
+                            trans i_i ins
                             ]
           -- consume a node but not an observation
           | s == del = let trans t prev = 
                               (score + tProb hmm (n-1) t, del:path)
                               where (score, path) = viterbi' prev (n - 1) o
                         in minimum [
-                            transition m_d mat,
-                            transition d_d del
+                            trans m_d mat,
+                            trans d_d del
                             ]
+                            
+        numNodes = Data.Vector.length hmm
+        seqlen = Data.Vector.length query
+        
+        eProb' :: Vector a -> Int -> a
+        eProb' emissions residue = emissions ! residue
+
+        tProb :: HMM -> Int -> StateAcc -> Double
+        tProb hmm nodenum state = case logProbability $ state (transitions (hmm ! nodenum)) of
+                                           NonZero p -> p
+                                           LogZero -> maxProb
+        

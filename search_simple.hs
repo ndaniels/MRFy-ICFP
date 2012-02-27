@@ -1,21 +1,15 @@
 module StochasticSearch where
-
 type Scorer = QuerySequence -> [BetaStrand] -> SearchGuess -> SearchSolution
-data SearchStrategy =
-     SearchStrategy { accept :: SearchParameters -> Seed -> History ->
-                       Age -> Bool
-                    , terminate :: SearchParameters -> History -> Age -> Bool
-                    , mutate :: SearchParameters -> Seed -> QuerySequence ->
-                       Scorer -> [BetaStrand] -> [SearchSolution] ->
-                       [SearchSolution]
-                    , initialize :: SearchParameters -> Seed ->
-                       QuerySequence -> [BetaStrand]-> [SearchGuess]
-                    }
-
-search :: QuerySequence -> HMM -> [BetaStrand] -> SearchParameters ->
-          [Seed] -> (SearchSolution, History)
-search query hmm betas searchP seeds =
-        search' (tail seeds) initialGuessScore [] 0
+data SearchStrategy = SearchStrategy { accept :: SearchParameters -> Seed -> History -> Age -> Bool
+                                     , terminate :: SearchParameters -> History -> Age -> Bool
+                                     , mutate :: SearchParameters -> Seed -> QuerySequence ->
+                                        Scorer -> [BetaStrand] -> [SearchSolution] ->
+                                        [SearchSolution]
+                                     , initialize :: SearchParameters -> Seed ->
+                                        QuerySequence -> [BetaStrand]-> [SearchGuess]
+                                     }
+search :: QuerySequence -> HMM -> [BetaStrand] -> SearchParameters -> [Seed] -> (SearchSolution, History)
+search query hmm betas searchP seeds = search' (tail seeds) initialGuessScore [] 0
   where initialGuessScore = map (score hmm query betas) initialGuess
         initialGuess = initialize strat searchP (head seeds) query betas
         strat = strategy searchP

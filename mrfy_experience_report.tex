@@ -20,7 +20,7 @@
 \begin{document}
 
 
-\conferenceinfo{ICFP '12}{date, City.} 
+\conferenceinfo{ICFP '12}{September 9-15, Copenhagen.} 
 \copyrightyear{2012} 
 \copyrightdata{[to be supplied]} 
 
@@ -28,7 +28,7 @@
 \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Experience Report: Haskell in Computational Biology}
-\subtitle{Subtitle Text, if any}
+% \subtitle{Subtitle Text, if any}
 
 \authorinfo{Noah M. Daniels \and Andrew Gallant \and Norman Ramsey}
            {Department of Computer Science, Tufts University}
@@ -142,11 +142,13 @@ residues in the beta strands.
 
 
 
-\begin{figure}
-\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}}
-\caption{The directed graph representing the states of a MRFy Markov random field finite state
-automaton}\label{mrf}
-\end{figure}
+\begin{figure} 
+\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
+\caption{The directed graph representing the states of a MRFy Markov random 
+field finite state automaton. Shaded nodes represent beta-strand positions, 
+while the dashed edges represent the long-range dependencies due to hydrogen 
+bonding.}\label{mrf} \end{figure}
+
 
 
 \subsection{Our Background}
@@ -170,18 +172,20 @@ annealing, multistart simulated annealing, and a genetic algorithm.
 
 
 The Viterbi algorithm~\cite{Viterbi:1967} comprises a set of recurrence 
-relations that seek to maximize the probability of an observed sequence (in 
-this case, of amino acid ``letters'') being emitted by a particular 
-finite-state automaton (the hidden Markov model). The particular states of this 
-finite-state automaton map to the recurrence relations, and in this instance 
-derive from what is known in the computational biology community as a 
-\textit{profile} hidden Markov model. The Viterbi algorithm in this instance 
-recurses on ``match,'' ``insertion,'' and ``deletion'' states. To be efficient, 
-the Viterbi algorithm relies on dynamic programming, or memoization, and the 
-resulting asymptotic complexity is $O(|M|\times|N|)$, when $M$ is the sequence 
-of distinct states (nodes in the automaton's graph) and $N$ is the sequence of 
-letters in the protein sequence. In our particular problem domain, both $M$ and 
-$N$ routinely contain several hundred to a few thousand elements.
+relations (see Equation \ref{viterbi_eqn}) that seek to maximize the 
+probability of an observed sequence (in this case, of amino acid ``letters'') 
+being emitted by a particular finite-state automaton (the hidden Markov model). 
+The particular states of this finite-state automaton map to the recurrence 
+relations, and in this instance derive from what is known in the computational 
+biology community as a \textit{profile} hidden Markov model. The Viterbi 
+algorithm in this instance recurses on ``match,'' ``insertion,'' and 
+``deletion'' states. To be efficient, the Viterbi algorithm relies on dynamic 
+programming, or memoization, and the resulting asymptotic complexity is 
+$O(|M|\times|N|)$, when $M$ is the sequence of distinct states (nodes in the 
+automaton's graph) and $N$ is the sequence of letters in the protein sequence. 
+In our particular problem domain, both $M$ and $N$ routinely contain several 
+hundred to a few thousand elements.
+
 
 \begin{eqnarray}    
 V_{j}^{M}(i) = \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
@@ -202,6 +206,26 @@ V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}D_{j}}\\
 \end{array} \right.\nonumber\\
 \end{eqnarray}\label{viterbi_eqn}
 
+\begin{eqnarray}    
+V_{j}^{\prime M}(i) = e^{\prime}_{M_{j}}(x_{i}) + min \left\{
+\begin{array}{l l}
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}M_{j}},\\
+V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}M_{j}},\\
+V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
+\end{array} \right.\nonumber\\
+V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
+\begin{array}{l l}
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}I_{j}},\\
+V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}I_{j}},\\
+\end{array} \right.\nonumber\\
+V_{j}^{\prime D}(i) = min \left\{
+\begin{array}{l l}
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}D_{j}},\\
+V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}D_{j}}\\
+\end{array} \right.\nonumber\\
+\text{where } a^{\prime}_{s} = - \log a_{s} \nonumber \\
+\text{and } e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}} \nonumber
+\end{eqnarray}\label{viterbi_log_eqn}
 
 
 We implemented the Viterbi algorithm in two distinct ways. We first wrote a 
@@ -357,8 +381,7 @@ occurs.
  
 \section{Our previous code base compared}
 
- - SMURF bad
- - HMMER good
+Haskell makes it difficult to write code in haste, because Haskell militates towards careful type-checking and clearly thought-out function contracts. Unlike dynamic languages such as Ruby, and unlike C++, Haskell punishes the programmer who attempts to write code quickly with the goal of later making it work correctly. We have found MRFy to be easier to enhance and maintain than our existing C++ code bases.
  
 \section{State of the practice}
 
@@ -398,14 +421,14 @@ occurs.
 - The ecosystem contains tools that look promising and work great: Data.Memocombinators, Quickcheck, Parallel Strategies. How to tell what's good? How did we discover what's good?
 - Profiler can produce backtraces, but this was hard to discover.
 
-\appendix
-\section{Appendix Title}
-
-This is the text of the appendix, if you need one.
+% \appendix
+% \section{Appendix Title}
+% 
+% This is the text of the appendix, if you need one.
 
 \acks
 
-Acknowledgments, if needed.
+We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and Nathan Ricci.
 
 % We recommend abbrvnat bibliography style.
 
