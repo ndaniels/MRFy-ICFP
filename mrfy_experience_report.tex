@@ -121,17 +121,19 @@ stochastic search approach to Markov random fields.
 
 SMURF, SMURFLite, and MRFy all attempt to compute the optimal parse, or 
 alignment, of a protein sequence onto the directed graph representing a Markov 
-random field (see Figure \ref{mrf}). The algorithm underlying MRFy grew out of 
-an understanding of the limitations of the SMURF (Structural Motifs Using 
-Random Fields) algorithm, which used multidimensional dynamic programming to 
-compute the optimal parse of a query sequence onto a Markov random field. 
-Rather than attempt to compute exactly the optimal parse, MRFy treats the 
-non-local interactions (which correspond to hydrogen-bonded ``beta strands'' in 
-the protein) as ``beads'' which can be slid along a string. In this analogy, 
-the string is the sequence of amino acids of the query protein. A given 
-placement of these beads corresponds to an assignment of particular amino acid 
-residues being hydrogen bonded to other particular amino acid residues, and 
-thus MRFy computes a probability based on observed frequencies of residues 
+random field (see Figure \ref{mrf}). A parse is a mapping of the letters of a 
+query sequence onto the states of a markov Random field, while an optimal parse 
+is the parse exhibiting the greatest probability once. The algorithm underlying 
+MRFy grew out of an understanding of the limitations of the SMURF (Structural 
+Motifs Using Random Fields) algorithm, which used multidimensional dynamic 
+programming to compute the optimal parse of a query sequence onto a Markov 
+random field. Rather than attempt to compute exactly the optimal parse, MRFy 
+treats the non-local interactions (which correspond to hydrogen-bonded ``beta 
+strands'' in the protein) as ``beads'' which can be slid along a string. In 
+this analogy, the string is the sequence of amino acids of the query protein. A 
+given placement of these beads corresponds to an assignment of particular amino 
+acid residues being hydrogen bonded to other particular amino acid residues, 
+and thus MRFy computes a probability based on observed frequencies of residues 
 hydrogen bonding in beta strands~\cite{betawrappro}. In between these beta 
 strands, the Markov random field is in fact a traditional hidden Markov model, 
 whose optimal solution can be easily computed via dynamic programming (known as 
@@ -139,6 +141,7 @@ the Viterbi algorithm). MRFy performs a stochastic search to place these beta
 strands, based on an objective function that combines the probability computed 
 by the Viterbi algorithm with that computed from the paired, hydrogen-bonded 
 residues in the beta strands.
+
 
 
 
@@ -164,21 +167,12 @@ wrote no code for this project.
 \section{What we did}
 
 \subsection{Beautiful code}
-MRFy contains two distinct algorithms: the classical Viterbi dynamic 
-programming algorithm for hidden Markov models, and a stochastic search 
-algorithm for placing beta strand positions. This stochastic search algorithm 
+MRFy contains two distinct algorithms: the classical Viterbi 
+dynamic-programming algorithm for hidden Markov models, and a stochastic search 
+algorithm for placing beta-strand positions. This stochastic search algorithm 
 implements several search heuristics: random-mutation hill climbing, simulated 
 annealing, multistart simulated annealing, and a genetic algorithm.
 
-%% TODO talk about the concepts in Viterbi, and how they map to types:
-%% states (I, M, D)
-%% transitions and their probabilities, and what's allowed
-%% emissions and their probabilities
-%% what a parse and an optimal parse means.
-
-\begin{figure*}
-\lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
-\end{figure*}
 
 
 The Viterbi algorithm~\cite{Viterbi:1967} comprises a set of recurrence 
@@ -188,13 +182,48 @@ being emitted by a particular finite-state automaton (the hidden Markov model).
 The particular states of this finite-state automaton map to the recurrence 
 relations, and in this instance derive from what is known in the computational 
 biology community as a \textit{profile} hidden Markov model. The Viterbi 
-algorithm in this instance recurses on ``match,'' ``insertion,'' and 
-``deletion'' states. To be efficient, the Viterbi algorithm relies on dynamic 
-programming, or memoization, and the resulting asymptotic complexity is 
-$O(|M|\times|N|)$, when $M$ is the sequence of distinct states (nodes in the 
-automaton's graph) and $N$ is the sequence of letters in the protein sequence. 
-In our particular problem domain, both $M$ and $N$ routinely contain several 
-hundred to a few thousand elements.
+algorithm in this instance recurses on ``insertion,'' ``deletion,'' and 
+``match'' states (Figure~\ref{plan7}). Insertion states represent mutations 
+that gain an amino acid letter in the query sequence, deletion states represent 
+mutations that lose an amino acid letter in the query sequence, and match 
+states represent either conserved positions (no change) or mutations that 
+substitute one amino acid for another. The match and insertion states each have 
+an associated table of emission probabilities, determined during training, 
+indicating how likely that state is to emit a particular amino acid letter. 
+Edges from state to state represent state transitions, and have associated 
+probabilities determined during training. To be efficient, the Viterbi 
+algorithm relies on dynamic programming, or memoization, and the resulting 
+asymptotic complexity is $O(|M|\times|N|)$, when $M$ is the sequence of 
+distinct states (nodes in the automaton's graph) and $N$ is the sequence of 
+letters in the protein sequence. In our particular problem domain, both $M$ and 
+$N$ routinely contain several hundred to a few thousand elements. The types of 
+these states and probabilities are provided in Figure~\ref{viterbi_types}.
+
+
+\begin{figure*}
+\lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
+\end{figure*}
+
+
+\begin{figure} \centerline{\includegraphics[width=8cm]{Plan7.pdf}} \caption{The 
+directed graph representing the states of a traditional HMMER ``Plan7'' hidden 
+Markov model. Only 7 of the possible 9 state transitions are allowed, which 
+simplifies the dynamic programming. Insertion states represent mutations that 
+insert an amino acid, deletion states represent mutations that lose an amino 
+acid, and match states represent either conserved amino acids (those with no 
+changes) or mutations that substitute one amino acid for another. Each match or 
+insertion state has an associated table of emission probabilities (here 
+illustrated only for the first two states)}\label{plan7} \end{figure}
+
+
+The textbook Viterbi recurrence relations refer to logs of probabilities, so 
+that the terms may be added rather than multiplying raw probabilities. For 
+reasons including floating point underflow, the HMMER software (with which we 
+maintain file format compatibility) stores all probabilities in a trained HMM 
+file as negative natural logs. Thus, the Viterbi recurrence relations are 
+simplified from the form in \ref{viterbi_eqn} to that in \ref{viterbi_log_eqn}, 
+and because they are \textit{negative} logs, the problem transforms from 
+maximization to minimization.
 
 
 \begin{eqnarray}    
@@ -238,11 +267,16 @@ V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}D_{j}}\\
 \end{eqnarray}\label{viterbi_log_eqn}
 
 
+\begin{figure*}
+\lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
+\end{figure*}
+
+
 We implemented the Viterbi algorithm in two distinct ways. We first wrote a 
-bottom-up dynamic programming version, which began with the first node of the 
+bottom-up dynamic-programming version, which began with the first node of the 
 hidden Markov model and first observation and built up the three-dimensional 
 array of possible paths through the model. The array containing the paths 
-served as the memoization table. We next wrote a top-down dynamic programming 
+served as the memoization table. We next wrote a top-down dynamic-programming 
 version, which began with the last node of the model and the last observation, 
 and applied structural recursion down to the base cases involving the first 
 node or first observation (or both). In this second approach, we used the 
@@ -257,13 +291,12 @@ cases. This bug was observed as a missing state in the alignment our program
 displayed, and we quickly discovered that one of our base cases was missing 
 this state: it was returning an empty list as the base of the path, rather than 
 a list containing a single node. In this, we were grateful for the resemblance 
-between the mathematical description of the algorithm and the top-down dynamic 
-programming approach in Haskell, which resulted in perspicuous code.
+between the mathematical description of the algorithm and the top-down 
+dynamic-programming approach in Haskell, which resulted in perspicuous code.
 
 
-\begin{figure*}
-\lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
-\end{figure*}
+
+
 
 Just as the Viterbi algorithm is one major component of MRFy, stochastic search 
 is the other. In designing MRFy, we did not know in advance what sort of 
@@ -290,6 +323,13 @@ or Python, we likely would have used a class hierarchy to accomplish this. We
 feel that this would have required more code, because object orientation is 
 meant for encapsulating data as well as functions on those data; here we only 
 wanted to encapsulate functions, as the data did not change.
+
+
+We note that \texttt{seed} in \texttt{search} comes from a monadic random 
+number generator in Main, but we wished for search itself to be pure at this 
+level. One advantage is that this allows for testing of the \texttt{search} 
+function with no randomness at all: if we pass in a known number as the seed, 
+behavior is entirely deterministic.
 
 
 \begin{figure*}
