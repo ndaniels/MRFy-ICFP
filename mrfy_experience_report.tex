@@ -170,6 +170,16 @@ algorithm for placing beta strand positions. This stochastic search algorithm
 implements several search heuristics: random-mutation hill climbing, simulated 
 annealing, multistart simulated annealing, and a genetic algorithm.
 
+%% TODO talk about the concepts in Viterbi, and how they map to types:
+%% states (I, M, D)
+%% transitions and their probabilities, and what's allowed
+%% emissions and their probabilities
+%% what a parse and an optimal parse means.
+
+\begin{figure*}
+\lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
+\end{figure*}
+
 
 The Viterbi algorithm~\cite{Viterbi:1967} comprises a set of recurrence 
 relations (see Equation \ref{viterbi_eqn}) that seek to maximize the 
