@@ -1,6 +1,7 @@
 *.aux
 *.synctex
 *.synctex.gz
+*.graffle
 .DS_Store
 mrfy.md
 
