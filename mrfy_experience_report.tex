@@ -162,9 +162,55 @@ the function of a single, newly discovered protein, or she may use the software
 to scan an entire newly sequenced genome against a library of known protein 
 structures. This latter case demands particularly high-performance software.
 
-%% move into later section
+In typical use, HMMER builds its structural template -- its Markov random field 
+-- from a group of proteins that share common function and structure. A 
+biologist puts these protein sequences into a correspondence, or alignment, 
+typically using structural alignment software. The columns of the alignment 
+(Figure~\ref{alignment}) may contain gaps, indicating that a particular protein 
+does not have an amino acid, or residue, participating in that position. Gaps 
+in a few sequences at a position likely correspond to evolutionary deletions, 
+while gaps in many sequences at a position may correspond to evolutionary 
+insertions. A position that has residues in a majority of the sequences becomes 
+a \textit{match} state in the hidden Markov model; this position may see a 
+variety of amino acids due to evolutionary substitution, but it still 
+corresponds to a position that a homologous protein should most likely fill.
 
-%% add something about groups of related proteins aligned (put into correspondence)
+\begin{figure}\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
+\caption{Protein sequences are put into alignment based on structural or 
+sequence similarities. Each column of the alignment corresponds to a node of 
+the hidden Markov model; columns with many gaps will induce highly probable 
+insertion states in the HMM, while columns with fewer gaps will induce 
+more-probable deletion and match states. Columns with strong consensus towards 
+a particular residue will induce match states with high emission probability 
+for that residue.}\label{alignment} \end{figure}
+
+The resulting match states, as well as \textit{insertion} states that allow 
+additional residues to appear in a protein sequence, and \textit{deletion} 
+states that allow match states to be skipped, form a directed graph, the hidden 
+Markov model (Figure~\ref{plan7}). Each match or insertion state has an 
+associated table of emission probabilities, which correspond to the probability 
+of seeing each specific amino acid letter at a given position. Triplets of 
+insertion, deletion, and match states are grouped into ``nodes,'' which 
+correspond to columns of the original alignment. What looks like an 
+intimidating geometry is thus completely explained by the fact that we have 
+insertions, deletions, and substitutions due to evolution.
+
+
+\begin{figure} \centerline{\includegraphics[width=8cm]{Plan7.pdf}} \caption{The 
+directed graph representing the states of a traditional HMMER ``Plan7'' hidden 
+Markov model. Only 7 of the possible 9 state transitions are allowed, which 
+simplifies the dynamic programming. Insertion states represent mutations that 
+insert an amino acid, deletion states represent mutations that lose an amino 
+acid, and match states represent either conserved amino acids (those with no 
+changes) or mutations that substitute one amino acid for another. Each match or 
+insertion state has an associated table of emission probabilities (here 
+illustrated only for the first two states). Triplets of insertion, deletion, 
+and match states are grouped into ``nodes,'' represented here with dashed 
+ovals; each node corresponds to a column in the original alignment used to 
+train the HMM.}\label{plan7} \end{figure}
+
+%% now explain computing a *parse* (HMMER) leading into Viterbi.
+
 
 SMURF, SMURFLite, and MRFy all attempt to compute the optimal parse, or 
 alignment, of a protein sequence onto the directed graph representing a Markov 
@@ -243,23 +289,9 @@ these states and probabilities are provided in Figure~\ref{viterbi_types}.
 
 %% group nodes, illustrate an alignment
 
-\begin{figure}\centerline{\includegraphics[width=6cm]{alignment.pdf}} \caption{Protein sequences are put into alignment based on structural or sequence similarities. Each column of the alignment corresponds to a node of the hidden Markov model; columns with many gaps will induce highly probable insertion states in the HMM, while columns with fewer gaps will induce more-probable deletion and match states. Columns with strong consensus towards a particular residue will induce match states with high emission probability for that residue.}\label{alignment} \end{figure}
 
-%% how do proteins change due to evolution?
-%% explain insertion, deletion, substitution.
 
-%% what looks like an intimidating geometry is completely explained by the fact
-%% that we have insertions, deletions, and substitutions.
 
-\begin{figure} \centerline{\includegraphics[width=8cm]{Plan7.pdf}} \caption{The 
-directed graph representing the states of a traditional HMMER ``Plan7'' hidden 
-Markov model. Only 7 of the possible 9 state transitions are allowed, which 
-simplifies the dynamic programming. Insertion states represent mutations that 
-insert an amino acid, deletion states represent mutations that lose an amino 
-acid, and match states represent either conserved amino acids (those with no 
-changes) or mutations that substitute one amino acid for another. Each match or 
-insertion state has an associated table of emission probabilities (here 
-illustrated only for the first two states). Triplets of insertion, deletion, and match states are grouped into ``nodes,'' represented here with dashed ovals; each node corresponds to a column in the original alignment used to train the HMM.}\label{plan7} \end{figure}
 
 
 The textbook Viterbi recurrence relations refer to logs of probabilities, so 
