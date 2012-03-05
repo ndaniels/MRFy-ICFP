@@ -1,9 +1,10 @@
 type HMMState = Int
 type StatePath = [ HMMState ]
-data HMMState = Match | Insertion | Deletion
+data HMMState = Match | Insert | Delete
 type EProbs = V.Vector Double
-data TProb  = 
-     TProb { logProbability::LogProbability
+data LogProb = LogZero | NonZero Double
+data TProb  =
+     TProb { logProbability::LogProb
            , fromState::HMMState
            , toState::HMMState
            }
@@ -18,8 +19,8 @@ data TProbs =
             }
 data HmmNode =
      HmmNode { nodeNum :: Int
-             , matchEmissions :: EProbs
-             , insertionEmissions :: EProbs
+             , matEmissions :: EProbs
+             , insEmissions :: EProbs
              , transitions :: TProbs
              }
 type HMM = V.Vector HmmNode
