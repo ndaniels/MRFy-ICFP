@@ -515,7 +515,38 @@ occurs.
  
 \section{Our previous code base compared}
 
-Haskell makes it difficult to write code in haste, because Haskell militates towards careful type-checking and clearly thought-out function contracts. Unlike dynamic languages such as Ruby, and unlike C++, Haskell punishes the programmer who attempts to write code quickly with the goal of later making it work correctly. We have found MRFy to be easier to enhance and maintain than our existing C++ code bases.
+Our previous computational biology projects include an enhancement to a protein 
+structural aligner that previously came from our group, Matt~\cite{matt}. 
+Matt's code base contains approximately 12,000 lines of C++ code, and relies on 
+data structures such as mutable oct-trees, vectors, and arrays, with 
+significant amounts of clever pointer arithmetic. Our enhancement involved 
+modifying Matt to incorporate sequence information along with the structural 
+aligner. While we initially estimated this would be a three-month project, it 
+took most of a year because the mutable data structures were difficult to 
+repurpose, and the pointer arithmetic was too clever for its own good: since 
+invariants were not clear, nearly every change resulted in new segfaults. One 
+enhancement, partial alignments (essentially a cosmetic manipulation of the 
+output, but requiring deep information about some of the data structures) was 
+deemed infeasible. We believe we could have completed a ground-up rewrite in 
+Haskell, with most of the run-time performance, in fewer than nine months.
+
+
+In general, the failure modes we encounter most in C++ programming are 
+segmentation faults, memory errors (due to pointer arithmetic and uninitialized 
+memory) and heap exhaustion. In contrast, the failure modes we most commonly 
+see in Haskell code are type-check failures, or at worst, runtime errors around 
+bounds checking of arrays and vectors. While bounds checking failures have 
+proved difficult to debug, they are still less so than C++ memory errors.
+
+
+Haskell makes it difficult to write code in haste, because Haskell militates 
+towards careful type-checking and clearly thought-out function contracts. 
+Unlike dynamic languages such as Ruby, and unlike C++, Haskell punishes the 
+programmer who attempts to write code quickly with the goal of later making it 
+work correctly. We have found MRFy to be easier to enhance and maintain than 
+our existing C++ code bases. Despite the learning curve of Haskell, we 
+implemented most of MRFy in roughly three months of part-time work.
+
  
 \section{State of the practice}
 
