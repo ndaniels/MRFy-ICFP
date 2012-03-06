@@ -114,32 +114,53 @@ newly discovered proteins.
 Proteins are cellular machinery. They interact with one another and with other 
 molecules to carry out the functions of living cells: metabolism, regulation, 
 signalling, and more.
-The function of a protein is determined by its structure, 
-and this structure in turn is determined by the specific sequence of the twenty 
-different amino acids that make up the protein, but proteins with significantly 
-different amino acid sequences may share similar structure and function.
-This 
-amino acid sequence is ultimately determined by the DNA sequence we call a 
-gene.
-Given the genetic sequence of a protein, biologists wish to know its 
-specific cellular function.
-The best path to this is to find other proteins of 
+A~protein's function is determined by its structure, 
+and its structure is determined by the sequence of amino acids that
+form the protein.
+\remark{Lost: there are only 20-odd amino acids}
+The amino-acid sequence is ultimately determined by a sequence of
+nucleic acids in DNA, which we call a gene.
+Given a genetic sequence, biologists wish to know the cellular
+function of the protein that gene codes for.
+The best known method of discovering such function is
+to find other proteins of 
 similar structure, which likely share similar function.
 This problem is called 
 \textit{homology detection}.
 
-Computational biologists address the homology detection problem by building 
-algorithms to find similar proteins given an amino acid sequence.
-When there 
-are nearly-identical sequences for proteins of known structure, this is a 
-simple string-matching problem.
-When there are no identical sequences, but 
-still some reasonably similar sequences, one family of algorithms called 
-\textit{hidden Markov models} excels at homology detection.
-We will explain an 
-algorithm for detecting reasonably similar sequences, and then move on to 
-explain MRFy, our novel approach for detecting more distantly related sequences 
-for proteins that share similar structure and function.
+
+
+
+Computational biologists detect homologies by building 
+algorithms which, given an amino-acid sequence,\remark{This sequence
+  (the sequence ``under test'') needs a name. ---NR}
+find known proteins of
+similar structure.
+When the similar proteins are formed from amino-acid sequences that
+are nearly identical to the sequence under test, the homologies can be
+detected by  
+simple string-matching algorithms.\remark{Can we just drop the
+  sentence about string matching?}
+When the similar proteins are formed from amino-acid sequences that
+are not too far in edit distance from the sequence under test, the homologies can be
+detected by
+a family of algorithms called 
+\textit{hidden Markov models}.\remark{citation needed?}
+But in real biological systems,
+proteins with similar structure and function may be formed from significantly 
+different amino-acid sequences, which are not close in edit distance.
+Our~research contribution---the MRFy algorithm, can detect homologies
+in amino-acid sequences that are only distantly related.
+%
+%We will explain an 
+%algorithm for detecting reasonably similar sequences, and then move on to 
+%explain MRFy, our novel approach for detecting more distantly related sequences 
+%for proteins that share similar structure and function.
+
+\emph{[We need an argument here saying why an understanding of the
+    algorithms is relevant to the claims made in the experience
+    report, then say how we present the algorithms, then say what
+    experiential conclusions this presentation supports.]}
 
 
 % As a brief refresher in the standard dogma of genetics, recall that genes 
