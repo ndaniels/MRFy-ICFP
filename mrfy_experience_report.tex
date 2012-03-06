@@ -1,5 +1,5 @@
 
-\documentclass[preprint]{sigplanconf}
+\documentclass[preprint,nocopyrightspace,times]{sigplanconf}
 
 % The following \documentclass options may be useful:
 %
@@ -17,6 +17,24 @@
     language = Haskell
     }    
 
+\renewcommand\ttdefault{aett}
+
+  \long\def\remark#1{%
+      \ifvmode
+         \marginpar{\raggedright\hbadness=10000
+         \parindent=8pt \parskip=2pt
+         \def\baselinestretch{0.8}\tiny
+         \itshape\noindent #1\par}%
+      \else
+          \unskip\raisebox{-3.5pt}{\rlap{$\scriptstyle\diamond$}}%
+          \marginpar{\raggedright\hbadness=10000
+         \parindent=8pt \parskip=2pt
+         \def\baselinestretch{0.8}\tiny
+         \itshape\noindent #1\par}%
+      \fi}
+
+
+
 \begin{document}
 
 
@@ -24,8 +42,8 @@
 \copyrightyear{2012} 
 \copyrightdata{[to be supplied]} 
 
-\titlebanner{banner above paper title}        % These are ignored unless
-\preprintfooter{short description of paper}   % 'preprint' option specified.
+%\titlebanner{banner above paper title}        % These are ignored unless
+\preprintfooter{Haskell in Computational Biology}   % 'preprint' option specified.
 
 \title{Experience Report: Haskell in Computational Biology}
 % \subtitle{Subtitle Text, if any}
@@ -38,47 +56,49 @@
 \maketitle
 
 \begin{abstract}
-This is the text of the abstract.
+HELLO?  DRAFT OF AN ABSTRACT?
 \end{abstract}
 
-\category{CR-number}{subcategory}{third-level}
-
-\terms
-term1, term2
-
-\keywords
-keyword1, keyword2
+% \category{CR-number}{subcategory}{third-level}
+% 
+% \terms
+% term1, term2
+% 
+% \keywords
+% keyword1, keyword2
 
 \section{Introduction}
 
-We address this paper to computational biologists who may have an interest in 
-functional programming, but this is not an advocacy paper. We do not argue that 
-computational biologists \textit{should} use functional programming. Rather, 
-argue that computational biologists \textit{can} successfully develop software 
-in Haskell, and what to expect if they do.
+Computational biologists write software that answers questions about 
+sequences of nucleic acids (genomic data) or sequences of amino 
+acids (proteomic data). 
+For some software, considerations of performance are paramount; this
+software is usually written C~or~C++. 
+For other software, considerations of convenience, readability, and
+productivity are more important;
+this software is usually written in a ``scripting'' language like
+Perl, Python, Ruby, or~R.\remark{Don't forget audience.}
+In~this Experience Report, we show that computational biologists can
+successfully replace both these families of languages with Haskell:
+\begin{itemize}
+\item
+Our experimental Haskell programs are as easy to understand and change
+ as the programs our group writes using scripting languages.
+\item
+The performance of our Haskell code is comparable to the performance
+of~C++.
+\item
+We have experienced barriers to entry, of which the most salient has been
+the difficulty of understanding and tuning  the performance of Haskell
+programs. 
+We found the other barriers 
+relatively easy to overcome.
+\end{itemize}
+Our experience is based on MRFy (pronounced ``Murphy''), which
+implements a novel family of algorithms for finding remote homologs to 
+newly discovered proteins. 
 
-We also address this paper to the functional programming community, in the 
-hopes that our experiences will be enlightening. We believe that our 
-experiences can provide lessons about outreach and education.
-
-
-\subsection{Problem Domain}
-
-Computational biologists write software that answers questions about large data 
-sets involving sequences of nucleic acids (genomic data) or sequences of amino 
-acids (proteomic data). This software comes in two varieties. The first variety 
-is \textit{high performance software}, where performance is a top priority; 
-this kind of software is usually written in a programming language like C or 
-C++. The second variety is software where performance is not a top priority; 
-this kind of software written in higher-level languages that emphasize 
-convenience and programmer productivity, such as Perl, Python, Ruby, or R.
-
-In this Experience Report, we show that the Haskell programming language is an 
-excellent alternative for computational biologists: a Haskell program can 
-perform comparably to a C++ program while being as flexible and easy to 
-understand as a program written in an interpreted language. Our experience is 
-based on an implementation of a novel algorithm for finding remote homologs to 
-newly discovered proteins. We call this program MRFy.
+\section{The biology}
 
 Proteins are cellular machinery. They interact with one another and with other 
 molecules to carry out the functions of living cells: metabolism, regulation, 
@@ -143,15 +163,20 @@ for proteins that share similar structure and function.
 % stochastic search approach to Markov random fields.
 
 
-\subsection{Our Background}
+%%  \subsection{Our Background}
+%%  
+%%  All three authors are members of the Tufts University Department of Computer 
+%%  Science. Noah Daniels has taken a graduate seminar in advanced functional 
+%%  programming, which included some Haskell, and spent ten years in industry as a 
+%%  professional programmer in languages such as Ruby, C, and C++. Andrew Gallant 
+%%  has taken a programming languages course heavily focused on functional 
+%%  programming, but with no Haskell. Norman Ramsey is the local expert, but he 
+%%  wrote no code for this project.
 
-All three authors are members of the Tufts University Department of Computer 
-Science. Noah Daniels has taken a graduate seminar in advanced functional 
-programming, which included some Haskell, and spent ten years in industry as a 
-professional programmer in languages such as Ruby, C, and C++. Andrew Gallant 
-has taken a programming languages course heavily focused on functional 
-programming, but with no Haskell. Norman Ramsey is the local expert, but he 
-wrote no code for this project.
+\remark{Dropped the section on ``our background,'' but the information
+  should reappear when and where we discuss barriers to entry in more
+  detail. ---NR}
+
 
 \section{What we did}
 
