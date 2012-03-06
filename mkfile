@@ -12,7 +12,7 @@ $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 	convert $prereq $target  # hideous, but workable
 
 $TGT.dvi: $TGT.tex
-	mklatex $target
+	latexmk $TGT.tex
 
 $TGT.pdf: $TGT.tex
-	mklatex -pdf $target
+	latexmk -pdf $TGT.tex
