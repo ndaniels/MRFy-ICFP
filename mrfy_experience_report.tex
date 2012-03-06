@@ -1,3 +1,14 @@
+\newif\ifpdfmadness
+
+\ifx\pdfoutput\undefined
+   \pdfmadnessfalse
+\else
+   \ifnum\pdfoutput=1
+     \pdfmadnesstrue
+   \else
+     \pdfmadnessfalse
+   \fi
+\fi
 
 \documentclass[preprint,nocopyrightspace,times]{sigplanconf}
 
@@ -200,14 +211,21 @@ a \textit{match} state in the hidden Markov model; this position may see a
 variety of amino acids due to evolutionary substitution, but it still 
 corresponds to a position that a homologous protein should most likely fill.
 
-\begin{figure}\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
+\begin{figure}
+\ifpdfmadness
+\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
+\else
+\centerline{\includegraphics[width=6cm]{alignment.eps}} 
+\fi
+
 \caption{Protein sequences are put into alignment based on structural or 
 sequence similarities. Each column of the alignment corresponds to a node of 
 the hidden Markov model; columns with many gaps will induce highly probable 
 insertion states in the HMM, while columns with fewer gaps will induce 
 more-probable deletion and match states. Columns with strong consensus towards 
 a particular residue will induce match states with high emission probability 
-for that residue.}\label{alignment} \end{figure}
+for that residue.}\label{alignment} 
+\end{figure}
 
 The resulting match states, as well as \textit{insertion} states that allow 
 additional residues to appear in a protein sequence, and \textit{deletion} 
@@ -221,7 +239,14 @@ which correspond to columns of the original alignment. What looks like an
 intimidating geometry is thus completely explained by the fact that we have 
 insertions, deletions, and substitutions due to evolution.
 
-\begin{figure} \centerline{\includegraphics[width=8cm]{Plan7.pdf}} \caption{The 
+\begin{figure} 
+\ifpdfmadness
+\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
+\else
+\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
+\fi
+
+\caption{The 
 directed graph representing the states of a traditional HMMER ``Plan7'' hidden 
 Markov model. Only 7 of the possible 9 state transitions are allowed, which 
 simplifies the dynamic programming. Insertion states represent mutations that 
@@ -393,7 +418,11 @@ models which can be solved via the Viterbi algorithm.
 
 
 \begin{figure}[h!] 
+\ifpdfmadness
 \centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
+\else
+\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.eps}} 
+\fi
 \caption{The directed graph representing the states of a MRFy Markov random 
 field finite state automaton. Shaded nodes represent beta-strand positions which have been fixed into match states, 
 while the dashed edges represent the long-range dependencies due to hydrogen 
