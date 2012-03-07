@@ -153,7 +153,7 @@ When the similar proteins are formed from amino-acid sequences that
 are not too far in edit distance from the sequence under test, the homologies can be
 detected by
 a family of algorithms called 
-\textit{hidden Markov models}.\remark{citation needed?}
+\textit{hidden Markov models}~\cite{hmmer}.\remark{citation needed?}
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
@@ -169,6 +169,20 @@ in amino-acid sequences that are only distantly related.
     algorithms is relevant to the claims made in the experience
     report, then say how we present the algorithms, then say what
     experiential conclusions this presentation supports.]}
+
+We present an explanation of the algorithms relevant to MRFy, because there 
+exists a natural fit between the mathematics behind the algorithms and the 
+Haskell implementation of those algorithms.
+If the reader understands the 
+algorithms, he or she is more likely to appreciate the benefits of implementing 
+them in Haskell.
+We will first present the more traditional algorithm used in 
+hidden Markov models, followed by our variation on it and the stochastic search 
+approach.
+We conclude that implementations of mathematically-intensive 
+algorithms such as these lend themselves to the Haskell language, particularly 
+when the programmer needs a flexible implementation that simplifies 
+experimenting with variants of the algorithm.
 
 
 % As a brief refresher in the standard dogma of genetics, recall that genes 
@@ -264,6 +278,7 @@ is that in one or two proteins, mutations in the underlying DNA
 \emph{inserted} an amino acid in that position (\figref{alignment}).
 
 The protein alignment is used to train a \emph{hidden-Markov model}.
+\remark{I've never seen this hypenated, in ANY literature.}
 A~hidden-Markov model is a probabilistic finite-state machine which 
 can assign a probability to any amino-acid sequence under test.
 \remark{What is the biological or computational meaning of the
@@ -296,7 +311,7 @@ and low probability if there are few gaps in column~$C$.
 \item
 Between every adjacent pair of columns in the alignment,\remark{This isn't right}
 the hidden-Markov model has an
-\emph{insertion state}.
+\emph{insertion state}.\remark{concept of consensus columns is what's missing}
 The insertion state determines the probability that the sequence under
 test has an ``extra'' amino acid that does not correspond to any
 column in the alignment.
