@@ -16,3 +16,6 @@ $TGT.dvi: $TGT.tex
 
 $TGT.pdf: $TGT.tex
 	latexmk -pdf $TGT.tex
+
+latex:V:
+	latex $TGT
