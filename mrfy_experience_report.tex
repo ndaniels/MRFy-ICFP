@@ -127,23 +127,21 @@ form the protein.
 \remark{Lost: there are only 20-odd amino acids}
 The amino-acid sequence is ultimately determined by a sequence of
 nucleic acids in DNA, which we call a gene.
-Given a genetic sequence, biologists wish to know the cellular
+Given a genetic sequence (the \textit{query sequence}), biologists wish to know the cellular
 function of the protein that gene codes for.
 The best known method of discovering such function is
 to find other proteins of 
 similar structure, which likely share similar function.
-This problem is called 
+Proteins that share structure and function are \textit{homologous}, and thus
+the process of identifying similar proteins to a query sequence is called 
 \textit{homology detection}.
 
 
 
 
 Computational biologists detect homologies by building 
-algorithms which, given an amino-acid sequence,\remark{This sequence
-  (the sequence ``under test'') needs a name.  (Urk! I see below it is
-  called the ``query sequence.''  This name needs to come in earlier.) ---NR}
-find known proteins of
-similar structure.
+algorithms which, given an amino-acid query sequence,
+find known proteins of similar structure.
 When the similar proteins are formed from amino-acid sequences that
 are nearly identical to the sequence under test, the homologies can be
 detected by  
@@ -153,7 +151,7 @@ When the similar proteins are formed from amino-acid sequences that
 are not too far in edit distance from the sequence under test, the homologies can be
 detected by
 a family of algorithms called 
-\textit{hidden Markov models}~\cite{hmmer}.\remark{citation needed?}
+\textit{hidden Markov models}~\cite{hmmer}.
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
@@ -239,26 +237,20 @@ to test a hypothesis about
 the function of a single, newly discovered protein, or 
 to compare every protein in a genome against a library of known protein 
 structures.
-\remark{Drop this sentence? This latter case demands particularly high-performance software.}
-In~both cases, the software is ``trained'' \remark{do we want to talk ``Training''?}
+The software is ``trained'' \remark{do we want to talk ``Training''?}
 on a group of proteins that share function and structure.
 These proteins are identified by a biologist, who puts
 their amino-acid sequences into a correspondence, also called an
-\emph{alignment}.
-\remark{What does the alignment signify?  Biological significance?
-  Computational significance?}
+\emph{alignment}. This alignment signifies structural and evolutionary
+correspondence among individual amino acids in a set of homologous proteins.
 An~alignment may be represented as a matrix
 (Figure~\ref{alignment}) 
 in which each row corresponds to the amino-acid sequence of a protein,
 and each column groups amino acids that play similar roles in
 different proteins.
-A~column
-may contain gaps, which indicate
-indicating certain protein have no amino acid participating in that
-position.
-\remark{The word ``position'' hasn't been defined, and can we get away
-  without ``residue''?  (If~we need ``residue,'' let's give it a
-  proper introduction.}
+A protein may have a gap in a column of the alignment, which indicates
+that during the course of evolution, either that protein lost that amino
+acid, or other proteins gained an amino acid.
 If~a column contains just one or two gaps, the most likely explanation
 is that in one or two proteins, mutations in the underlying DNA
 deleted an amino acid from that position (\figref{alignment}).
@@ -274,7 +266,7 @@ can assign a probability to any amino-acid sequence under test.
 \remark{What is the biological or computational meaning of the
   probability?}
 Proteins whose sequences have higher probabilities are more likely to
-be structurally related to the proteins in the alignment.
+be homologous to the proteins in the alignment.
 \remark{Should we say ``homologous'' rather than  ``structurally
   related''?
   If~so, where should this jargon be introduced?}
@@ -283,30 +275,35 @@ The states of the hidden-Markov model are determined by the alignment:
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
 \item
-For a given column~$C$ of the alignment, the hidden-Markov model has a
+If a given column~$j$ of the alignment contains amino acids in a majority
+of the protein sequences, it is considered a \textit{consensus column}.
+\item
+For a given column~$j$ of the alignment, the hidden-Markov model has a
 \emph{match state}.
 The match state determines the probability that the sequence under
-test has a particular amino acid in column~$C$.
+test has a particular amino acid in column~$j$.
 The match state assigns high probability to the amino acids that
-appear in column~$C$, and a low but nonzero probability to other amino
+appear in column~$j$, and a low but nonzero probability to other amino
 acids.
+The match state is more probable if it corresponds to a consensus column.
 \item
 For every column of the alignment, the hidden-Markov model has a
 \emph{deletion state}.
 The deletion state determines the probability that the sequence under
-test has \emph{no} amino acid  in column~$C$, i.e., that it has a gap.
+test has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
 The deletion state has high probability if there are lots of gaps in
-column~$C$,
-and low probability if there are few gaps in column~$C$.
+column~$j$, and low probability if there are few gaps in column~$j$.
+Thus, the deletion state is more likely in non-consensus columns.
 \item
-Between every adjacent pair of columns in the alignment,\remark{This isn't right}
-the hidden-Markov model has an
-\emph{insertion state}.\remark{concept of consensus columns is what's missing}
-The insertion state determines the probability that the sequence under
-test has an ``extra'' amino acid that does not correspond to any
-column in the alignment.
-The insertion state assigns high probability to \emph{[some amino
-    acids]}, and low probability to \emph{[other amino acids]}.
+For every column of the alignment, the hidden-Markov model has an
+\emph{insertion state}.
+The insertion state determines the probability that a query sequence
+has an ``extra'' amino acid that does not correspond to any
+consensus column in the alignment.
+Thus, the insertion state is more likely in non-consensus columns.
+The insertion state assigns high probability to amino acids that are
+frequently observed among all proteins, and low probability to amino acids
+that are rarely observed.
 \end{itemize}
 %%  A position that has residues in a majority of the sequences becomes 
 %%  a \textit{match} state in the hidden Markov model; this position may see a 
