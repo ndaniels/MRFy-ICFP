@@ -272,9 +272,9 @@ the most likely explanation
 is that in one or two proteins, mutations in the underlying DNA
 \emph{inserted} an amino acid in that position (\figref{alignment}).
 
-The protein alignment is used to train a \emph{hidden-Markov model}.
+The protein alignment is used to train a \emph{hidden Markov model}.
 \remark{I've never seen this hypenated, in ANY literature.}
-A~hidden-Markov model is a probabilistic finite-state machine which 
+A~hidden Markov model is a probabilistic finite-state machine which 
 can assign a probability to any amino-acid sequence under test.
 \remark{What is the biological or computational meaning of the
   probability?}
@@ -283,7 +283,7 @@ be homologous to the proteins in the alignment.
 \remark{Should we say ``homologous'' rather than  ``structurally
   related''?
   If~so, where should this jargon be introduced?}
-The states of the hidden-Markov model are determined by the alignment:
+The states of the hidden Markov model are determined by the alignment:
 \remark{I've tried for lots of parallel structure.
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
@@ -291,7 +291,7 @@ Somebody let me know if any of this is right.  ---NR}
 If a given column~$j$ of the alignment contains amino acids in a majority
 of the protein sequences, it is considered a \textit{consensus column}.
 \item
-For a given column~$j$ of the alignment, the hidden-Markov model has a
+For a given column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}.
 \remark{Time to introduce the elements of Viterbi's equations!}
 The match state determines the probability that the sequence under
@@ -301,7 +301,7 @@ appear in column~$j$, and a low but nonzero probability to other amino
 acids.
 The match state is more probable if it corresponds to a consensus column.
 \item
-For every column of the alignment, the hidden-Markov model has a
+For every column of the alignment, the hidden Markov model has a
 \emph{deletion state}.
 The deletion state determines the probability that the sequence under
 test has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
@@ -309,7 +309,7 @@ The deletion state has high probability if there are lots of gaps in
 column~$j$, and low probability if there are few gaps in column~$j$.
 Thus, the deletion state is more likely in non-consensus columns.
 \item
-For every column of the alignment, the hidden-Markov model has an
+For every column of the alignment, the hidden Markov model has an
 \emph{insertion state}.
 The insertion state determines the probability that a query sequence
 has an ``extra'' amino acid that does not correspond to any
@@ -323,12 +323,12 @@ that are rarely observed.
 %%  a \textit{match} state in the hidden Markov model; this position may see a 
 %%  variety of amino acids due to evolutionary substitution, but it still 
 %%  corresponds to a position that a homologous protein should most likely fill.
-The hidden-Markov model also has distinguished \emph{begin} and \emph{end} states.
+The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
 The probability associated with a specific state is conditional upon the previous
 state in the model.
 Thus, the hidden Markov model can be represented as a directed graph, with each
 edge weight corresponding to the probability of a specific state transition.
-\figref{plan7} shows a hidden-Markov model derived from an alignment
+\figref{plan7} shows a hidden Markov model derived from an alignment
 with just four columns.
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
@@ -385,7 +385,7 @@ were algebraic datatypes:
 \fi
 
 This directed graph represents the states of a
-hidden-Markov model in the ``Plan7'' format defined by the HMMER
+hidden Markov model in the ``Plan7'' format defined by the HMMER
 software package.
 %% Only 7 of the possible 9 state transitions are allowed, which 
 %% simplifies the dynamic programming.
@@ -404,12 +404,12 @@ and match state formas a \emph{node}, which corresponds to a column in
 the alignment used to train the model.
 (Each node is shown in a dashed oval.)
 
-\caption{A hidden-Markov model trained from a four-column alignment}
+\caption{A hidden Markov model trained from a four-column alignment}
 
 \label{plan7} \end{figure}
 
 
-A hidden-Markov model like that shown in \figref{plan7} can be used to
+A hidden Markov model like that shown in \figref{plan7} can be used to
 determine the likelihood that a new protein shares structure and
 evolutionary history with the proteins used to train the model.
 (The new protein's amino-acid sequence is known, but its structure and
@@ -417,7 +417,7 @@ function are unknown.)
 Such a likelihood can be computed by
 a~widely used software package called HMMER (``hammer'').
 HMMER computes the optimal \textit{parse}, or 
-alignment, of a protein sequence onto the directed graph of the hidden-Markov 
+alignment, of a protein sequence onto the directed graph of the hidden Markov 
 model.
 A parse maps each amino acid of the sequence under test onto a state
 of the model; equivalently, a parse is a \textit{path} through the model.
