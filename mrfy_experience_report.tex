@@ -29,6 +29,12 @@
     }    
 
 \newcommand\figref[1]{Figure~\ref{#1}}
+\newcommand\secref[1]{Section~\ref{sec:#1}}
+\newcommand\seclabel[1]{\label{sec:#1}}
+
+\usepackage{verbatim}
+
+\newenvironment{smallverbatim}{\par\small\verbatim}{\endverbatim}
 
 \renewcommand\ttdefault{aett}
 
@@ -91,7 +97,7 @@ Computational biologists write software that answers questions about
 sequences of nucleic acids (genomic data) or sequences of amino 
 acids (proteomic data). 
 For some software, considerations of performance are paramount; this
-software is usually written C~or~C++. 
+software is usually written in C~or~C++. 
 For other software, considerations of convenience, readability, and
 productivity are more important;
 this software is usually written in a ``scripting'' language like
@@ -105,6 +111,10 @@ Our experimental Haskell programs are as easy to understand and change
 \item
 The performance of our Haskell code is comparable to the performance
 of~C++.
+\item
+Although we have had to write a new implementation of a standard
+algorithm, the cost was low, and the connection between code and
+algorithm is unusually strong (\secref{viterbi}).
 \item
 We have experienced barriers to entry, of which the most salient has been
 the difficulty of understanding and tuning  the performance of Haskell
@@ -129,6 +139,7 @@ The amino-acid sequence is ultimately determined by a sequence of
 nucleic acids in DNA, which we call a gene.
 Given a genetic sequence (the \textit{query sequence}), biologists wish to know the cellular
 function of the protein that gene codes for.
+\remark{I thought the query sequence was an amino-acid sequence.}
 The best known method of discovering such function is
 to find other proteins of 
 similar structure, which likely share similar function.
@@ -232,6 +243,8 @@ experimenting with variants of the algorithm.
 
 %% \subsection{The Viterbi Algorithm}
 
+\seclabel{viterbi}
+
 Homology-detection software most often used in one of two ways:
 to test a hypothesis about 
 the function of a single, newly discovered protein, or 
@@ -280,6 +293,7 @@ of the protein sequences, it is considered a \textit{consensus column}.
 \item
 For a given column~$j$ of the alignment, the hidden-Markov model has a
 \emph{match state}.
+\remark{Time to introduce the elements of Viterbi's equations!}
 The match state determines the probability that the sequence under
 test has a particular amino acid in column~$j$.
 The match state assigns high probability to the amino acids that
@@ -524,6 +538,11 @@ dynamic-programming approach in Haskell, which resulted in perspicuous code.
 \begin{figure*}
 \lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
 \end{figure*}
+
+
+\emph{[This might be a place for comparison with standard
+implementations of Viterbi.]}
+
 
 
 \subsection{MRFy Implementation}
