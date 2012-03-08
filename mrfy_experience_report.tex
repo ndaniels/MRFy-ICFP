@@ -274,16 +274,30 @@ is that in one or two proteins, mutations in the underlying DNA
 
 The protein alignment is used to train a \emph{hidden Markov model}.
 \remark{I've never seen this hypenated, in ANY literature.}
-A~hidden Markov model is a probabilistic finite-state machine which 
-can assign a probability to any amino-acid sequence under test.
-\remark{What is the biological or computational meaning of the
-  probability?}
+A~hidden-Markov model is a probabilistic finite-state machine which 
+can assign a probability to any query sequence of amino acids.
 Proteins whose sequences have higher probabilities are more likely to
 be homologous to the proteins in the alignment.
-\remark{Should we say ``homologous'' rather than  ``structurally
-  related''?
-  If~so, where should this jargon be introduced?}
-The states of the hidden Markov model are determined by the alignment:
+Mathematically, we represent a query sequence as
+$\left\{x_{1}...x_{n}\right\}$.
+Ideally, if we were writing something like the BioHaskell library, we would
+have begun with an algebraic datatype for amino acids deriving
+\texttt{Ix}, something like
+\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
+which would still allow us to index into an array or vector.
+However, since we wanted to maintain compatibility with the file format
+shared with previous software, we broke with idiomatic Haskell and represented
+our amino acids as 
+\begin{verbatim}
+type AA = Int
+\end{verbatim}
+and thus our query sequence as
+\begin{verbatim}
+type querySeq = Vector AA
+\end{verbatim}
+
+
+The states of the hidden-Markov model are determined by the alignment:
 \remark{I've tried for lots of parallel structure.
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
@@ -293,9 +307,8 @@ of the protein sequences, it is considered a \textit{consensus column}.
 \item
 For a given column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}.
-\remark{Time to introduce the elements of Viterbi's equations!}
-The match state determines the probability that the sequence under
-test has a particular amino acid in column~$j$.
+The match state determines the probability that the query sequence
+has a particular amino acid in column~$j$.
 The match state assigns high probability to the amino acids that
 appear in column~$j$, and a low but nonzero probability to other amino
 acids.
@@ -303,8 +316,8 @@ The match state is more probable if it corresponds to a consensus column.
 \item
 For every column of the alignment, the hidden Markov model has a
 \emph{deletion state}.
-The deletion state determines the probability that the sequence under
-test has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
+The deletion state determines the probability that the query sequence
+has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
 The deletion state has high probability if there are lots of gaps in
 column~$j$, and low probability if there are few gaps in column~$j$.
 Thus, the deletion state is more likely in non-consensus columns.
@@ -325,7 +338,19 @@ that are rarely observed.
 %%  corresponds to a position that a homologous protein should most likely fill.
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
 The probability associated with a specific state is conditional upon the previous
-state in the model.
+state in the model, so it is a \textit{transition probability}.
+Mathematically, transition probabilities are represented by $a_{s_{j-1}s_{j}}$
+for a state $s_{j}$.
+In Haskell, we use 
+\begin{verbatim}
+type logProb = Double
+data TProb  = TProb { logProbability::LogProb
+                    , fromState::HMMState
+                    , toState::HMMState
+                    }
+\end{verbatim}
+to represent the seven allowed state transitions.
+
 Thus, the hidden Markov model can be represented as a directed graph, with each
 edge weight corresponding to the probability of a specific state transition.
 \figref{plan7} shows a hidden Markov model derived from an alignment
@@ -333,35 +358,29 @@ with just four columns.
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
 match state.
-
-We employed a variety of Haskell data types to represent the hidden Markov
-model.
-Ideally, if we were writing something like the BioHaskell library, we would
-have begun with an algebraic datatype for amino acids deriving
-\texttt{Ix}, something like
-\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
-which would still allow us to index into an array or vector.
-However, since we wanted to maintain compatibility with the file format
-shared with previous software, we broke with idiomatic Haskell and represented
-our amino acids as \texttt{Int}.
-Similarly, to avoid a great deal of data transformation, each state's emission
-and insertion probabilities were simply
-\begin{verbatim}type EProbs = V.Vector Double \end{verbatim} while the states themselves
-were algebraic datatypes: 
-\begin{verbatim}data HMMState = Match | Insert | Delete \end{verbatim}
-
-
-\emph{[HOW ABOUT SOME HASKELL TYPE DEFINITIONS AT OR NEAR THIS POINT?
-    I THINK WE'RE READY.]}
-    
-% time for types.
-% first, ideal: amino acids as an algebraic DT
-% next, back off this: we're working with an existing input format
-% so, how is the graph represented (vector of state-transitions, 
-% vector of emissions)
-% so show those types
-
-
+Mathematically, nodes are simply $\left\{a_{s_{k},s_{j}}, e_{s_{j}}(x_{i})\right\}$
+for states $s_{k}, s_{j}$ and emission probabilities $e_{s_{j}}(x_{i})$ for a
+query sequence element $x_{i}$.
+In Haskell, we represent a node as a group of transition probabilities
+\begin{verbatim}
+data TProbs = TProbs { m_m :: TProb
+                     , m_i :: TProb
+                     , m_d :: TProb
+                     , i_m :: TProb
+                     , i_i :: TProb
+                     , d_m :: TProb
+                     , d_d :: TProb
+                     }
+\end{verbatim}
+and a vector of emission probabilities for the match and insertion states.
+\begin{verbatim}
+type EProbs = V.Vector logProb
+data HmmNode = HmmNode { nodeNum :: Int
+                       , matEmissions :: EProbs
+                       , insEmissions :: EProbs
+                       , transitions :: TProbs
+                       }
+\end{verbatim}
 
 \begin{figure}
 \ifpdfmadness
@@ -446,11 +465,11 @@ these states and probabilities are provided in Figure~\ref{viterbi_types}.
 
 %% break the viterbi types up and insert into the Plan7 explanation.
 %% go over this with NR; I can't make it flow.
-
-\begin{figure}
-\lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
-\end{figure}
-
+% 
+% \begin{figure}
+% \lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
+% \end{figure}
+% 
 
 The textbook Viterbi recurrence relations refer to logs of probabilities, so 
 that the terms may be added rather than multiplying raw probabilities.
@@ -473,8 +492,8 @@ V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}I_{j}},\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}I_{j}},\\
+V_{j-1}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
+V_{j-1}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{D}(i) = max \left\{
 \begin{array}{l l}
@@ -492,8 +511,8 @@ V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}I_{j}},\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}I_{j}},\\
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
+V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime D}(i) = min \left\{
 \begin{array}{l l}
