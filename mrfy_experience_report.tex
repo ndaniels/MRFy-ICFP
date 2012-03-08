@@ -889,18 +889,50 @@ in order to track down where the out-of-bounds errors were occurring.
 % [ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ] 
 
 \subsection{What you must know to succeed}
-- Ecosystem is loaded with tools that look promising but either are no longer maintained or are not ready for prime time (Pads, Backtrace)
+\remark{I don't like this. I really struggled with this section. ---AG}
+If others would like to follow in our footsteps, there are a few
+things we believe one must know in order to succeed.
+Firstly, some experience with functional programming concepts is a necessity. 
+Specifically, coming from an imperative background, writing algorithms and 
+modeling data without the ability to mutate state were the most difficult 
+concepts to adapt to.
+NEED MORE.
 
 \subsection{Evaluation}
-- What does the local expert do? Do you have to have one?
+\remark{I think we need more in this section. ---AG}
+In hindsight, we feel that there are several key facets of our project in 
+Haskell that deserve evaluation.
+Firstly, we found that existing tools and libraries were plentiful and 
+typically helped us greatly.
+In particular, Data.Memocombinators made dynamic 
+programming with Viterbi exquisitely simple and elegant.
+Control.Parallel.Strategies also made the parallelization of Viterbi trivial.
+Most of the tools we used came straight from Hackage, and although 
+documentation of some form was almost always present, it was sometimes 
+difficult to tell if a particular tool was right for us.
+In particular, parts of the documentation were inaccessible to us as beginning 
+functional programmers.
+We found that documentation with straight-forward examples to be the most 
+helpful.
 
-- To the FP community: Those who want us to abandon our old tools for debugging imperative code have not provided a clear path to follow (both intellectually, and via software tools).
+Another component worthy of evaluation is the debugging process.
+Debugging in Haskell often takes the form of fixing type errors; which we think 
+is a great thing.
+However, in the case where debugging extends into runtime behavior, there 
+doesn't appear to be any clearly defined approach to effective debugging.
+Stack traces are available via profiling, but this was difficult to find and 
+as we mentioned, profiling has its own problems.
 
-- No obvious body of knowledge on code improvement.
 
-- The ecosystem contains tools that look promising and work great: Data.Memocombinators, Quickcheck, Parallel Strategies.
-How to tell what's good? How did we discover what's good?
-- Profiler can produce backtraces, but this was hard to discover.
+% - What does the local expert do? Do you have to have one? 
+%  
+% - To the FP community: Those who want us to abandon our old tools for debugging imperative code have not provided a clear path to follow (both intellectually, and via software tools). 
+%  
+% - No obvious body of knowledge on code improvement. 
+%  
+% - The ecosystem contains tools that look promising and work great: Data.Memocombinators, Quickcheck, Parallel Strategies. 
+% How to tell what's good? How did we discover what's good? 
+% - Profiler can produce backtraces, but this was hard to discover. 
 
 % \appendix
 % \section{Appendix Title}
