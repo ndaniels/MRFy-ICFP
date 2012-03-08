@@ -547,7 +547,32 @@ implementations of Viterbi.]}
 
 \subsection{MRFy Implementation}
 
-HMMER simply implements the Viterbi algorithm for computing the optimal parse 
+Our implementations of hidden Markov models and Viterbi's algorithm
+simply duplicate 
+functionality that is already implemented in the C++~package
+HMMER.
+These implementations form is just one component of our new tool, MRFy.
+
+A hidden Markov model effectively uses local information about
+amino-acid sequences.
+But because real proteins are three-dimensional structures,
+their amino-acid sequences are subject to \emph{nonlocal}
+constraints. 
+In~particular, when a real protein folds, groups of amino acids
+that are far away in the one-dimensional sequence can nevertheless be
+adjacent in three-dimensional space.
+Moreover, two such groups can become hydrogen-bonded to one another,
+effectively ``stuck together.''
+Such groups are called \emph{beta strands}.
+\remark{I hope this is relatively accurate. --NR}
+
+\emph{[Next up: how does this bonding phenomenon constrain sequences
+of homologous proteins?]}
+
+
+
+
+ simply implements the Viterbi algorithm for computing the optimal parse 
 of a protein sequence onto a hidden Markov model.
 Thus, the graphical model of 
 a HMMER hidden Markov model is exactly that shown in Figure~\ref{plan7}.
