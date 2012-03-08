@@ -310,11 +310,12 @@ that are rarely observed.
 %%  variety of amino acids due to evolutionary substitution, but it still 
 %%  corresponds to a position that a homologous protein should most likely fill.
 The hidden-Markov model also has distinguished \emph{begin} and \emph{end} states.
+The probability associated with a specific state are conditional upon the previous
+state in the model.
+Thus, the hidden Markov model can be represented as a directed graph, with each
+edge weight corresponding to the probability of a specific state transition.
 \figref{plan7} shows a hidden-Markov model derived from an alignment
 with just four columns.
-\emph{[I'm sure I don't have the proper explanation of the probabilities.]}
-\remark{LOST: Each edge in the 
-graph has a weight which is the probability of the associated state transition.}
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
 match state.
