@@ -225,16 +225,6 @@ experimenting with variants of the algorithm.
 % stochastic search approach to Markov random fields.
 
 
-%%  \subsection{Our Background}
-%%  
-%%  All three authors are members of the Tufts University Department of Computer 
-%%  Science. Noah Daniels has taken a graduate seminar in advanced functional 
-%%  programming, which included some Haskell, and spent ten years in industry as a 
-%%  professional programmer in languages such as Ruby, C, and C++. Andrew Gallant 
-%%  has taken a programming languages course heavily focused on functional 
-%%  programming, but with no Haskell. Norman Ramsey is the local expert, but he 
-%%  wrote no code for this project.
-
 \remark{Dropped the section on ``our background,'' but the information
   should reappear when and where we discuss barriers to entry in more
   detail. ---NR}
@@ -849,12 +839,54 @@ implemented most of MRFy in roughly three months of part-time work.
 
 \section{What we think about it}
 
-\subsection{Barriers}
+\subsection{Our Background}
 
-- profiling
-- debugging
- [ talk about profiling and debugging problems where?]
-[ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ]
+\remark{I moved this section from the Intro as per NR's suggestion. ---AG}
+All three authors are members of the Tufts University Department of Computer
+Science.
+Noah Daniels has taken a graduate seminar in advanced functional
+programming, which included some Haskell, and spent ten years in industry as a
+professional programmer in languages such as Ruby, C, and C++.
+Andrew Gallant has taken a programming languages course heavily focused on 
+functional programming, but with no Haskell.
+Norman Ramsey is the local expert, but he wrote no code for this project.
+
+\subsection{Barriers}
+\remark{I feel like a lot of this is a summary of some of the problems we've
+  discussed previously in the paper. Is that okay? A summary may be worth it. 
+---AG}
+
+As inexperienced functional programmers, developing a complex piece of
+software in Haskell posed several barriers.
+\remark{NOAH: You did the profiling, could you make sure what I've said here
+is accurate and/or relevant? I didn't know what else to say. ---AG}
+The first of which was profiling with GHC.
+We previously mentioned that profiling with GHC produced ugly code with
+cost center annotations scattered throughout our code, but we also found it
+very difficult to profile code at all.
+In particular, profiling required that all installed libraries be re-compiled
+with profiling support---which was a process that we could not replicate
+consistently.
+
+Another barrier we faced was how to test our code using QuickCheck.
+Indeed, the barrier was so formidable in our case that we still have not been 
+able to use it.
+The problems we faced specifically were two-fold: How do we start testing
+a complex module? and How can we use QuickCheck to generate random inputs with 
+complex constraints?
+
+Finally, one last barrier we faced was debugging runtime errors.
+Runtime errors in the form of out-of-bounds indexing were particularly 
+difficult to track down because they were not accompanied by a stack trace.
+(While profiling with GHC could help remedy this, profiling was itself a 
+barrier, as previous mentioned.)
+We had to resort to polluting our code with cals to the \texttt{trace} function 
+in order to track down where the out-of-bounds errors were occurring.
+
+% - profiling 
+% - debugging 
+ % [ talk about profiling and debugging problems where?] 
+% [ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ] 
 
 \subsection{What you must know to succeed}
 - Ecosystem is loaded with tools that look promising but either are no longer maintained or are not ready for prime time (Pads, Backtrace)
