@@ -924,7 +924,22 @@ Firstly, some experience with functional programming concepts is a necessity.
 Specifically, coming from an imperative background, writing algorithms and 
 modeling data without the ability to mutate state were the most difficult 
 concepts to adapt to.
-NEED MORE.
+
+Secondly, identifying existing tools and libraries from Hackage that are mature 
+is also important.
+We found that some packages that could have been immensely useful---like one 
+that provides backtraces---were either not maintained or contained bugs.
+Some other packages like Pads were functional but immature, which resulted in 
+additional code to work around the parts of Pads that had not been implemented 
+yet.
+
+Finally, a ``local expert'' or someone available to talk to with functional 
+programming expertise, can make the transition to a language like Haskell 
+easier.
+We don't believe a local expert is absolutely necessary, but answers 
+specifically related to functional programming idioms were easier to find when 
+a local expert was available.
+
 
 \subsection{Evaluation}
 \remark{I think we need more in this section. ---AG}
@@ -940,16 +955,26 @@ documentation of some form was almost always present, it was sometimes
 difficult to tell if a particular tool was right for us.
 In particular, parts of the documentation were inaccessible to us as beginning 
 functional programmers.
-We found that documentation with straight-forward examples to be the most 
-helpful.
+Documentation that was accessible to us typically contained straight-forward 
+examples showing how to use that particular tool or library.
 
 Another component worthy of evaluation is the debugging process.
 Debugging in Haskell often takes the form of fixing type errors; which we think 
 is a great thing.
-However, in the case where debugging extends into runtime behavior, there 
-doesn't appear to be any clearly defined approach to effective debugging.
+However, in the case where debugging extends into runtime behavior, we couldn't 
+find any clearly defined approach to effective debugging.
 Stack traces are available via profiling, but this was difficult to find and 
-as we mentioned, profiling has its own problems.
+as we mentioned, profiling had its own barriers.
+
+Finally, we believe that we could have achieved a better division of modules in 
+our project, but that conflicted with one our goals: to get publishable results
+quickly. Despite being hasty programmers, we were still able to produce code 
+that is easy to understand and easily extensible. Namely, in our experience, 
+hasty Haskell code beats hasty code in a language like C or C++.
+
+In summary, with Haskell, we didn't have to master a completely different 
+design and development style but we did have to wrap our heads around 
+functional programming.
 
 
 % - What does the local expert do? Do you have to have one? 
