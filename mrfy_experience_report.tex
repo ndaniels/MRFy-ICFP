@@ -310,7 +310,7 @@ that are rarely observed.
 %%  variety of amino acids due to evolutionary substitution, but it still 
 %%  corresponds to a position that a homologous protein should most likely fill.
 The hidden-Markov model also has distinguished \emph{begin} and \emph{end} states.
-The probability associated with a specific state are conditional upon the previous
+The probability associated with a specific state is conditional upon the previous
 state in the model.
 Thus, the hidden Markov model can be represented as a directed graph, with each
 edge weight corresponding to the probability of a specific state transition.
@@ -319,6 +319,24 @@ with just four columns.
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
 match state.
+
+We employed a variety of Haskell data types to represent the hidden Markov
+model.
+Ideally, if we were writing something like the BioHaskell library, we would
+have begun with an algebraic datatype for amino acids deriving
+\texttt{Ix}, something like
+\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
+which would still allow us to index into an array or vector.
+However, since we wanted to maintain compatibility with the file format
+shared with previous software, we broke with idiomatic Haskell and represented
+our amino acids as \texttt{Int}.
+Similarly, to avoid a great deal of data transformation, each state's emission
+and insertion probabilities were simply
+\begin{verbatim}type EProbs = V.Vector Double \end{verbatim} while the states themselves
+were algebraic datatypes: 
+\begin{verbatim}data HMMState = Match | Insert | Delete \end{verbatim}
+
+
 \emph{[HOW ABOUT SOME HASKELL TYPE DEFINITIONS AT OR NEAR THIS POINT?
     I THINK WE'RE READY.]}
     
