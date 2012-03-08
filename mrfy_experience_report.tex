@@ -932,8 +932,8 @@ Finally, one last barrier we faced was debugging runtime errors.
 Runtime errors in the form of out-of-bounds indexing were particularly 
 difficult to track down because they were not accompanied by a stack trace.
 (While profiling with GHC could help remedy this, profiling was itself a 
-barrier, as previous mentioned.)
-We had to resort to polluting our code with cals to the \texttt{trace} function 
+barrier, as previously mentioned.)
+We had to resort to polluting our code with calls to the \texttt{trace} function 
 in order to track down where the out-of-bounds errors were occurring.
 
 % - profiling 
