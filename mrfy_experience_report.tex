@@ -319,13 +319,16 @@ with just four columns.
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
 match state.
-What looks like an 
-intimidating geometry is thus completely explained by the fact that we have 
-insertions, deletions, and substitutions due to evolution.
-\remark{The evolution seems like a distraction to me here, and we hit
-  it above.  Can we simply drop this sentence?}
 \emph{[HOW ABOUT SOME HASKELL TYPE DEFINITIONS AT OR NEAR THIS POINT?
     I THINK WE'RE READY.]}
+    
+% time for types.
+% first, ideal: amino acids as an algebraic DT
+% next, back off this: we're working with an existing input format
+% so, how is the graph represented (vector of state-transitions, 
+% vector of emissions)
+% so show those types
+
 
 
 \begin{figure}
@@ -335,16 +338,6 @@ insertions, deletions, and substitutions due to evolution.
 \centerline{\includegraphics[width=6cm]{alignment.eps}} 
 \fi
 
-\emph{[Not sure we need this text: 
-Protein sequences are put into alignment based on structural or 
-sequence similarities.
-Each column of the alignment corresponds to a node of 
-the hidden Markov model; columns with many gaps will induce highly probable 
-insertion states in the HMM, while columns with fewer gaps will induce 
-more-probable deletion and match states.
-Columns with strong consensus towards 
-a particular residue will induce match states with high emission probability 
-for that residue.]}
 
 
 \caption{A~structural alignment of four proteins}
