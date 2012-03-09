@@ -600,6 +600,15 @@ SMURF~\cite{Menke:2010ti} and SMURFLite~\cite{Daniels:2012}, our previous work,
 attempted to compute the 
 optimal parse of a protein sequence onto the directed graph representing a 
 Markov random field using multidimensional dynamic programming.
+Mathematically, we can represent the probability of a query sequence 
+$x_{1}..x_{n}$ given a Markov random field with an additional term in the
+Viterbi relations.
+Specifically, each term $V_{j}^{\prime M}(i)$ becomes
+$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log Pr(x_{i} | x_{\pi(j)})$, where
+$x_{\pi(j)}$ is the amino acid in the query sequence that will be placed
+in the beta-strand position paired with position $j$.
+This nonlocal dependency prevents the problem from exhibiting optimal substructure,
+preventing dynamic programming from solving the problem quickly.
 SMURF's 
 computational complexity quickly exploded with complex protein structures, 
 while SMURFLite limited its computational complexity by also limiting the 
