@@ -12,12 +12,6 @@
 
 \documentclass[preprint,nonatbib,blockstyle,nocopyrightspace,times]{sigplanconf}
 
-% The following \documentclass options may be useful:
-%
-% 10pt          To set in 10-point type instead of 9-point.
-% 11pt          To set in 11-point type instead of 9-point.
-% authoryear    To obtain author/year citation style instead of numeric.
-
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{listings}
@@ -276,7 +270,7 @@ is that in one or two proteins, mutations in the underlying DNA
 
 The protein alignment is used to train a \emph{hidden Markov model}.
 \remark{I've never seen this hypenated, in ANY literature.}
-A~hidden-Markov model is a probabilistic finite-state machine which 
+A~hidden Markov model is a probabilistic finite-state machine which 
 can assign a probability to any query sequence of amino acids.
 Proteins whose sequences have higher probabilities are more likely to
 be homologous to the proteins in the alignment.
@@ -299,7 +293,7 @@ type querySeq = Vector AA
 \end{verbatim}
 
 
-The states of the hidden-Markov model are determined by the alignment:
+The states of the hidden Markov model are determined by the alignment:
 \remark{I've tried for lots of parallel structure.
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
