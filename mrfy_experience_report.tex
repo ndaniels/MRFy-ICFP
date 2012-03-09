@@ -162,7 +162,7 @@ When the similar proteins are formed from amino-acid sequences that
 are not too far in edit distance from the sequence under test, the homologies can be
 detected by
 a family of algorithms called 
-\textit{hidden Markov models}~\cite{hmmer}.
+\textit{hidden Markov models}~\cite{Eddy:1998ut}.
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
@@ -362,25 +362,21 @@ Mathematically, nodes are simply $\left\{a_{s_{k},s_{j}}, e_{s_{j}}(x_{i})\right
 for states $s_{k}, s_{j}$ and emission probabilities $e_{s_{j}}(x_{i})$ for a
 query sequence element $x_{i}$.
 In Haskell, we represent a node as a group of transition probabilities
-\begin{verbatim}
-data TProbs = TProbs { m_m :: TProb
-                     , m_i :: TProb
-                     , m_d :: TProb
-                     , i_m :: TProb
-                     , i_i :: TProb
-                     , d_m :: TProb
-                     , d_d :: TProb
-                     }
-\end{verbatim}
+\begin{smallverbatim}
+data TProbs = 
+     TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
+            , i_m :: TProb, i_i :: TProb, d_m :: TProb
+            , d_d :: TProb}
+\end{smallverbatim}
 and a vector of emission probabilities for the match and insertion states.
-\begin{verbatim}
+\begin{smallverbatim}
 type EProbs = V.Vector logProb
 data HmmNode = HmmNode { nodeNum :: Int
                        , matEmissions :: EProbs
                        , insEmissions :: EProbs
                        , transitions :: TProbs
                        }
-\end{verbatim}
+\end{smallverbatim}
 
 \begin{figure}
 \ifpdfmadness
@@ -445,7 +441,7 @@ state (match or insertion) maps each amino acid to a probability,
 and the 
 probability of a given path is the product of these individual probabilities.
 The most likely path, and its associated probability, are computed 
-using an algorithm developed by~\citet{Viterbi:1967}.
+using an algorithm developed by~\citet{Viterbi:1967hq}.
 
 
 The Viterbi algorithm comprises a set of recurrence 
@@ -460,8 +456,6 @@ distinct states (nodes in the automaton's graph) and $N$ is the sequence of
 letters in the protein sequence.
 In our particular problem domain, both $M$ and 
 $N$ routinely contain several hundred to a few thousand elements.
-The types of 
-these states and probabilities are provided in Figure~\ref{viterbi_types}.
 
 %% break the viterbi types up and insert into the Plan7 explanation.
 %% go over this with NR; I can't make it flow.
@@ -541,7 +535,7 @@ In this second approach, we used the
 We determined that the run-time 
 performances of both approaches were virtually indistinguishable, and we also 
 noted that the top-down version quite faithfully resembled the recurrence 
-relations found in a textbook~\cite{durbin} or the HMMER literature~\cite{eddy} 
+relations found in a textbook~\cite{Durbin:1998wz} or the HMMER literature~\cite{Eddy:1998ut} 
 (see Equation \ref{viterbi_eqn}).
 We chose to keep the top-down version, which 
 later proved to be wise when we had to track down a bug in one of our base 
@@ -596,8 +590,8 @@ of a protein sequence onto a hidden Markov model.
 Thus, the graphical model of 
 a HMMER hidden Markov model is exactly that shown in Figure~\ref{plan7}.
 In 
-contrast, MRFy builds on the approach of SMURF~\cite{smurf} and 
-SMURFLite~\cite{smurflite}, our previous work.
+contrast, MRFy builds on the approach of SMURF~\cite{Menke:2010ti} and 
+SMURFLite~\cite{Daniels:2012}, our previous work.
 Like SMURF and SMURFLite, MRFy 
 pays attention to longer-range structural interactions than a simple hidden 
 Markov model can understand.
@@ -637,7 +631,7 @@ A given placement
 of these beads corresponds to an assignment of particular amino acid residues 
 being hydrogen bonded to other particular amino acid residues, and thus MRFy 
 computes a probability based on observed frequencies of residues hydrogen 
-bonding in beta strands~\cite{betawrappro}.
+bonding in beta strands~\cite{Cowen:2002p588}.
 In between these beta strands, the 
 Markov random field is in fact a traditional hidden Markov model, whose optimal 
 solution can be easily computed via the Viterbi algorithm.
@@ -851,7 +845,7 @@ occurs.
 \section{Our previous code base compared}
 
 Our previous computational biology projects include an enhancement to a protein 
-structural aligner that previously came from our group, Matt~\cite{matt}.
+structural aligner that previously came from our group, Matt~\cite{Menke:2008wu}.
 
 Matt's code base contains approximately 12,000 lines of C++ code, and relies on 
 data structures such as mutable oct-trees, vectors, and arrays, with 
@@ -1048,12 +1042,6 @@ We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and N
 
 % The bibliography should be embedded for final submission.
 
-\begin{thebibliography}{}
-\softraggedright
-
-\bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
-P. Q. Smith, and X. Y. Jones. ...reference text...
-
-\end{thebibliography}
+\bibliography{mrfy_experience_report}
 
 \end{document}
