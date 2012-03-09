@@ -342,13 +342,13 @@ state in the model, so it is a \textit{transition probability}.
 Mathematically, transition probabilities are represented by $a_{s_{j-1}s_{j}}$
 for a state $s_{j}$.
 In Haskell, we use 
-\begin{verbatim}
+\begin{smallverbatim}
 type logProb = Double
 data TProb  = TProb { logProbability::LogProb
                     , fromState::HMMState
                     , toState::HMMState
                     }
-\end{verbatim}
+\end{smallverbatim}
 to represent the seven allowed state transitions.
 
 Thus, the hidden Markov model can be represented as a directed graph, with each
@@ -890,9 +890,14 @@ implemented most of MRFy in roughly three months of part-time work.
 \section{State of the practice}
 
 \subsection{Our group then}
- - Modifying Formatt took nearly a year
- - mutable data structures hard to repurpose
- - one enhancement deemed infeasible
+ - reimplementing algorithms
+  - we reimplemented and yet it was easy and pleasant
+  - past reimplementation of a variant of Viterbi DP, in haste, -> 700 line C function
+  - building on that reimplementation
+ - new implementations (Matt)
+  - Modifying Formatt took nearly a year
+  - mutable data structures hard to repurpose
+  - one enhancement deemed infeasible
  - C++ failures most commonly segfaults, memory errors, heap exhaustion
 
 \subsection{Our group now}
@@ -1015,7 +1020,8 @@ hasty Haskell code beats hasty code in a language like C or C++.
 
 In summary, with Haskell, we didn't have to master a completely different 
 design and development style but we did have to wrap our heads around 
-functional programming.
+functional programming.\remark{Andrew, look at the comments below this
+part of the manuscript. See what you can do with them.}
 
 
 % - What does the local expert do? Do you have to have one? 
