@@ -593,6 +593,15 @@ SMURF~\cite{Menke:2010ti} and SMURFLite~\cite{Daniels:2012}, our previous work,
 attempted to compute the 
 optimal parse of a protein sequence onto the directed graph representing a 
 Markov random field using multidimensional dynamic programming.
+Mathematically, we can represent the probability of a query sequence 
+$x_{1}..x_{n}$ given a Markov random field with an additional term in the
+Viterbi relations.
+Specifically, each term $V_{j}^{\prime M}(i)$ becomes
+$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log Pr(x_{i} | x_{\pi(j)})$, where
+$x_{\pi(j)}$ is the amino acid in the query sequence that will be placed
+in the beta-strand position paired with position $j$.
+This nonlocal dependency prevents the problem from exhibiting optimal substructure,
+preventing dynamic programming from solving the problem quickly.
 SMURF's 
 computational complexity quickly exploded with complex protein structures, 
 while SMURFLite limited its computational complexity by also limiting the 
@@ -868,24 +877,42 @@ implemented most of MRFy in roughly three months of part-time work.
 \section{State of the practice}
 
 \subsection{Our group then}
- - reimplementing algorithms
-  - we reimplemented and yet it was easy and pleasant
-  - past reimplementation of a variant of Viterbi DP, in haste, -> 700 line C function
-  - building on that reimplementation
- - new implementations (Matt)
-  - Modifying Formatt took nearly a year
-  - mutable data structures hard to repurpose
-  - one enhancement deemed infeasible
- - C++ failures most commonly segfaults, memory errors, heap exhaustion
+Programmers generally avoid reimplementing algorithms, but there may be good reasons for doing so.
+Although the HMMER software contains an mature C++ implementation of the Viterbi algorithm,
+a previous member of our group implemented \textit{multidimensional} dynamic programming for SMURF
+in haste, resulting in 12,000 lines of undocumented code (including one function of 700 lines).
+Though we are using the same Viterbi algorithm HMMER implements, we chose to reimplement it because
+we wished to explore the design space of stochastic search techniques using higher order functions
+in Haskell.
+We found that reimplementing the Viterbi algorithm in Haskell was easy and pleasant.
+In contrast, the programming effort to transform SMURF into SMURFLite, a minor evolution, required
+several months of research to simply understand the SMURF codebase.
+
+A set of enhancements to another large C++ implementation, the Matt~\cite{Menke:2008wu} structural
+aligner, required nearly a year of programming due to complex mutable data structures being 
+hard to repurpose.
+In fact, we deemed one enhancement infeasible.
+Our experience working with these C++ codebases largely involved the failure modes of
+segmentation faults, memory errors, and heap exhaustion.
 
 \subsection{Our group now}
- - Higher order functions militate towards more flexibility
- - Haskell failures are usually typecheck failures; at worst runtime errors around bounds checking
- - MRFy about 3 months of part-time work
+Implementing MRFy in Haskell allowed us great flexibility to explore the space of stochastic search
+techniques, initial guess heuristics, and search termination.
+Higher order functions militate towards more flexibility, so that adding several planned features 
+to MRFy should be easy.
+The first functioning version of MRFy took roughly three months of part-time work.
+The Haskell failure modes we have experienced have largely been typecheck errors; at the worst,
+we have seen runtime errors around bounds checking of arrays and vectors, though we wanted
+better debugging tools for these runtime errors.
 
 \subsection{Computational biology at large}
- - some good software, like HMMER
-
+There exists some excellent software in the computational biology community, though little of it
+has been written in Haskell.
+The training component of MRFy was modified from that of HMMER, and working with the HMMER
+codebase was relatively pleasant, as data structures and their mutators are well documented.
+BioHaskell exists (and we use \texttt{Bio.Sequence.Fasta} as a parser) but is not nearly as
+complete as BioPython or BioRuby, which are heavily used in the community.
+We hope that BioHaskell and other tools for computational biology in Haskell continue to mature.
 \section{What we think about it}
 
 \subsection{Our Background}
