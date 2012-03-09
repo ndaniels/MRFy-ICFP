@@ -125,7 +125,7 @@ relatively easy to overcome.
 Our experience is based on MRFy (pronounced ``Murphy''), which
 implements a novel family of algorithms for finding remote homologs to 
 newly discovered proteins. 
-\remark{``Homology'' means ``share a common ancestor.  I hope we can
+\remark{``Homology'' means ``share a common ancestor.''  I hope we can
 avoid this story. ---NR}
 
 \section{The biology}
@@ -587,20 +587,6 @@ of homologous proteins?]}
 
 
 
-
-\emph{[GIT CONFLICT HERE:
- simply implements the Viterbi algorithm for computing the optimal parse 
-of a protein sequence onto a hidden Markov model.
-Thus, the graphical model of 
-a HMMER hidden Markov model is exactly that shown in Figure~\ref{plan7}.
-In 
-contrast, MRFy builds on the approach of SMURF~\cite{Menke:2010ti} and 
-SMURFLite~\cite{Daniels:2012}, our previous work.
-Like SMURF and SMURFLite, MRFy 
-pays attention to longer-range structural interactions than a simple hidden 
-Markov model can understand.
-]}
-
 In particular, these approaches ``nail down'' 
 certain subsequences of the model, corresponding to the non-local hydrogen-bond 
 interactions between beta strands.
@@ -616,7 +602,8 @@ illustrated in Figure~\ref{mrf}.
 
 These non-local interactions cause what had been a simple hidden Markov model 
 to become a Markov random field.
-SMURF and SMURFLite attempted to compute the 
+SMURF~\cite{Menke:2010ti} and SMURFLite~\cite{Daniels:2012}, our previous work,
+attempted to compute the 
 optimal parse of a protein sequence onto the directed graph representing a 
 Markov random field using multidimensional dynamic programming.
 SMURF's 
