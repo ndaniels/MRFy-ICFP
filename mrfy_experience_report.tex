@@ -475,13 +475,13 @@ V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
+V_{j}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
+V_{j}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{D}(i) = max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}D_{j}},\\
-V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}D_{j}}\\
+V_{j-1}^{M}(i) + \log a_{M_{j-1}D_{j}},\\
+V_{j-1}^{D}(i) + \log a_{D_{j-1}D_{j}}\\
 \end{array} \right.\nonumber\\
 \end{eqnarray}\label{viterbi_eqn}
 
@@ -494,13 +494,13 @@ V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
+V_{j}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
+V_{j}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime D}(i) = min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}D_{j}},\\
-V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}D_{j}}\\
+V_{j-1}^{\prime M}(i) + a^{\prime}_{M_{j-1}D_{j}},\\
+V_{j-1}^{\prime D}(i) + a^{\prime}_{D_{j-1}D_{j}}\\
 \end{array} \right.\nonumber\\
 \text{where } a^{\prime}_{s} = - \log a_{s} \nonumber \\
 \text{and } e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}} \nonumber
