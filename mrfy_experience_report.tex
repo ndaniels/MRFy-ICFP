@@ -164,7 +164,7 @@ When the similar proteins are formed from amino-acid sequences that
 are not too far in edit distance from the sequence under test, the homologies can be
 detected by
 a family of algorithms called 
-\textit{hidden Markov models}~\cite{hmmer}.
+\textit{hidden Markov models}~\cite{Eddy:1998ut}.
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
@@ -276,16 +276,30 @@ is that in one or two proteins, mutations in the underlying DNA
 
 The protein alignment is used to train a \emph{hidden Markov model}.
 \remark{I've never seen this hypenated, in ANY literature.}
-A~hidden Markov model is a probabilistic finite-state machine which 
-can assign a probability to any amino-acid sequence under test.
-\remark{What is the biological or computational meaning of the
-  probability?}
+A~hidden-Markov model is a probabilistic finite-state machine which 
+can assign a probability to any query sequence of amino acids.
 Proteins whose sequences have higher probabilities are more likely to
 be homologous to the proteins in the alignment.
-\remark{Should we say ``homologous'' rather than  ``structurally
-  related''?
-  If~so, where should this jargon be introduced?}
-The states of the hidden Markov model are determined by the alignment:
+Mathematically, we represent a query sequence as
+$\left\{x_{1}...x_{n}\right\}$.
+Ideally, if we were writing something like the BioHaskell library, we would
+have begun with an algebraic datatype for amino acids deriving
+\texttt{Ix}, something like
+\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
+which would still allow us to index into an array or vector.
+However, since we wanted to maintain compatibility with the file format
+shared with previous software, we broke with idiomatic Haskell and represented
+our amino acids as 
+\begin{verbatim}
+type AA = Int
+\end{verbatim}
+and thus our query sequence as
+\begin{verbatim}
+type querySeq = Vector AA
+\end{verbatim}
+
+
+The states of the hidden-Markov model are determined by the alignment:
 \remark{I've tried for lots of parallel structure.
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
@@ -295,9 +309,8 @@ of the protein sequences, it is considered a \textit{consensus column}.
 \item
 For a given column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}.
-\remark{Time to introduce the elements of Viterbi's equations!}
-The match state determines the probability that the sequence under
-test has a particular amino acid in column~$j$.
+The match state determines the probability that the query sequence
+has a particular amino acid in column~$j$.
 The match state assigns high probability to the amino acids that
 appear in column~$j$, and a low but nonzero probability to other amino
 acids.
@@ -305,8 +318,8 @@ The match state is more probable if it corresponds to a consensus column.
 \item
 For every column of the alignment, the hidden Markov model has a
 \emph{deletion state}.
-The deletion state determines the probability that the sequence under
-test has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
+The deletion state determines the probability that the query sequence
+has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
 The deletion state has high probability if there are lots of gaps in
 column~$j$, and low probability if there are few gaps in column~$j$.
 Thus, the deletion state is more likely in non-consensus columns.
@@ -327,7 +340,19 @@ that are rarely observed.
 %%  corresponds to a position that a homologous protein should most likely fill.
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
 The probability associated with a specific state is conditional upon the previous
-state in the model.
+state in the model, so it is a \textit{transition probability}.
+Mathematically, transition probabilities are represented by $a_{s_{j-1}s_{j}}$
+for a state $s_{j}$.
+In Haskell, we use 
+\begin{smallverbatim}
+type logProb = Double
+data TProb  = TProb { logProbability::LogProb
+                    , fromState::HMMState
+                    , toState::HMMState
+                    }
+\end{smallverbatim}
+to represent the seven allowed state transitions.
+
 Thus, the hidden Markov model can be represented as a directed graph, with each
 edge weight corresponding to the probability of a specific state transition.
 \figref{plan7} shows a hidden Markov model derived from an alignment
@@ -335,35 +360,25 @@ with just four columns.
 Each column in the original alignment corresponds to a \emph{node},
 which is a triplet holding an insertion state, a deletion state, and a
 match state.
-
-We employed a variety of Haskell data types to represent the hidden Markov
-model.
-Ideally, if we were writing something like the BioHaskell library, we would
-have begun with an algebraic datatype for amino acids deriving
-\texttt{Ix}, something like
-\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
-which would still allow us to index into an array or vector.
-However, since we wanted to maintain compatibility with the file format
-shared with previous software, we broke with idiomatic Haskell and represented
-our amino acids as \texttt{Int}.
-Similarly, to avoid a great deal of data transformation, each state's emission
-and insertion probabilities were simply
-\begin{verbatim}type EProbs = V.Vector Double \end{verbatim} while the states themselves
-were algebraic datatypes: 
-\begin{verbatim}data HMMState = Match | Insert | Delete \end{verbatim}
-
-
-\emph{[HOW ABOUT SOME HASKELL TYPE DEFINITIONS AT OR NEAR THIS POINT?
-    I THINK WE'RE READY.]}
-    
-% time for types.
-% first, ideal: amino acids as an algebraic DT
-% next, back off this: we're working with an existing input format
-% so, how is the graph represented (vector of state-transitions, 
-% vector of emissions)
-% so show those types
-
-
+Mathematically, nodes are simply $\left\{a_{s_{k},s_{j}}, e_{s_{j}}(x_{i})\right\}$
+for states $s_{k}, s_{j}$ and emission probabilities $e_{s_{j}}(x_{i})$ for a
+query sequence element $x_{i}$.
+In Haskell, we represent a node as a group of transition probabilities
+\begin{smallverbatim}
+data TProbs = 
+     TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
+            , i_m :: TProb, i_i :: TProb, d_m :: TProb
+            , d_d :: TProb}
+\end{smallverbatim}
+and a vector of emission probabilities for the match and insertion states.
+\begin{smallverbatim}
+type EProbs = V.Vector logProb
+data HmmNode = HmmNode { nodeNum :: Int
+                       , matEmissions :: EProbs
+                       , insEmissions :: EProbs
+                       , transitions :: TProbs
+                       }
+\end{smallverbatim}
 
 \begin{figure}
 \ifpdfmadness
@@ -428,7 +443,7 @@ state (match or insertion) maps each amino acid to a probability,
 and the 
 probability of a given path is the product of these individual probabilities.
 The most likely path, and its associated probability, are computed 
-using an algorithm developed by~\citet{Viterbi:1967}.
+using an algorithm developed by~\citet{Viterbi:1967hq}.
 
 
 The Viterbi algorithm comprises a set of recurrence 
@@ -443,16 +458,14 @@ distinct states (nodes in the automaton's graph) and $N$ is the sequence of
 letters in the protein sequence.
 In our particular problem domain, both $M$ and 
 $N$ routinely contain several hundred to a few thousand elements.
-The types of 
-these states and probabilities are provided in Figure~\ref{viterbi_types}.
 
 %% break the viterbi types up and insert into the Plan7 explanation.
 %% go over this with NR; I can't make it flow.
-
-\begin{figure}
-\lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
-\end{figure}
-
+% 
+% \begin{figure}
+% \lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
+% \end{figure}
+% 
 
 The textbook Viterbi recurrence relations refer to logs of probabilities, so 
 that the terms may be added rather than multiplying raw probabilities.
@@ -475,8 +488,8 @@ V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}I_{j}},\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}I_{j}},\\
+V_{j-1}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
+V_{j-1}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{D}(i) = max \left\{
 \begin{array}{l l}
@@ -494,8 +507,8 @@ V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}I_{j}},\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}I_{j}},\\
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
+V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime D}(i) = min \left\{
 \begin{array}{l l}
@@ -524,7 +537,7 @@ In this second approach, we used the
 We determined that the run-time 
 performances of both approaches were virtually indistinguishable, and we also 
 noted that the top-down version quite faithfully resembled the recurrence 
-relations found in a textbook~\cite{durbin} or the HMMER literature~\cite{eddy} 
+relations found in a textbook~\cite{Durbin:1998wz} or the HMMER literature~\cite{Eddy:1998ut} 
 (see Equation \ref{viterbi_eqn}).
 We chose to keep the top-down version, which 
 later proved to be wise when we had to track down a bug in one of our base 
@@ -574,6 +587,20 @@ of homologous proteins?]}
 
 
 
+
+\emph{[GIT CONFLICT HERE:
+ simply implements the Viterbi algorithm for computing the optimal parse 
+of a protein sequence onto a hidden Markov model.
+Thus, the graphical model of 
+a HMMER hidden Markov model is exactly that shown in Figure~\ref{plan7}.
+In 
+contrast, MRFy builds on the approach of SMURF~\cite{Menke:2010ti} and 
+SMURFLite~\cite{Daniels:2012}, our previous work.
+Like SMURF and SMURFLite, MRFy 
+pays attention to longer-range structural interactions than a simple hidden 
+Markov model can understand.
+]}
+
 In particular, these approaches ``nail down'' 
 certain subsequences of the model, corresponding to the non-local hydrogen-bond 
 interactions between beta strands.
@@ -608,7 +635,7 @@ A given placement
 of these beads corresponds to an assignment of particular amino acid residues 
 being hydrogen bonded to other particular amino acid residues, and thus MRFy 
 computes a probability based on observed frequencies of residues hydrogen 
-bonding in beta strands~\cite{betawrappro}.
+bonding in beta strands~\cite{Cowen:2002p588}.
 In between these beta strands, the 
 Markov random field is in fact a traditional hidden Markov model, whose optimal 
 solution can be easily computed via the Viterbi algorithm.
@@ -822,7 +849,7 @@ occurs.
 \section{Our previous code base compared}
 
 Our previous computational biology projects include an enhancement to a protein 
-structural aligner that previously came from our group, Matt~\cite{matt}.
+structural aligner that previously came from our group, Matt~\cite{Menke:2008wu}.
 
 Matt's code base contains approximately 12,000 lines of C++ code, and relies on 
 data structures such as mutable oct-trees, vectors, and arrays, with 
@@ -867,9 +894,14 @@ implemented most of MRFy in roughly three months of part-time work.
 \section{State of the practice}
 
 \subsection{Our group then}
- - Modifying Formatt took nearly a year
- - mutable data structures hard to repurpose
- - one enhancement deemed infeasible
+ - reimplementing algorithms
+  - we reimplemented and yet it was easy and pleasant
+  - past reimplementation of a variant of Viterbi DP, in haste, -> 700 line C function
+  - building on that reimplementation
+ - new implementations (Matt)
+  - Modifying Formatt took nearly a year
+  - mutable data structures hard to repurpose
+  - one enhancement deemed infeasible
  - C++ failures most commonly segfaults, memory errors, heap exhaustion
 
 \subsection{Our group now}
@@ -899,31 +931,32 @@ Norman Ramsey is the local expert, but he wrote no code for this project.
   discussed previously in the paper. Is that okay? A summary may be worth it. 
 ---AG}
 
-As inexperienced functional programmers, developing a complex piece of
-software in Haskell posed several barriers.
-\remark{NOAH: You did the profiling, could you make sure what I've said here
-is accurate and/or relevant? I didn't know what else to say. ---AG}
-The first of which was profiling with GHC.
-We previously mentioned that profiling with GHC produced ugly code with
-cost center annotations scattered throughout our code, but we also found it
-very difficult to profile code at all.
+As inexperienced functional programmers developing a complex piece of
+software in Haskell, we encountered some barriers.
+The first of these was profiling with GHC.
+We previously mentioned that profiling with GHC required annotating
+cost centers by hand, producing ugly code.
+Beyond that, we also found it very difficult to profile code at all.
 In particular, profiling required that all installed libraries be re-compiled
-with profiling support---which was a process that we could not replicate
+with profiling support,which was a process that we could not replicate
 consistently.
 
 Another barrier we faced was how to test our code using QuickCheck.
 Indeed, the barrier was so formidable in our case that we still have not been 
 able to use it.
 The problems we faced specifically were two-fold: How do we start testing
-a complex module? and How can we use QuickCheck to generate random inputs with 
-complex constraints?
+a complex module? How can we use QuickCheck to generate random inputs with 
+complex constraints? 
+We wished to test invariants around beta-strand placement 
+(potential solutions in our stochastic search), but found the QuickCheck generator
+to be difficult to write.
 
 Finally, one last barrier we faced was debugging runtime errors.
 Runtime errors in the form of out-of-bounds indexing were particularly 
 difficult to track down because they were not accompanied by a stack trace.
 (While profiling with GHC could help remedy this, profiling was itself a 
-barrier, as previous mentioned.)
-We had to resort to polluting our code with cals to the \texttt{trace} function 
+barrier, as previously mentioned.)
+We had to resort to polluting our code with calls to the \texttt{trace} function 
 in order to track down where the out-of-bounds errors were occurring.
 
 % - profiling 
@@ -932,13 +965,13 @@ in order to track down where the out-of-bounds errors were occurring.
 % [ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ] 
 
 \subsection{What you must know to succeed}
-\remark{I don't like this. I really struggled with this section. ---AG}
 If others would like to follow in our footsteps, there are a few
 things we believe one must know in order to succeed.
 Firstly, some experience with functional programming concepts is a necessity. 
-Specifically, coming from an imperative background, writing algorithms and 
-modeling data without the ability to mutate state were the most difficult 
-concepts to adapt to.
+Specifically, coming from an imperative background, we found transforming input data 
+from the HMMER file format without the ability to mutate state was difficult.
+In contrast, writing ``pure math'' like the Viterbi algorithm felt easier
+and more natural than it would have been in C++.
 
 Secondly, identifying existing tools and libraries from Hackage that are mature 
 is also important.
@@ -946,7 +979,9 @@ We found that some packages that could have been immensely useful---like one
 that provides backtraces---were either not maintained or contained bugs.
 Some other packages like Pads were functional but immature, which resulted in 
 additional code to work around the parts of Pads that had not been implemented 
-yet.
+yet. 
+In contrast, other packages such as \texttt{Data.Memocombinators} were
+useful and mature.
 
 Finally, a ``local expert'' or someone available to talk to with functional 
 programming expertise, can make the transition to a language like Haskell 
@@ -962,9 +997,9 @@ In hindsight, we feel that there are several key facets of our project in
 Haskell that deserve evaluation.
 Firstly, we found that existing tools and libraries were plentiful and 
 typically helped us greatly.
-In particular, Data.Memocombinators made dynamic 
+In particular, \texttt{Data.Memocombinators} made dynamic 
 programming with Viterbi exquisitely simple and elegant.
-Control.Parallel.Strategies also made the parallelization of Viterbi trivial.
+\texttt{Control.Parallel.Strategies} also made the parallelization of Viterbi trivial.
 Most of the tools we used came straight from Hackage, and although 
 documentation of some form was almost always present, it was sometimes 
 difficult to tell if a particular tool was right for us.
@@ -989,7 +1024,8 @@ hasty Haskell code beats hasty code in a language like C or C++.
 
 In summary, with Haskell, we didn't have to master a completely different 
 design and development style but we did have to wrap our heads around 
-functional programming.
+functional programming.\remark{Andrew, look at the comments below this
+part of the manuscript. See what you can do with them.}
 
 
 % - What does the local expert do? Do you have to have one? 
@@ -1016,12 +1052,6 @@ We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and N
 
 % The bibliography should be embedded for final submission.
 
-\begin{thebibliography}{}
-\softraggedright
-
-\bibitem[Smith et~al.(2009)Smith, Jones]{smith02}
-P. Q. Smith, and X. Y. Jones. ...reference text...
-
-\end{thebibliography}
+\bibliography{mrfy_experience_report}
 
 \end{document}

@@ -11,7 +11,9 @@ mrfy_experience_report.log
 mrfy_experience_report.pdf
 
 sigplanconf-guide.pdf
-/*.eps
+
+*.bbl
+*.blg
 *~
 *.dvi
 *.fdb_latexmk
