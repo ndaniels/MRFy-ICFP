@@ -119,8 +119,6 @@ relatively easy to overcome.
 Our experience is based on MRFy (pronounced ``Murphy''), which
 implements a novel family of algorithms for finding remote homologs to 
 newly discovered proteins. 
-\remark{``Homology'' means ``share a common ancestor.''  I hope we can
-avoid this story. ---NR}
 
 \section{The biology}
 
@@ -133,29 +131,25 @@ form the protein.
 \remark{Lost: there are only 20-odd amino acids}
 The amino-acid sequence is ultimately determined by a sequence of
 nucleic acids in DNA, which we call a gene.
-Given a genetic sequence (the \textit{query sequence}), biologists wish to know the cellular
+Given a genetic sequence, biologists wish to know the cellular
 function of the protein that gene codes for.
-\remark{I thought the query sequence was an amino-acid sequence.}
 The best known method of discovering such function is
 to find other proteins of 
 similar structure, which likely share similar function.
-Proteins that share structure and function are \textit{homologous}, and thus
-the process of identifying similar proteins to a query sequence is called 
+Proteins that share structure and function are expected to be
+descended from a common ancestor---in biological terms, \emph{homologous}---and
+thus
+the problem of identifying proteins similar to a query sequence is called 
 \textit{homology detection}.
 
 
 
 
 Computational biologists detect homologies by building 
-algorithms which, given an amino-acid query sequence,
+algorithms which, given a \emph{query sequence} of amino acids,
 find known proteins of similar structure.
 When the similar proteins are formed from amino-acid sequences that
-are nearly identical to the sequence under test, the homologies can be
-detected by  
-simple string-matching algorithms.\remark{Can we just drop the
-  sentence about string matching?}
-When the similar proteins are formed from amino-acid sequences that
-are not too far in edit distance from the sequence under test, the homologies can be
+are not too different from the query sequence, the homology can be
 detected by
 a family of algorithms called 
 \textit{hidden Markov models}~\cite{Eddy:1998ut}.
@@ -169,25 +163,16 @@ in amino-acid sequences that are only distantly related.
 %algorithm for detecting reasonably similar sequences, and then move on to 
 %explain MRFy, our novel approach for detecting more distantly related sequences 
 %for proteins that share similar structure and function.
+%
+To~enable you to understand our experience with Haskell,
+we~sketch not only the MRFy algorithm (\secref{mrfy})
+but also one of the older hidden-Markov algorithms (\secref{viterbi}),
+which is incorporated into~MRFy.
 
-\emph{[We need an argument here saying why an understanding of the
-    algorithms is relevant to the claims made in the experience
-    report, then say how we present the algorithms, then say what
-    experiential conclusions this presentation supports.]}
-
-We present an explanation of the algorithms relevant to MRFy, because there 
-exists a natural fit between the mathematics behind the algorithms and the 
-Haskell implementation of those algorithms.
-If the reader understands the 
-algorithms, he or she is more likely to appreciate the benefits of implementing 
-them in Haskell.
-We will first present the more traditional algorithm used in 
-hidden Markov models, followed by our variation on it and the stochastic search 
-approach.
-We conclude that implementations of mathematically-intensive 
+\remark{LOST: We conclude that implementations of mathematically-intensive 
 algorithms such as these lend themselves to the Haskell language, particularly 
 when the programmer needs a flexible implementation that simplifies 
-experimenting with variants of the algorithm.
+experimenting with variants of the algorithm.}
 
 
 % As a brief refresher in the standard dogma of genetics, recall that genes 
@@ -246,87 +231,76 @@ to test a hypothesis about
 the function of a single, newly discovered protein, or 
 to compare every protein in a genome against a library of known protein 
 structures.
-The software is ``trained'' \remark{do we want to talk ``Training''?}
+Either way, 
+the software is \emph{trained}
 on a group of proteins that share function and structure.
 These proteins are identified by a biologist, who puts
 their amino-acid sequences into a correspondence, also called an
-\emph{alignment}. This alignment signifies structural and evolutionary
+\emph{alignment}. 
+This alignment represents structural
 correspondence among individual amino acids in a set of homologous proteins.
 An~alignment may be represented as a matrix
 (Figure~\ref{alignment}) 
 in which each row corresponds to the amino-acid sequence of a protein,
 and each column groups amino acids that play similar roles in
 different proteins.
-A protein may have a gap in a column of the alignment, which indicates
-that during the course of evolution, either that protein lost that amino
-acid, or other proteins gained an amino acid.
-If~a column contains just one or two gaps, the most likely explanation
-is that in one or two proteins, mutations in the underlying DNA
-deleted an amino acid from that position (\figref{alignment}).
-If~a column contains \emph{mostly} gaps, 
-the most likely explanation
-is that in one or two proteins, mutations in the underlying DNA
-\emph{inserted} an amino acid in that position (\figref{alignment}).
 
-The protein alignment is used to train a \emph{hidden Markov model}.
-\remark{I've never seen this hypenated, in ANY literature.}
+An alignment may contain \emph{gaps} (notated as dashes in
+\figref{alignment}) for some proteins.
+A~gap in row~2, column~$j$ indicates that as proteins evolved, either 
+protein~2 lost its amino acid in position~$j$, or 
+other proteins gained an amino acid in position~$j$.
+If~column~$j$ contains few gaps, 
+it~is considered a \emph{consensus column},
+and the few proteins with gaps probably lost amino acids via
+\emph{deletions}. 
+If~column~$j$ contains \emph{mostly} gaps, 
+it~is considered a \emph{non-consensus column},
+and the few proteins without gaps probably gained amino acids via
+\emph{insertions}. 
+
+Once a protein alignment is constructed, it~is used to train a
+\emph{hidden Markov model}. 
 A~hidden Markov model is a probabilistic finite-state machine which 
-can assign a probability to any query sequence of amino acids.
-Proteins whose sequences have higher probabilities are more likely to
+can assign a probability to any query sequence.
+A~protein whose query sequence has a higher probability is more likely to %
 be homologous to the proteins in the alignment.
-Mathematically, we represent a query sequence as
-$\left\{x_{1}...x_{n}\right\}$.
-Ideally, if we were writing something like the BioHaskell library, we would
-have begun with an algebraic datatype for amino acids deriving
-\texttt{Ix}, something like
-\begin{verbatim}data Amino = Ala | Cys | Asp | Glu | Gly ...\end{verbatim}
-which would still allow us to index into an array or vector.
-However, since we wanted to maintain compatibility with the file format
-shared with previous software, we broke with idiomatic Haskell and represented
-our amino acids as 
-\begin{verbatim}
-type AA = Int
-\end{verbatim}
-and thus our query sequence as
-\begin{verbatim}
-type querySeq = Vector AA
-\end{verbatim}
-
+We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
+where each $x_i$~is 
+an amino acid.
 
 The states of the hidden Markov model are determined by the alignment:
 \remark{I've tried for lots of parallel structure.
 Somebody let me know if any of this is right.  ---NR}
 \begin{itemize}
 \item
-If a given column~$j$ of the alignment contains amino acids in a majority
-of the protein sequences, it is considered a \textit{consensus column}.
-\item
-For a given column~$j$ of the alignment, the hidden Markov model has a
+For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}.
 The match state determines the probability that the query sequence
 has a particular amino acid in column~$j$.
 The match state assigns high probability to the amino acids that
 appear in column~$j$, and a low but nonzero probability to other amino
 acids.
-The match state is more probable if it corresponds to a consensus column.
+A~match state is more probable if it corresponds to a consensus column.
 \item
-For every column of the alignment, the hidden Markov model has a
+For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}.
 The deletion state determines the probability that the query sequence
 has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
-The deletion state has high probability if there are lots of gaps in
-column~$j$, and low probability if there are few gaps in column~$j$.
-Thus, the deletion state is more likely in non-consensus columns.
+A~deletion state is more probable if it corresponds to a
+non-consensus column.
+% has high probability if there are lots of gaps in
+%column~$j$, and low probability if there are few gaps in column~$j$.
+%Thus, the deletion state is more likely in non-consensus columns.
 \item
-For every column of the alignment, the hidden Markov model has an
+For each column~$j$ of the alignment, the hidden Markov model has an
 \emph{insertion state}.
 The insertion state determines the probability that a query sequence
-has an ``extra'' amino acid that does not correspond to any
-consensus column in the alignment.
-Thus, the insertion state is more likely in non-consensus columns.
-The insertion state assigns high probability to amino acids that are
-frequently observed among all proteins, and low probability to amino acids
-that are rarely observed.
+has an ``extra'' amino acid.
+Like a match state, the insertion state assigns high probability to
+amino acids appearing in column~$j$.
+An~insertion state is more probable if it corresponds to a
+non-consensus column.
 \end{itemize}
 %%  A position that has residues in a majority of the sequences becomes 
 %%  a \textit{match} state in the hidden Markov model; this position may see a 
@@ -346,6 +320,25 @@ data TProb  = TProb { logProbability::LogProb
                     }
 \end{smallverbatim}
 to represent the seven allowed state transitions.
+
+
+We~write a query sequence as
+$x_{1}, \ldots, x_{n}$, where each~$x_i$ is an amino acid.
+In~idiomatic Haskell, we might represent each individual amino acid
+using a value of algebraic data type, thus:
+\begin{smallverbatim}
+data Amino = Ala | Cys | Asp | Glu | Gly | ...
+\end{smallverbatim}
+But our primary goal was to get something working quickly with a
+legacy file format that represents each amino acid as a small integer.
+Our types are therefore
+\begin{smallverbatim}
+type AA       = Int -- amino acid using HMMER coding
+type QuerySeq = Vector AA
+\end{smallverbatim}
+
+
+
 
 Thus, the hidden Markov model can be represented as a directed graph, with each
 edge weight corresponding to the probability of a specific state transition.
