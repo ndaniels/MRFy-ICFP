@@ -248,6 +248,7 @@ in which each row corresponds to the amino-acid sequence of a protein,
 and each column groups amino acids that play similar roles in
 different proteins.
 
+
 An alignment may contain \emph{gaps} (notated as dashes in
 \figref{alignment}) for some proteins.
 A~gap in row~2, column~$j$ indicates that as proteins evolved, either 
@@ -271,6 +272,20 @@ be homologous to the proteins in the alignment.
 We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
 an amino acid.
+
+
+\begin{figure}
+\ifpdfmadness
+\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
+\else
+\centerline{\includegraphics[width=6cm]{alignment.eps}} 
+\fi
+
+
+
+\caption{A~structural alignment of four proteins}
+\label{alignment} 
+\end{figure}
 
 A~hidden Markov model carries probabilities on its states and on its
 state transitions.
@@ -327,6 +342,26 @@ The probability of such a transition is notated
 $\txprobjj M I$ or $\txprobjj I I$.
 \end{itemize}
 
+
+
+\begin{figure} 
+\ifpdfmadness
+\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
+\else
+\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
+\fi
+
+This model, trained from a four-column alignment,
+has begin and end states $B$~and~$E$,
+as well as four
+nodes, each containing 
+an insertion state~$I$, 
+a match state~$M$, and a
+deletion state~$D$.
+
+\caption{A hidden Markov model}
+
+\label{plan7} \end{figure}
 
 
 
@@ -399,51 +434,6 @@ data HmmNode = HmmNode { nodeNum :: Int
 
 
 
-\begin{figure}
-\ifpdfmadness
-\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
-\else
-\centerline{\includegraphics[width=6cm]{alignment.eps}} 
-\fi
-
-
-
-\caption{A~structural alignment of four proteins}
-\label{alignment} 
-\end{figure}
-
-
-\begin{figure} 
-\ifpdfmadness
-\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
-\else
-\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
-\fi
-
-This directed graph represents the states of a
-hidden Markov model in the ``Plan7'' format defined by the HMMER
-software package.
-%% Only 7 of the possible 9 state transitions are allowed, which 
-%% simplifies the dynamic programming.
-Each insertion state~($I$) represents a potential mutation that 
-inserts an amino acid;
-each deletion state~($D$) represents a potental mutation that
-deletes an amino acid;
-and each match state~($M$) represents either
-an unmutated amino acid or a potential mutation that
-substitutes one amino acid for another.
-A~match state or an insertion state includes a table that assigns a
-nonzero probability to each amino acid.
-(The figure shows tables for the first two states only.)
-A~triplet of an insertion state, deletion state, 
-and match state formas a \emph{node}, which corresponds to a column in
-the alignment used to train the model.
-(Each node is shown in a dashed oval.)
-
-\caption{A hidden Markov model trained from a four-column alignment}
-
-\label{plan7} \end{figure}
-
 
 A hidden Markov model like that shown in \figref{plan7} can be used to
 determine the likelihood that a new protein shares structure and
@@ -498,45 +488,56 @@ and because they are \textit{negative} logs, the problem transforms from
 maximization to minimization.
 
 
-\begin{eqnarray}    
-V_{j}^{M}(i) = \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
+\begin{figure*}
+\def\goo{18pt}
+\def\gum{14pt}
+\[
+\begin{array}{l@{}c@{}l}
+V_{j}^{M}(i) &{}={}& \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}M_{j}},\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}M_{j}},\\
+V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}M_{j}}\\
+V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}M_{j}}\\
 V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
-\end{array} \right.\nonumber\\
-V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
+\end{array} \right.\\[\goo]
+V_{j}^{I}(i) &=& \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
 \begin{array}{l l}
-V_{j}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
-V_{j}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
-\end{array} \right.\nonumber\\
-V_{j}^{D}(i) = max \left\{
+V_{j}^{M}(i - 1) + \log a_{M_{j}I_{j}}\\
+V_{j}^{I}(i - 1) + \log a_{I_{j}I_{j}}\\
+\end{array} \right.\\[\gum]
+V_{j}^{D}(i) &=& \max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i) + \log a_{M_{j-1}D_{j}},\\
+V_{j-1}^{M}(i) + \log a_{M_{j-1}D_{j}}\\
 V_{j-1}^{D}(i) + \log a_{D_{j-1}D_{j}}\\
-\end{array} \right.\nonumber\\
-\end{eqnarray}\label{viterbi_eqn}
-
-\begin{eqnarray}    
-V_{j}^{\prime M}(i) = e^{\prime}_{M_{j}}(x_{i}) + min \left\{
+\end{array} \right.\\
+\end{array}
+\qquad
+\begin{array}{l@{}c@{}l}
+V_{j}^{\prime M}(i) &{}={}& e^{\prime}_{M_{j}}(x_{i}) + \min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}M_{j}},\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}M_{j}},\\
+V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}M_{j}}\\
+V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}M_{j}}\\
 V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
-\end{array} \right.\nonumber\\
-V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
+\end{array} \right.\\[\goo]
+V_{j}^{\prime I}(i) &=& e^{\prime}_{I_{j}}(x_{i}) + \min \left\{
 \begin{array}{l l}
-V_{j}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
-V_{j}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
-\end{array} \right.\nonumber\\
-V_{j}^{\prime D}(i) = min \left\{
+V_{j}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}}\\
+V_{j}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}}\\
+\end{array} \right.\\[\gum]
+V_{j}^{\prime D}(i) &=& \min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i) + a^{\prime}_{M_{j-1}D_{j}},\\
+V_{j-1}^{\prime M}(i) + a^{\prime}_{M_{j-1}D_{j}}\\
 V_{j-1}^{\prime D}(i) + a^{\prime}_{D_{j-1}D_{j}}\\
-\end{array} \right.\nonumber\\
-\text{where } a^{\prime}_{s} = - \log a_{s} \nonumber \\
-\text{and } e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}} \nonumber
-\end{eqnarray}\label{viterbi_log_eqn}
+\end{array} \right.\\
+\end{array}
+\]
+
+\centerline{$a'_{s} = - \log a_{s} \nonumber$,
+$e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}}$,
+and 
+$V_j^{\prime M}(i) = - V_j^{M}(i)$}
+\caption{Viterbi's equations, in original and negated forms}
+\label{viterbi}
+\end{figure*}
 
 
 We implemented the Viterbi algorithm in two distinct ways.
@@ -614,7 +615,7 @@ implementations of Viterbi.]}
 
 
 
-\subsection{MRFy Implementation}
+%\subsection{MRFy Implementation}
 
 Our implementations of hidden Markov models and Viterbi's algorithm
 simply duplicate 
@@ -720,6 +721,8 @@ implements several search heuristics: random-mutation hill climbing, simulated
 annealing, multistart simulated annealing, and a genetic algorithm.
 
 
+\subsection{Higher-order functions}
+
 Just as the Viterbi algorithm is one major component of MRFy, stochastic search 
 is the other.
 In designing MRFy, we did not know in advance what sort of 
@@ -806,7 +809,6 @@ search, and all forty-eight cores on a compute server for population-based
 searches.
 
 
-\subsection{Ugly code}
 
 
 Despite the beauty of some of the code we were able to write, we found several 
@@ -864,6 +866,8 @@ and in concept, and it imposes negligible run-time overhead as compared to
 having two distinct functions.
 
 \lstinputlisting[label=scorepathcons,caption=ScorePathCons]{scorepathcons.hs}
+
+\subsection{Awkward Haskell}
 
 Another source of ugliness resulted from adding cost-center annotations when we 
 wished to profile our code.
