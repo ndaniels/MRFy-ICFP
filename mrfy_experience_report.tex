@@ -12,6 +12,9 @@
 
 \documentclass[preprint,nonatbib,blockstyle,nocopyrightspace,times]{sigplanconf}
 
+\newcommand\txprobj[3][]{a#1_{#2_{j-1}#3_j}}
+\newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
+
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{listings}
@@ -269,103 +272,132 @@ We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
 an amino acid.
 
-The states of the hidden Markov model are determined by the alignment:
-\remark{I've tried for lots of parallel structure.
-Somebody let me know if any of this is right.  ---NR}
+A~hidden Markov model carries probabilities on its states and on its
+state transitions.
+Both the probabilities and the
+the states are determined by the alignment:
 \begin{itemize}
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}.
-The match state determines the probability that the query sequence
-has a particular amino acid in column~$j$.
-The match state assigns high probability to the amino acids that
-appear in column~$j$, and a low but nonzero probability to other amino
-acids.
-A~match state is more probable if it corresponds to a consensus column.
+The match state contains a table $e_{M_j}(x)$ which gives the
+ probability that a homologous protein has amino acid~$x$ in
+ column~$j$.
+This probability is called an \emph{emission} probability.
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}.
 The deletion state determines the probability that the query sequence
 has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
-A~deletion state is more probable if it corresponds to a
-non-consensus column.
-% has high probability if there are lots of gaps in
-%column~$j$, and low probability if there are few gaps in column~$j$.
-%Thus, the deletion state is more likely in non-consensus columns.
-\item
+\item 
 For each column~$j$ of the alignment, the hidden Markov model has an
 \emph{insertion state}.
-The insertion state determines the probability that a query sequence
-has an ``extra'' amino acid.
-Like a match state, the insertion state assigns high probability to
-amino acids appearing in column~$j$.
-An~insertion state is more probable if it corresponds to a
-non-consensus column.
+The insertion state contains a table $e_{I_j}(x)$ which gives the
+probability that a homologous protein has gained amino acid~$x$ by
+insertion at column~$j$.
 \end{itemize}
-%%  A position that has residues in a majority of the sequences becomes 
-%%  a \textit{match} state in the hidden Markov model; this position may see a 
-%%  variety of amino acids due to evolutionary substitution, but it still 
-%%  corresponds to a position that a homologous protein should most likely fill.
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
-The probability associated with a specific state is conditional upon the previous
-state in the model, so it is a \textit{transition probability}.
-Mathematically, transition probabilities are represented by $a_{s_{j-1}s_{j}}$
-for a state $s_{j}$.
-In Haskell, we use 
-\begin{smallverbatim}
-type logProb = Double
-data TProb  = TProb { logProbability::LogProb
-                    , fromState::HMMState
-                    , toState::HMMState
-                    }
-\end{smallverbatim}
-to represent the seven allowed state transitions.
+
+The particular hidden Markov model we use requires that every nonempty
+sequence of insertions be followed by a match, and similarly for
+deletions.
+\remark{citation needed?}
+In~other words, insertions and deletions cannot be mixed without an
+intervening match.
+This restriction means that between two adjacent columns, six
+transitions are possible.
+An~insertion state may also transition to itself.
+\begin{itemize} 
+\item
+A~transition into a match state in
+column~$j$ is more likely when column~$j$ is a consensus column.
+Depending on the predecessor state, 
+the probability of such a transition is notated
+$\txprobj M M$, $\txprobj I M$, or $\txprobj D M$.
+\item
+A~transition into a deletion state in
+ column~$j$ is more likely when column~$j$ is a non-consensus column.
+The probability of such a transition is notated
+$\txprobj M D$ or $\txprobj D D$.
+\item
+A~transition into an insertion state in
+ column~$j$ is relatively unlikely,
+but it is more likely when column~$j$ is a non-consensus column.
+The probability of such a transition is notated
+$\txprobjj M I$ or $\txprobjj I I$.
+\end{itemize}
 
 
-We~write a query sequence as
-$x_{1}, \ldots, x_{n}$, where each~$x_i$ is an amino acid.
-In~idiomatic Haskell, we might represent each individual amino acid
+
+
+
+\subsection{Perspicuous Haskell}
+
+Computation of probabilities from hidden Markov models is well
+understood and is implemented in standard software packages.
+To~be able to use Haskell, we had to reimplement this standard
+algorithm.
+Haskell made it possible for us to write code that looks like the
+math,
+which made the code easy to write and gives us confidence that it is
+correct.
+
+
+We~begin with our representations.
+In~idiomatic Haskell, a query sequence is an immutable vector, and
+we might represent an individual amino acid~$x$
 using a value of algebraic data type, thus:
 \begin{smallverbatim}
 data Amino = Ala | Cys | Asp | Glu | Gly | ...
 \end{smallverbatim}
 But our primary goal was to get something working quickly with a
 legacy file format that represents each amino acid as a small integer.
-Our types are therefore
+Our representations are therefore
 \begin{smallverbatim}
 type AA       = Int -- amino acid using HMMER coding
 type QuerySeq = Vector AA
 \end{smallverbatim}
 
+A~transition probability is simply a number.
+For accuracy in computation, we add log probabilities instead of
+multiplying probabilities.
+And to distinguish a transition probability from other numbers, we wrap it in
+the value constructor \texttt{TProb}:
+\begin{smallverbatim}
+type LogProb = Double
+data TProb  = TProb { logProbability :: LogProb }
+\end{smallverbatim}
 
-
-
-Thus, the hidden Markov model can be represented as a directed graph, with each
-edge weight corresponding to the probability of a specific state transition.
-\figref{plan7} shows a hidden Markov model derived from an alignment
-with just four columns.
-Each column in the original alignment corresponds to a \emph{node},
-which is a triplet holding an insertion state, a deletion state, and a
-match state.
-Mathematically, nodes are simply $\left\{a_{s_{k},s_{j}}, e_{s_{j}}(x_{i})\right\}$
-for states $s_{k}, s_{j}$ and emission probabilities $e_{s_{j}}(x_{i})$ for a
-query sequence element $x_{i}$.
-In Haskell, we represent a node as a group of transition probabilities
+We group transition probabilities into 7-tuples.
+Each tuple corresponds to a ``node'' in the hidden Markov model
+(a~dashed ovel in \figref{plan7}), and to a column of the original
+alignment.
+As~noted above, 
+a match state may transition to any state in the successor node;
+an insertion state may transition to itself or to its successor match
+state;
+and
+a~deletion may transition to its successor match
+state or deletion state.
 \begin{smallverbatim}
 data TProbs = 
      TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
-            , i_m :: TProb, i_i :: TProb, d_m :: TProb
-            , d_d :: TProb}
+            , i_m :: TProb, i_i :: TProb
+            , d_m :: TProb, d_d :: TProb }
 \end{smallverbatim}
+
+The
 and a vector of emission probabilities for the match and insertion states.
 \begin{smallverbatim}
-type EProbs = V.Vector logProb
+type EProbs = V.Vector LogProb
 data HmmNode = HmmNode { nodeNum :: Int
                        , matEmissions :: EProbs
                        , insEmissions :: EProbs
                        , transitions :: TProbs
                        }
 \end{smallverbatim}
+
+
 
 \begin{figure}
 \ifpdfmadness
