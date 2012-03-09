@@ -507,13 +507,13 @@ V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{I}(i) = \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
+V_{j}^{M}(i - 1) + \log a_{M_{j}I_{j}},\\
+V_{j}^{I}(i - 1) + \log a_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{D}(i) = max \left\{
 \begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}D_{j}},\\
-V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}D_{j}}\\
+V_{j-1}^{M}(i) + \log a_{M_{j-1}D_{j}},\\
+V_{j-1}^{D}(i) + \log a_{D_{j-1}D_{j}}\\
 \end{array} \right.\nonumber\\
 \end{eqnarray}\label{viterbi_eqn}
 
@@ -526,13 +526,13 @@ V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime I}(i) = e^{\prime}_{I_{j}}(x_{i}) + min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
+V_{j}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}},\\
+V_{j}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}},\\
 \end{array} \right.\nonumber\\
 V_{j}^{\prime D}(i) = min \left\{
 \begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}D_{j}},\\
-V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}D_{j}}\\
+V_{j-1}^{\prime M}(i) + a^{\prime}_{M_{j-1}D_{j}},\\
+V_{j-1}^{\prime D}(i) + a^{\prime}_{D_{j-1}D_{j}}\\
 \end{array} \right.\nonumber\\
 \text{where } a^{\prime}_{s} = - \log a_{s} \nonumber \\
 \text{and } e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}} \nonumber
@@ -550,6 +550,44 @@ We next wrote a top-down dynamic-programming
 version, which began with the last node of the model and the last observation, 
 and applied structural recursion down to the base cases involving the first 
 node or first observation (or both).
+The general case of this top-down, structurally recursive implementation closely
+resembles the Viterbi equations above.
+The match equation is thus:
+\begin{verbatim}
+viterbi s n o
+  -- consume an observation AND a node
+  | s == mat = let trans t prev = 
+                   (score + tProb (n-1) t + (eProb n o), mat:path)
+                    where (score, path) = viterbi prev (n - 1) (o - 1)
+                in minimum $ [
+                    trans m_m mat,
+                    trans i_m ins,
+                    trans d_m del
+                    ]
+\end{verbatim}
+% Similarly, the insertion equation is:
+% \begin{verbatim}                    
+%   -- consume an observation but not a node
+%   | s == ins = let trans t prev =
+%                    (score + tProb n t + (eProb n o), ins:path)
+%                     where (score, path) = viterbi prev n (o - 1)
+%                 in minimum [
+%                     trans m_i mat,
+%                     trans i_i ins
+%                     ]
+% \end{verbatim}
+% Finally, the deletion equation is:
+% \begin{verbatim}                    
+%   -- consume a node but not an observation
+%   | s == del = let trans t prev = 
+%                       (score + tProb (n-1) t, del:path)
+%                       where (score, path) = viterbi prev (n - 1) o
+%                 in minimum [
+%                     trans m_d mat,
+%                     trans d_d del
+%                     ]
+% \end{verbatim}
+
 In this second approach, we used the 
 \texttt{Data.Memocombinators} library to provide the memoization container 
 (again, a three-dimensional array).
@@ -569,9 +607,6 @@ In this, we were grateful for the resemblance
 between the mathematical description of the algorithm and the top-down 
 dynamic-programming approach in Haskell, which resulted in perspicuous code.
 
-\begin{figure*}
-\lstinputlisting[label=viterbi,caption=Viterbi]{viterbi_simple.hs}
-\end{figure*}
 
 
 \emph{[This might be a place for comparison with standard
@@ -696,8 +731,26 @@ We
 found this to be easy and pleasant thanks to Haskell's support of higher order 
 functions.
 
-We wrote a basic search function in only twenty-two lines of code; as one of 
-its parameters we provide a \texttt{SearchStrategy} data type, which we use to 
+We wrote a basic search function in only twenty-two lines of code.
+The central logic of this search function is simply:
+\begin{verbatim}
+search' (s1:s2:seeds) oldPop hist age =
+  let newPop = mutate oldPop
+      score = fst $ minimum newPop
+      newHist = score : hist
+    in if accept newHist age then
+          if terminate newHist age then
+            (minimum newPop, newHist)
+          else
+            search' seeds newPop newHist (age + 1)
+       else
+         if terminate hist age then
+           (minimum oldPop, hist)
+         else
+           search' seeds oldPop hist (age + 1)
+\end{verbatim}
+As one of the parameters to the top-level \texttt{search} function,
+we provide a \texttt{SearchStrategy} data type, which we use to 
 define specific search techniques.
 We require a \texttt{SearchStrategy} to 
 define four functions: \texttt{mutate}, \texttt{accept}, \texttt{terminate}, 
@@ -729,9 +782,6 @@ function with no randomness at all: if we pass in a known number as the seed,
 behavior is entirely deterministic.
 
 
-\begin{figure*}
-\lstinputlisting[label=search,caption=Search]{search_simple.hs}
-\end{figure*}
 
 In MRFy, the Viterbi function is called several times (once for each 
 non-beta-strand region) for each search generation.
