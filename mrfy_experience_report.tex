@@ -125,6 +125,8 @@ relatively easy to overcome.
 Our experience is based on MRFy (pronounced ``Murphy''), which
 implements a novel family of algorithms for finding remote homologs to 
 newly discovered proteins. 
+\remark{``Homology'' means ``share a common ancestor.  I hope we can
+avoid this story. ---NR}
 
 \section{The biology}
 
@@ -555,38 +557,26 @@ These implementations form is just one component of our new tool, MRFy.
 
 A hidden Markov model effectively uses local information about
 amino-acid sequences.
-But because real proteins are three-dimensional structures,
-their amino-acid sequences are subject to \emph{nonlocal}
+But real proteins are three-dimensional structures,
+and their amino-acid sequences are subject to \emph{nonlocal}
 constraints. 
-In~particular, when a real protein folds, groups of amino acids
-that are far away in the one-dimensional sequence can nevertheless be
+And when a real protein folds, groups of amino acids
+that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
-Moreover, two such groups can become hydrogen-bonded to one another,
-effectively ``stuck together.''
-Such groups are called \emph{beta strands}.
-\remark{I hope this is relatively accurate. --NR}
+We~are studying adjacent groups called \emph{beta strands}, which
+can become hydrogen-bonded to each other,
+and are effectively ``stuck together.''
+
+
 
 \emph{[Next up: how does this bonding phenomenon constrain sequences
 of homologous proteins?]}
 
 
 
-
- simply implements the Viterbi algorithm for computing the optimal parse 
-of a protein sequence onto a hidden Markov model.
-Thus, the graphical model of 
-a HMMER hidden Markov model is exactly that shown in Figure~\ref{plan7}.
-In 
-contrast, MRFy builds on the approach of SMURF~\cite{smurf} and 
-SMURFLite~\cite{smurflite}, our previous work.
-Like SMURF and SMURFLite, MRFy 
-pays attention to longer-range structural interactions than a simple hidden 
-Markov model can understand.
 In particular, these approaches ``nail down'' 
 certain subsequences of the model, corresponding to the non-local hydrogen-bond 
 interactions between beta strands.
-Beta strands are regions of protein 
-structure that ``stick'' to one another.
 Because of their pairwise 
 interactions, they are highly conserved over the course of evolution.
 Moreover, 
