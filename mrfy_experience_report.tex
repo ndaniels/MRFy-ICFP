@@ -891,13 +891,13 @@ idiomatically in Haskell.
 Rather than attempt to use \texttt{TemplateHaskell} to generate two versions of 
 the Viterbi function, we wrote a higher-order function type 
 \lstinline!type ScorePathCons a = a -> [a] -> [a]! and two functions conforming to that type:
-\begin{verbatim}
+\begin{smallverbatim}
 consPath :: ScorePathCons a
 consPath x xs = x:xs
 
 consNoPath :: ScorePathCons a
 consNoPath _ _ = []
-\end{verbatim}
+\end{smallverbatim}
 
 Then, depending on whether \texttt{viterbi} was called with \texttt{consPath} 
 or \texttt{consNoPath} as a parameter, the path would or would not be 
