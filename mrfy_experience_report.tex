@@ -620,6 +620,14 @@ viterbi s n o
 In this second approach, we used the
 \texttt{Data.Memocombinators} library to provide the memoization container 
 (again, a three-dimensional array).
+This combinator approach was easy to apply to the code after the fact:
+\begin{smallverbatim}
+viterbi state node obs = 
+  Memo.memo3 (Memo.arrayRange (mat, end)) 
+             (Memo.arrayRange (0, numNodes))
+             (Memo.arrayRange (0, seqlen)) 
+             viterbi' state node obs
+\end{smallverbatim}
 We determined that the run-time 
 performances of both approaches were virtually indistinguishable, and we also 
 noted that the top-down version quite faithfully resembled the recurrence 
@@ -762,7 +770,7 @@ functions.
 
 We wrote a basic search function in only twenty-two lines of code.
 The central logic of this search function is simply:
-\begin{verbatim}
+\begin{smallverbatim}
 search' (s1:s2:seeds) oldPop hist age =
   let newPop = mutate oldPop
       score = fst $ minimum newPop
@@ -777,7 +785,7 @@ search' (s1:s2:seeds) oldPop hist age =
            (minimum oldPop, hist)
          else
            search' seeds oldPop hist (age + 1)
-\end{verbatim}
+\end{smallverbatim}
 As one of the parameters to the top-level \texttt{search} function,
 we provide a \texttt{SearchStrategy} data type, which we use to 
 define specific search techniques.
