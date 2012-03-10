@@ -9,6 +9,7 @@ mrfy.md
 mrfy_experience_report.log
 
 mrfy_experience_report.pdf
+mrfy_experience_report.ps
 
 sigplanconf-guide.pdf
 
@@ -17,3 +18,4 @@ sigplanconf-guide.pdf
 *~
 *.dvi
 *.fdb_latexmk
+/Smurf2
