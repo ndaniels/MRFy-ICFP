@@ -885,7 +885,14 @@ idiomatically in Haskell.
 
 Rather than attempt to use \texttt{TemplateHaskell} to generate two versions of 
 the Viterbi function, we wrote a higher-order function type 
-\lstinline!type ScorePathCons a = a -> [a] -> [a]! and two functions conforming to that type.
+\lstinline!type ScorePathCons a = a -> [a] -> [a]! and two functions conforming to that type:
+\begin{verbatim}
+consPath :: ScorePathCons a
+consPath x xs = x:xs
+
+consNoPath :: ScorePathCons a
+consNoPath _ _ = []
+\end{verbatim}
 
 Then, depending on whether \texttt{viterbi} was called with \texttt{consPath} 
 or \texttt{consNoPath} as a parameter, the path would or would not be 
@@ -893,8 +900,6 @@ allocated.
 We found this higher-order function approach to be simple in code 
 and in concept, and it imposes negligible run-time overhead as compared to 
 having two distinct functions.
-
-\lstinputlisting[label=scorepathcons,caption=ScorePathCons]{scorepathcons.hs}
 
 \subsection{Awkward Haskell}
 
