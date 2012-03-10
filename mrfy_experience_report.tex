@@ -217,12 +217,6 @@ experimenting with variants of the algorithm.}
 % simplifying the Markov random field's dependency graph. MRFy is a 
 % stochastic search approach to Markov random fields.
 
-
-\remark{Dropped the section on ``our background,'' but the information
-  should reappear when and where we discuss barriers to entry in more
-  detail. ---NR}
-
-
 \section{The Software}
 
 %% \subsection{The Viterbi Algorithm}
@@ -468,14 +462,6 @@ letters in the protein sequence.
 In our particular problem domain, both $M$ and 
 $N$ routinely contain several hundred to a few thousand elements.
 
-%% break the viterbi types up and insert into the Plan7 explanation.
-%% go over this with NR; I can't make it flow.
-% 
-% \begin{figure}
-% \lstinputlisting[label=viterbi_types,caption=Viterbi Types]{viterbi_types.hs}
-% \end{figure}
-% 
-
 The textbook Viterbi recurrence relations refer to logs of probabilities, so 
 that the terms may be added rather than multiplying raw probabilities.
 For 
@@ -608,12 +594,14 @@ In this, we were grateful for the resemblance
 between the mathematical description of the algorithm and the top-down 
 dynamic-programming approach in Haskell, which resulted in perspicuous code.
 
-
-
-\emph{[This might be a place for comparison with standard
-implementations of Viterbi.]}
-
-
+Standard implementations of the Viterbi algorithm, such as in HMMER, spend much of their code
+managing the dynamic programming tables, as even when memoization libraries are available,
+they are rarely used.
+Furthermore, standard implementations in imperative languages typically avoid the natural
+recursive representations because of the associated costs in languages such as C++.
+The efficient machine code that GHC generates for recursive functions allowed us to write
+a program that faithfully reflected the mathematics, without paying great costs in run-time
+efficiency.
 
 %\subsection{MRFy Implementation}
 
@@ -621,7 +609,7 @@ Our implementations of hidden Markov models and Viterbi's algorithm
 simply duplicate 
 functionality that is already implemented in the C++~package
 HMMER.
-These implementations form is just one component of our new tool, MRFy.
+These implementations form just one component of our new tool, MRFy.
 
 A hidden Markov model effectively uses local information about
 amino-acid sequences.
@@ -635,30 +623,26 @@ We~are studying adjacent groups called \emph{beta strands}, which
 can become hydrogen-bonded to each other,
 and are effectively ``stuck together.''
 
+During the course of evolution, a mutation in an amino acid that participates
+in this beta-strand pairing may cause a protein to fail to fold into a useful
+structure, unless that mutation is accompanied by a \textit{compensatory}
+mutation in the amino acid with which it is paired. 
+Thus, homologous
+proteins---those that share structure and function---tend to \textit{conserve}
+such pairwise-conditional amino acids.
 
-
-\emph{[Next up: how does this bonding phenomenon constrain sequences
-of homologous proteins?]}
-
-
-
-In particular, these approaches ``nail down'' 
+In order to model these non-local interactions, computational biologists
+have extended hidden Markov models to include these non-local interactions,
+modeled as a \textit{dependency graph}, which transforms the model into a
+\textit{Markov random field}. These approaches ``nail down'' 
 certain subsequences of the model, corresponding to the non-local hydrogen-bond 
 interactions between beta strands.
-Because of their pairwise 
-interactions, they are highly conserved over the course of evolution.
-Moreover, 
-again because of these pairwise interactions, a change in one amino acid in a 
-beta strand may require a change in a corresponding, hydrogen-bonded residue in 
-another beta strand if the protein is to remain stable.
 The architecture of the 
 resulting graphical model, derived from the HMMER ``Plan7'' architecture, is 
 illustrated in Figure~\ref{mrf}.
 
-These non-local interactions cause what had been a simple hidden Markov model 
-to become a Markov random field.
 SMURF~\cite{Menke:2010ti} and SMURFLite~\cite{Daniels:2012}, our previous work,
-attempted to compute the 
+compute the 
 optimal parse of a protein sequence onto the directed graph representing a 
 Markov random field using multidimensional dynamic programming.
 Mathematically, we can represent the probability of a query sequence 
