@@ -15,6 +15,7 @@
 \newcommand\txprobj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\alignwidth{\ensuremath R} % number of columns in an alignment
+\newcommand\pairedwith[1]{{\pi(#1)}}
 
 \newcommand\naive{na\"\i ve}
 \usepackage{amsmath}
@@ -685,7 +686,7 @@ Because the memoized version so faithfully resembles the equations in
 %%  
 
 
-\subsection{Solving new problems using perspicuous Haskell}
+\subsection{Exploring new algorithms using higher-order functions}
 
 
 %\subsection{MRFy Implementation}
@@ -694,112 +695,84 @@ Our implementations of hidden Markov models and Viterbi's algorithm
 duplicate existing functionality.
 They form just one component of our new tool, MRFy.
 
-A hidden Markov model effectively uses local information about
+A hidden Markov model uses local information about
 amino-acid sequences.
-But real proteins are three-dimensional structures,
-and their amino-acid sequences are subject to \emph{nonlocal}
-constraints. 
-And when a real protein folds, groups of amino acids
+But real proteins are three-dimensional,
+and when a real protein folds, groups of amino acids
 that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
 We~are studying adjacent groups called \emph{beta strands}, which
 can become hydrogen-bonded to each other,
 and are effectively ``stuck together.''
 
-During the course of evolution, a mutation in an amino acid that participates
-in this beta-strand pairing may cause a protein to fail to fold into a useful
-structure, unless that mutation is accompanied by a \textit{compensatory}
-mutation in the amino acid with which it is paired. 
-Thus, homologous
-proteins---those that share structure and function---tend to \textit{conserve}
-such pairwise-conditional amino acids.
-
-In order to model these non-local interactions, computational biologists
-have extended hidden Markov models to include these non-local interactions,
-modeled as a \textit{dependency graph}, which transforms the model into a
-\textit{Markov random field}. These approaches ``nail down'' 
-certain subsequences of the model, corresponding to the non-local hydrogen-bond 
-interactions between beta strands.
-The architecture of the 
-resulting graphical model, derived from the HMMER ``Plan7'' architecture, is 
-illustrated in Figure~\ref{mrf}.
-
-SMURF~\cite{Menke:2010ti} and SMURFLite~\cite{Daniels:2012}, our previous work,
-compute the 
-optimal parse of a protein sequence onto the directed graph representing a 
-Markov random field using multidimensional dynamic programming.
-Mathematically, we can represent the probability of a query sequence 
-$x_{1}..x_{n}$ given a Markov random field with an additional term in the
-Viterbi relations.
-Specifically, each term $V_{j}^{\prime M}(i)$ becomes
-$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log Pr(x_{i} | x_{\pi(j)})$, where
-$x_{\pi(j)}$ is the amino acid in the query sequence that will be placed
-in the beta-strand position paired with position $j$.
-This nonlocal dependency prevents the problem from exhibiting optimal substructure,
-preventing dynamic programming from solving the problem quickly.
-SMURF's 
-computational complexity quickly exploded with complex protein structures, 
-while SMURFLite limited its computational complexity by also limiting the 
-complexity of protein structure it would understand.
-The algorithm underlying 
-MRFy grew out of an understanding of these limitations.
+A~mutation in a paired beta strand may break the pairing, in which
+ case the mutated protein will not fold properly and is unlikely to
+ survive natural selection.
+But a mutation in a paired beta strand \emph{can} survive if it is
+ accompanied by a compensatory mutation in the strand with which it is
+ paired. 
+The probability of finding amino acid $x_i$ in column~$j$ of an alignment may
+ therefore depend on the amino acid in the paired column
+ $\pairedwith j$.
+This nonlocal interaction changes
+Viterbi's equations:
+each term $V_{j}^{\prime M}(i)$ becomes
+$$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith j}).$$
+The distance between columns~$j$ and $\pairedwith j$ can be as small
+ as a few columns or as large as a few hundreds of columns.
 
 
-Rather than attempt to compute exactly the optimal parse, MRFy treats the beta 
-strands as ``beads'' which can be slid along a string.
-In this analogy, the 
-string is the sequence of amino acids of the query protein.
-A given placement 
-of these beads corresponds to an assignment of particular amino acid residues 
-being hydrogen bonded to other particular amino acid residues, and thus MRFy 
-computes a probability based on observed frequencies of residues hydrogen 
-bonding in beta strands~\cite{Cowen:2002p588}.
-In between these beta strands, the 
-Markov random field is in fact a traditional hidden Markov model, whose optimal 
-solution can be easily computed via the Viterbi algorithm.
-MRFy performs a 
-stochastic search to place these beta strands, based on an objective function 
-that combines the probability computed by the Viterbi algorithm with that 
-computed from the paired, hydrogen-bonded residues in the beta strands.
-If a 
-structure has many beta strands, then it also has many miniature hidden Markov 
-models which can be solved via the Viterbi algorithm.
+The approach currently taken in computational biology
+is~to model each pair of beta strands not with two hidden Markov
+models, 
+but with a pair of sequences of match states.
+Each of the subsequences \emph{between} paired beta strands is then
+modeled with an ordinary hidden Markov model.
+The~combined model, as shown in \figref{mrf}, is called a
+\textit{Markov random field}. 
+Because of nonlocal interactions between paired beta strands, 
+the likelihood-maximization for a Markov random field does not
+ exhibit optimal substructure, and dynamic
+ programming cannot solve it quickly \cite{Menke:2010ti,Daniels:2012}.
+The~purpose of MRFy is to explore new methods of \emph{approximating}
+maximum likelihood.
 
 
-\begin{figure}[h!] 
+\begin{figure}
 \ifpdfmadness
 \centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
 \else
 \centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.eps}} 
 \fi
-\caption{The directed graph representing the states of a MRFy Markov random 
-field finite state automaton.
-Shaded nodes represent beta-strand positions which have been fixed into match states, 
-while the dashed edges represent the long-range dependencies due to hydrogen 
-bonding.
-Note that in between the beta-strand regions are normal HMMs.}\label{mrf} \end{figure}
+In this Markov random field,
+each shaded node represents a beta-strand position.
+Nodes connected by dashed edges are hydrogen-bonded.
+
+\caption{A Markov random field with two beta-stand pairs}
+\label{mrf} 
+\end{figure}
 
 
-MRFy contains two distinct algorithms: the classical Viterbi 
-dynamic-programming algorithm for hidden Markov models, and a stochastic search 
-algorithm for placing beta-strand positions.
-This stochastic search algorithm 
-implements several search heuristics: random-mutation hill climbing, simulated 
+
+MRFy treats the beta 
+strands, which are build into the model,
+ as ``beads'' which can be slid along the query sequence to determine
+ a \emph{placement} of the beta strands.
+A~placement's probability is computed
+based on observed frequencies of paired amino acids in 
+hydrogen-bonded beta strands~\cite{Cowen:2002p588}.
+Given a placement, the maximum likelihood of any subsequence that appears
+\emph{between} two beta strands can be computed exactly and
+efficiently using Viterbi's algorithm.
+(The result of the exact computation is a probability that is
+\emph{conditioned} on the placement.)
+MRFy searches for placements stochastically,
+trying to maximize the product of these probabilities.
+We~are exploring several
+heuristics: random-mutation hill climbing, simulated 
 annealing, multistart simulated annealing, and a genetic algorithm.
+Our~exploration of these heuristics relies on higher-order functions.
 
-
-\subsection{Higher-order functions}
-
-Just as the Viterbi algorithm is one major component of MRFy, stochastic search 
-is the other.
-In designing MRFy, we did not know in advance what sort of 
-stochastic search technique would converge the fastest, or give us the best 
-alignments with the fastest performance.
-We decided to implement several 
-different search strategies so that we could experiment with all of them.
-We 
-found this to be easy and pleasant thanks to Haskell's support of higher order 
-functions.
 
 We wrote a basic search function in only twenty-two lines of code.
 The central logic of this search function is simply:
@@ -1212,5 +1185,17 @@ We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and N
 % The bibliography should be embedded for final submission.
 
 \bibliography{mrfy_experience_report}
+
+
+\vfill
+
+\begingroup
+\advance\leftskip by 0pt plus 10em
+\emph{The Haskell wave passes, and if you slide off the crest, you
+drown.}
+\endgroup
+
+
+
 
 \end{document}
