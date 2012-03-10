@@ -77,7 +77,16 @@
 \maketitle
 
 \begin{abstract}
-HELLO?  DRAFT OF AN ABSTRACT?
+In computational biology, the languages of choice for solving ad-hoc problems are high-level
+``scripting'' languages such as Python or domain-specific statistics languages such as R,
+while the language of choice for solving high-performance problems is C++.
+This dichotomy creates a difficulty when computational biologists wish to experiment with a
+variety of approaches to a problem, only some of which are likely to prove fruitful.
+This experience report details our use of Haskell in implementing a high-performance,
+computational biology application which is the first implementation of a particular
+novel algorithm for protein structure and function prediction. We discuss the highlights
+and difficulties of this project, as well as the potential improvements the Haskell
+community might make that would ease some of these difficulties.
 \end{abstract}
 
 % \category{CR-number}{subcategory}{third-level}
@@ -142,7 +151,7 @@ similar structure, which likely share similar function.
 Proteins that share structure and function are expected to be
 descended from a common ancestor---in biological terms, \emph{homologous}---and
 thus
-the problem of identifying proteins similar to a query sequence is called 
+the problem of identifying proteins similar to a \textit{query sequence} is called 
 \textit{homology detection}.
 
 
@@ -223,7 +232,7 @@ experimenting with variants of the algorithm.}
 
 \seclabel{viterbi}
 
-Homology-detection software most often used in one of two ways:
+Homology-detection software is most often used in one of two ways:
 to test a hypothesis about 
 the function of a single, newly discovered protein, or 
 to compare every protein in a genome against a library of known protein 
@@ -251,7 +260,9 @@ other proteins gained an amino acid in position~$j$.
 If~column~$j$ contains few gaps, 
 it~is considered a \emph{consensus column},
 and the few proteins with gaps probably lost amino acids via
-\emph{deletions}. 
+\emph{deletions}.\remark{NMD: Missing is the fact that all these models
+are directionless; they don't care whether something was gained or lost
+over time. Perhaps this doesn't matter.}
 If~column~$j$ contains \emph{mostly} gaps, 
 it~is considered a \emph{non-consensus column},
 and the few proteins without gaps probably gained amino acids via
@@ -439,7 +450,7 @@ a~widely used software package called HMMER (``hammer'').
 HMMER computes the optimal \textit{parse}, or 
 alignment, of a protein sequence onto the directed graph of the hidden Markov 
 model.
-A parse maps each amino acid of the sequence under test onto a state
+A parse maps each amino acid of the query sequence onto a state
 of the model; equivalently, a parse is a \textit{path} through the model.
 Each edge is weighted with a probability, and each emitting 
 state (match or insertion) maps each amino acid to a probability,
@@ -542,15 +553,15 @@ resembles the Viterbi equations above.
 The match equation is thus:
 \begin{verbatim}
 viterbi s n o
-  -- consume an observation AND a node
-  | s == mat = let trans t prev = 
-                   (score + tProb (n-1) t + (eProb n o), mat:path)
-                    where (score, path) = viterbi prev (n - 1) (o - 1)
-                in minimum $ [
-                    trans m_m mat,
-                    trans i_m ins,
-                    trans d_m del
-                    ]
+  | s == mat = 
+       let trans t prev = 
+        (scr + tProb (n-1) t + (eProb n o), mat:p)
+        where (scr, p) = viterbi prev (n-1) (o-1)
+       in minimum $ [
+           trans m_m mat,
+           trans i_m ins,
+           trans d_m del
+           ]
 \end{verbatim}
 % Similarly, the insertion equation is:
 % \begin{verbatim}                    
