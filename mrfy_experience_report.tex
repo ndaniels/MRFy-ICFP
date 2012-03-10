@@ -16,6 +16,7 @@
 \newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\alignwidth{\ensuremath R} % number of columns in an alignment
 
+\newcommand\naive{na\"\i ve}
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{listings}
@@ -554,10 +555,10 @@ algorithm
 which starts at the begin state,
 computes probabilites in nodes $1$~through~$\alignwidth$ in
 succession, and terminates at the end state.
-We~implemented this algorithm, storing the probabilities in an array.
+One of us implemented this algorithm, storing the probabilities in an array.
 \remark{Why is the number of dimensions 3 and not 2 (indices $i$, $j$,
 and what??) and why do we care?}
-The cost is
+The cost was
 $O(|N|\times|\alignwidth|)$;
 in our work, $\alignwidth$~and~$N$ range from several hundred to a few
 thousand.
@@ -573,16 +574,41 @@ thousand.
 %%  and because they are \textit{negative} logs, the problem transforms from 
 %%  maximization to minimization.
 
-\emph{[WHAT WAS UNSATISFACTORY ABOUT THE FIRST IMPLEMENTATION]}
-
-We next wrote a top-down dynamic-programming 
-version, which began with the last node of the model and the last observation, 
-and applied structural recursion down to the base cases involving the first 
-node or first observation (or both).
-The general case of this top-down, structurally recursive implementation closely
-resembles the Viterbi equations above.
-The match equation is thus:
+Another of us was curious to try to code Viterbi's equations
+directly as recursive functions.
+But like the classic recursive Fibonacci function, Viterbi's functions,
+when implemented \naive ly,
+perform extraordinarily badly.
+But just like the Fibonacci function, Viterbi's functions can be
+\emph{memoized}.
+To~show the memoized code, we have to confess to a small
+transformation of Viterbi's equations.
+The logarithms on the left of \figref{viterbi} are computed when the
+hidden Markov model is constructed, and the resulting numbers are
+stored in a file.
+Moreover, to make the file more pleasant to read, the logarithms are
+negated.
+(The logarithm of a probability is typically negative, and negating
+the logarithm eliminates hordes of minus signs from the file.)
+The negated log probability is called a \texttt{Score}.
+We~therefore implement a transformed version of Viterbi's equations,
+shown on the right-hand side of \figref{viterbi}, which minimize the
+negated log probability for each combination of node~$j$, amino
+acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{smallverbatim}
+viterbi :: State -> Int -> Int -> (Score, StatePath)
+viterbi Mat j i = ( eProb j i + minimum $ [ trans m_m Mat
+                                          , trans i_m Ins
+                                          , trans d_m Del 
+                                          ]
+                  , Mat : path )
+  where (prevV, path) = viterbi prev (j-1) (i-1)
+        trans t prev = prevV + tProb hmm (j-1) t
+\end{smallverbatim}
+ALTERNATE VERSION FOLLOWS
+\begin{smallverbatim}
+viterbi :: WHAT IS MY TYPE????
 viterbi s n o
   | s == mat = 
        let trans t prev = 
