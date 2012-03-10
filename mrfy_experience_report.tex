@@ -413,44 +413,46 @@ deletion state~$D$.
 
 
 \begin{figure*}
+\newcommand\vsum[2]{#2&{}+{}& #1}
+
 \def\goo{18pt}
 \def\gum{14pt}
 \[
 \begin{array}{l@{}c@{}l}
 V_{j}^{M}(i) &{}={}& \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-\begin{array}{l l}
-V_{j-1}^{M}(i - 1) + \log a_{M_{j-1}M_{j}}\\
-V_{j-1}^{I}(i - 1) + \log a_{I_{j-1}M_{j}}\\
-V_{j-1}^{D}(i - 1) + \log a_{D_{j-1}M_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j-1}^{M}(i - 1)} {\log a_{M_{j-1}M_{j}}}\\
+\vsum{V_{j-1}^{I}(i - 1)} {\log a_{I_{j-1}M_{j}}}\\
+\vsum{V_{j-1}^{D}(i - 1)} {\log a_{D_{j-1}M_{j}}}\\
 \end{array} \right.\\[\goo]
 V_{j}^{I}(i) &=& \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-\begin{array}{l l}
-V_{j}^{M}(i - 1) + \log a_{M_{j}I_{j}}\\
-V_{j}^{I}(i - 1) + \log a_{I_{j}I_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j}^{M}(i - 1)} {\log a_{M_{j}I_{j}}}\\
+\vsum{V_{j}^{I}(i - 1)} {\log a_{I_{j}I_{j}}}\\
 \end{array} \right.\\[\gum]
 V_{j}^{D}(i) &=& \max \left\{
-\begin{array}{l l}
-V_{j-1}^{M}(i) + \log a_{M_{j-1}D_{j}}\\
-V_{j-1}^{D}(i) + \log a_{D_{j-1}D_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j-1}^{M}(i)} {\log a_{M_{j-1}D_{j}}}\\
+\vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
 \end{array} \right.\\
 \end{array}
 \qquad
 \begin{array}{l@{}c@{}l}
 V_{j}^{\prime M}(i) &{}={}& e^{\prime}_{M_{j}}(x_{i}) + \min \left\{
-\begin{array}{l l}
-V_{j-1}^{\prime M}(i - 1) + a^{\prime}_{M_{j-1}M_{j}}\\
-V_{j-1}^{\prime I}(i - 1) + a^{\prime}_{I_{j-1}M_{j}}\\
-V_{j-1}^{\prime D}(i - 1) + a^{\prime}_{D_{j-1}M_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j-1}^{\prime M}(i - 1)} {a^{\prime}_{M_{j-1}M_{j}}}\\
+\vsum{V_{j-1}^{\prime I}(i - 1)} {a^{\prime}_{I_{j-1}M_{j}}}\\
+\vsum{V_{j-1}^{\prime D}(i - 1)} {a^{\prime}_{D_{j-1}M_{j}}}\\
 \end{array} \right.\\[\goo]
 V_{j}^{\prime I}(i) &=& e^{\prime}_{I_{j}}(x_{i}) + \min \left\{
-\begin{array}{l l}
-V_{j}^{\prime M}(i - 1) + a^{\prime}_{M_{j}I_{j}}\\
-V_{j}^{\prime I}(i - 1) + a^{\prime}_{I_{j}I_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j}^{\prime M}(i - 1)} {a^{\prime}_{M_{j}I_{j}}}\\
+\vsum{V_{j}^{\prime I}(i - 1)} {a^{\prime}_{I_{j}I_{j}}}\\
 \end{array} \right.\\[\gum]
 V_{j}^{\prime D}(i) &=& \min \left\{
-\begin{array}{l l}
-V_{j-1}^{\prime M}(i) + a^{\prime}_{M_{j-1}D_{j}}\\
-V_{j-1}^{\prime D}(i) + a^{\prime}_{D_{j-1}D_{j}}\\
+\begin{array}{l@{}c@{}l}
+\vsum{V_{j-1}^{\prime M}(i)} {a^{\prime}_{M_{j-1}D_{j}}}\\
+\vsum{V_{j-1}^{\prime D}(i)} {a^{\prime}_{D_{j-1}D_{j}}}\\
 \end{array} \right.\\[\gum]
 \multicolumn3{l}{%
 a'_{s} = - \log a_{s} 
@@ -606,6 +608,7 @@ but also the path of states which leads to that most likely outcome.
 Because the cases for all three states are so similar, 
 we~show only the code for the match state:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\smallverbatiminput{viterbi}
 \begin{smallverbatim}
 viterbi' :: State -> Int -> Int -> (Score, [State])
 viterbi' Mat j i = ( eProb j i + minimum $ [ trans m_m Mat
@@ -768,77 +771,75 @@ Given a placement, the maximum likelihood of any subsequence that appears
 efficiently using Viterbi's algorithm.
 (The result of the exact computation is a probability that is
 \emph{conditioned} on the placement.)
+The likelihood is computed by a function \texttt{score},
+which given a model and a {placement} returns the {placement}
+paired with a \emph{score}.
+A~score is a negated log probability, so lower scores are better.
+
 MRFy searches for placements stochastically,
-trying to maximize the product of these probabilities.
-We~are exploring several
-heuristics: random-mutation hill climbing, simulated 
+trying to minimize scores.
+We~are exploring several stochastic algorithms: random-mutation hill
+climbing, simulated  
 annealing, multistart simulated annealing, and a genetic algorithm.
-Our~exploration of these heuristics relies on higher-order functions.
+\remark{It would be pleasant to connect these to the functions below,
+but we probably lack room.}
+Our~exploration relies on higher-order functions.
 
-These various search heuristics differ in how they approach four subproblems:
-how they \textit{initialize} the search with a starting guess or guesses;
-how they \textit{mutate} a solution into a new one; how they decide whether
-to \textit{accept} a solution over a previous one; how they decide when to
-\textit{terminate} the search.
-For example, random-mutation hill climbing only accepts better guesses,
-while simulated annealing sometimes accepts worse guesses; a genetic algorithm
-combines ``parent'' guesses in its mutate function, while random-mutation
-hill climbing simply permutes a guess into a new one.
-
-\emph{[In scope: Parameters, [BetaStrand], QuerySequence]}
-
-1. Start with [PLacement]
-2. At significant expense, any Placement can be assigned a Score
-
-
- terminate determines when to finally stop the search. Examples might
- be running for a predetermined number of generations, or stopping
- when we've gone N generations without achieving more than E
- improvement in score
-
-
-We represent these various search heuristics as a \texttt{SearchStrategy}:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+MRFy's search works with a sequence of \emph{generations}.
+A~generation is a collection of scored \emph{placements}.
+We~pass the
+search function a \texttt{Scorer}, which is the result of partially
+applying \texttt{score} to the model.
+\smallverbatiminput{scoredecl}
+A~search algorithm is characterized by four functions, which are
+bundled into a record called \texttt{SearchStrategy}.
 \smallverbatiminput{strategy}
+In this record,
+\begin{itemize}
+\item
+Function \texttt{gen0} produces the first generation of placements.
+\item
+Function \texttt{nextGen} produces a new generation of placements from
+an existing generation.
+Because scoring a placement is expensive, 
+and some placements may persist from the old generation to the new
+generation, \texttt{nextGen} works with \emph{scored} placements, not
+bare placements.
+\item
+A~new generation produced by \texttt{nextGen} may not be any better
+than the generation it replaces.
+When it is first produced, the new generation is ``on trial.''
+The \texttt{accept} function decides whether to keep a new generation
+or to try \texttt{nextGen} again with a different seed.
+The \texttt{accept} considers the score of the best
+placement of the trial generation, along with the history of previous
+best scores.
+It~also considers the \texttt{Age} of the trial generation, which is
+the total number of 
+generations tried.
+\item
+Finally, the \texttt{quit} function decides when to stop the search.
+It~too considers the history of scores and the age of the current
+generation. 
+\end{itemize}
+This interface allows for considerable variation.
+For example, random-mutation hill climbing accepts only generations
+with better scores than their predecessors,
+while simulated annealing may accept a generation with a worse score.
+A~genetic algorithm uses \texttt{nextGen} to
+combine placements from the previous generation, while
+random-mutation
+hill climbing simply permutes a placement into a new one.
+The interface \texttt{quit} makes it easy
+to implement such termination criteria as a fixed number of generations
+or a limit of going $k$~generations without achieving more than $E$
+improvement in score. 
 
-This \texttt{SearchStrategy} is passed (as part of \texttt{SearchParameters})
-to our generic search function:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+We hope you find the code simple and straightforward:
 \smallverbatiminput{search}
 
-As one of the parameters to the top-level \texttt{search} function,
-we provide a \texttt{SearchStrategy} data type, which we use to 
-define specific search techniques.
-We require a \texttt{SearchStrategy} to 
-define four functions: \texttt{mutate}, \texttt{accept}, \texttt{terminate}, 
-and \texttt{initialize}; we use the Haskell module system to allow sharing of 
-some of these functions between different search strategies.
-For example, both 
-\textit{random mutation hill climb} and \textit{simulated annealing} use the 
-same initialize and mutate functions, but very different accept functions.
-In 
-all, we implemented four search strategies: \textit{random mutation hill 
-climb}, \textit{simulated annealing}, \textit{multistart simulated annealing}, 
-and \textit{genetic algorithm}.
-We found the implementation of the search 
-function and search strategies to be pleasant, and the resulting code to be 
-simple and elegant.
-In an imperative language with object orientation like Ruby 
-or Python, we likely would have used a class hierarchy to accomplish this.
-We 
-feel that this would have required more code, because object orientation is 
-meant for encapsulating data as well as functions on those data; here we only 
-wanted to encapsulate functions, as the data did not change.
 
 
-We note that \texttt{seed} in \texttt{search} comes from a monadic random 
-number generator in Main, but we wished for search itself to be pure at this 
-level.
-One advantage is that this allows for testing of the \texttt{search} 
-function with no randomness at all: if we pass in a known number as the seed, 
-behavior is entirely deterministic.
 
 
 

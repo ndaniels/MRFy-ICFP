@@ -1,10 +1,9 @@
-type Scorer = Placement -> Scored Placement
 type Age  = Int -- number of generations explored
 type Seed = Int
 data SearchStrategy = 
  SS { gen0    :: Seed -> [Placement]
     , nextGen :: Seed -> Scorer 
               -> [Scored Placement] -> [Scored Placement]
-    , accept  :: Seed -> [Scored Age] -> Age -> Bool
-    , quit    ::         [Scored Age] -> Age -> Bool
+    , accept  :: Seed -> [Score] -> Age -> Bool
+    , quit    ::         [Score] -> Age -> Bool
     }
