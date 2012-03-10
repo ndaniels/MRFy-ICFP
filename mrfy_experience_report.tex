@@ -35,6 +35,8 @@
 \usepackage{verbatim}
 
 \newenvironment{smallverbatim}{\par\small\verbatim}{\endverbatim}
+\newcommand\smallverbatiminput[1]{{\par\unskip\small\verbatiminput{#1}}}
+\newcommand\smallfuzzverbatiminput[2]{{\par\unskip\small\hfuzz=#1 \verbatiminput{#2}}}
 
 \renewcommand\ttdefault{aett}
 
@@ -783,52 +785,29 @@ while simulated annealing sometimes accepts worse guesses; a genetic algorithm
 combines ``parent'' guesses in its mutate function, while random-mutation
 hill climbing simply permutes a guess into a new one.
 
+\emph{[In scope: Parameters, [BetaStrand], QuerySequence]}
+
+1. Start with [PLacement]
+2. At significant expense, any Placement can be assigned a Score
+
+
+ terminate determines when to finally stop the search. Examples might
+ be running for a predetermined number of generations, or stopping
+ when we've gone N generations without achieving more than E
+ improvement in score
+
+
 We represent these various search heuristics as a \texttt{SearchStrategy}:
-\begin{verbatim}
-data SearchStrategy = 
-      SS { accept :: SearchParameters -> Seed -> History -> Age -> Bool
-         , terminate :: SearchParameters -> History -> Age -> Bool
-         , mutate :: SearchParameters -> Seed -> QuerySequence ->
-            Scorer -> [BetaStrand] -> [SearchSolution] ->
-            [SearchSolution]
-         , initialize :: SearchParameters -> Seed ->
-            QuerySequence -> [BetaStrand]-> [SearchGuess]
-         }
-type Scorer = QuerySequence -> [BetaStrand] -> SearchGuess -> SearchSolution
-\end{verbatim}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\smallverbatiminput{strategy}
+
 This \texttt{SearchStrategy} is passed (as part of \texttt{SearchParameters})
 to our generic search function:
-\begin{smallverbatim}
-data SearchParameters = SP { strategy :: SearchStrategy
-                           , generations :: Int
-                           }
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-search :: QuerySequence -> HMM -> [BetaStrand] -> SearchParameters -> [Seed] -> (SearchSolution, History)
-search query hmm betas searchP seeds = search' (tail seeds) initialGuessScore [] 0
-  where initialGuessScore = map (score hmm query betas) initialGuess
+\smallverbatiminput{search}
 
-        initialGuess = (initialize strat) hmm searchP (head seeds) query betas
-
-        strat = strategy searchP
-        search' :: [Seed] -> [SearchSolution] -> History -> Age -> (SearchSolution, History)
-        search' (s1:s2:seeds) oldPop hist age =
-          let newPop = mutate' oldPop
-              score = fst $ minimum newPop
-              newHist = (score, age) : hist
-            in if accept' newHist age then
-                  if terminate' newHist age then
-                    (minimum newPop, newHist)
-                  else
-                    search' seeds newPop newHist (age + 1)
-               else
-                  if terminate' hist age then
-                    (minimum oldPop, hist)
-                  else
-                    search' seeds oldPop hist (age + 1)
-            where mutate' = mutate strat searchP s1 query (score hmm) betas
-                  terminate' = terminate strat searchP
-                  accept' = accept strat searchP s2
-\end{smallverbatim}
 As one of the parameters to the top-level \texttt{search} function,
 we provide a \texttt{SearchStrategy} data type, which we use to 
 define specific search techniques.

@@ -1,0 +1,6 @@
+vpaper Mat j i = (eProb j i /+/ DL.minimum [ from Mat
+                                        , from Ins
+                                        , from Del
+                                        ]) `snoc` Mat
+  where from prev = tProb (edge prev Mat) (j-1) /+/
+                      viterbi' prev (j - 1) (i - 1)
