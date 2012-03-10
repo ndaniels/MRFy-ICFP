@@ -773,24 +773,61 @@ heuristics: random-mutation hill climbing, simulated
 annealing, multistart simulated annealing, and a genetic algorithm.
 Our~exploration of these heuristics relies on higher-order functions.
 
+These various search heuristics differ in how they approach four subproblems:
+how they \textit{initialize} the search with a starting guess or guesses;
+how they \textit{mutate} a solution into a new one; how they decide whether
+to \textit{accept} a solution over a previous one; how they decide when to
+\textit{terminate} the search.
+For example, random-mutation hill climbing only accepts better guesses,
+while simulated annealing sometimes accepts worse guesses; a genetic algorithm
+combines ``parent'' guesses in its mutate function, while random-mutation
+hill climbing simply permutes a guess into a new one.
 
-We wrote a basic search function in only twenty-two lines of code.
-The central logic of this search function is simply:
+We represent these various search heuristics as a \texttt{SearchStrategy}:
+\begin{verbatim}
+data SearchStrategy = 
+      SS { accept :: SearchParameters -> Seed -> History -> Age -> Bool
+         , terminate :: SearchParameters -> History -> Age -> Bool
+         , mutate :: SearchParameters -> Seed -> QuerySequence ->
+            Scorer -> [BetaStrand] -> [SearchSolution] ->
+            [SearchSolution]
+         , initialize :: SearchParameters -> Seed ->
+            QuerySequence -> [BetaStrand]-> [SearchGuess]
+         }
+type Scorer = QuerySequence -> [BetaStrand] -> SearchGuess -> SearchSolution
+\end{verbatim}
+This \texttt{SearchStrategy} is passed (as part of \texttt{SearchParameters})
+to our generic search function:
 \begin{smallverbatim}
-search' (s1:s2:seeds) oldPop hist age =
-  let newPop = mutate oldPop
-      score = fst $ minimum newPop
-      newHist = score : hist
-    in if accept newHist age then
-          if terminate newHist age then
-            (minimum newPop, newHist)
-          else
-            search' seeds newPop newHist (age + 1)
-       else
-         if terminate hist age then
-           (minimum oldPop, hist)
-         else
-           search' seeds oldPop hist (age + 1)
+data SearchParameters = SP { strategy :: SearchStrategy
+                           , generations :: Int
+                           }
+
+search :: QuerySequence -> HMM -> [BetaStrand] -> SearchParameters -> [Seed] -> (SearchSolution, History)
+search query hmm betas searchP seeds = search' (tail seeds) initialGuessScore [] 0
+  where initialGuessScore = map (score hmm query betas) initialGuess
+
+        initialGuess = (initialize strat) hmm searchP (head seeds) query betas
+
+        strat = strategy searchP
+        search' :: [Seed] -> [SearchSolution] -> History -> Age -> (SearchSolution, History)
+        search' (s1:s2:seeds) oldPop hist age =
+          let newPop = mutate' oldPop
+              score = fst $ minimum newPop
+              newHist = (score, age) : hist
+            in if accept' newHist age then
+                  if terminate' newHist age then
+                    (minimum newPop, newHist)
+                  else
+                    search' seeds newPop newHist (age + 1)
+               else
+                  if terminate' hist age then
+                    (minimum oldPop, hist)
+                  else
+                    search' seeds oldPop hist (age + 1)
+            where mutate' = mutate strat searchP s1 query (score hmm) betas
+                  terminate' = terminate strat searchP
+                  accept' = accept strat searchP s2
 \end{smallverbatim}
 As one of the parameters to the top-level \texttt{search} function,
 we provide a \texttt{SearchStrategy} data type, which we use to 
