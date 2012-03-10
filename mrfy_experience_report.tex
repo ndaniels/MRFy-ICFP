@@ -404,121 +404,6 @@ deletion state~$D$.
 
 
 
-
-\subsection{Perspicuous Haskell}
-
-Computation of probabilities from hidden Markov models is well
-understood and is implemented in standard software packages.
-To~be able to use Haskell, we had to reimplement this standard
-algorithm.
-Haskell made it possible for us to write code that looks like the
-math,
-which made the code easy to write and gives us confidence that it is
-correct.
-
-
-We~begin with our representations.
-In~idiomatic Haskell, a query sequence is an immutable vector, and
-we might represent an individual amino acid~$x$
-using a value of algebraic data type, thus:
-\begin{smallverbatim}
-data Amino = Ala | Cys | Asp | Glu | Gly | ...
-\end{smallverbatim}
-But our primary goal was to get something working quickly with a
-legacy file format that represents each amino acid as a small integer.
-Our representations are therefore
-\begin{smallverbatim}
-type AA       = Int -- amino acid using HMMER coding
-type QuerySeq = Vector AA
-\end{smallverbatim}
-
-A~transition probability is simply a number.
-For accuracy in computation, we add log probabilities instead of
-multiplying probabilities.
-And to distinguish a transition probability from other numbers, we wrap it in
-the value constructor \texttt{TProb}:
-\begin{smallverbatim}
-type LogProb = Double
-data TProb  = TProb { logProbability :: LogProb }
-\end{smallverbatim}
-
-We group transition probabilities into 7-tuples.
-Each tuple corresponds to a ``node'' in the hidden Markov model
-(a~dashed ovel in \figref{plan7}), and to a column of the original
-alignment.
-As~noted above, 
-a match state may transition to any state in the successor node;
-an insertion state may transition to itself or to its successor match
-state;
-and
-a~deletion may transition to its successor match
-state or deletion state.
-\begin{smallverbatim}
-data TProbs = 
-     TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
-            , i_m :: TProb, i_i :: TProb
-            , d_m :: TProb, d_d :: TProb }
-\end{smallverbatim}
-
-The
-and a vector of emission probabilities for the match and insertion states.
-\begin{smallverbatim}
-type EProbs = V.Vector LogProb
-data HmmNode = HmmNode { nodeNum :: Int
-                       , matEmissions :: EProbs
-                       , insEmissions :: EProbs
-                       , transitions :: TProbs
-                       }
-\end{smallverbatim}
-
-
-
-
-A hidden Markov model like that shown in \figref{plan7} can be used to
-determine the likelihood that a new protein shares structure and
-evolutionary history with the proteins used to train the model.
-(The new protein's amino-acid sequence is known, but its structure and
-function are unknown.)
-Such a likelihood can be computed by
-a~widely used software package called HMMER (``hammer'').
-HMMER computes the optimal \textit{parse}, or 
-alignment, of a protein sequence onto the directed graph of the hidden Markov 
-model.
-A parse maps each amino acid of the query sequence onto a state
-of the model; equivalently, a parse is a \textit{path} through the model.
-Each edge is weighted with a probability, and each emitting 
-state (match or insertion) maps each amino acid to a probability,
-and the 
-probability of a given path is the product of these individual probabilities.
-The most likely path, and its associated probability, are computed 
-using an algorithm developed by~\citet{Viterbi:1967hq}.
-
-
-The Viterbi algorithm comprises a set of recurrence 
-relations (see Equation \ref{viterbi_eqn}) that seek to maximize the 
-probability of an observed sequence (in this case, of amino acid ``letters'') 
-being emitted by a particular finite-state automaton (the hidden Markov model).
-
-To be efficient, the Viterbi 
-algorithm relies on dynamic programming, or memoization, and the resulting 
-asymptotic complexity is $O(|M|\times|N|)$, when $M$ is the sequence of 
-distinct states (nodes in the automaton's graph) and $N$ is the sequence of 
-letters in the protein sequence.
-In our particular problem domain, both $M$ and 
-$N$ routinely contain several hundred to a few thousand elements.
-
-The textbook Viterbi recurrence relations refer to logs of probabilities, so 
-that the terms may be added rather than multiplying raw probabilities.
-For 
-reasons including floating point underflow, the HMMER software (with which we 
-maintain file format compatibility) stores all probabilities in a trained HMM 
-file as negative natural logs.
-Thus, the Viterbi recurrence relations are 
-simplified from the form in \ref{viterbi_eqn} to that in \ref{viterbi_log_eqn}, 
-and because they are \textit{negative} logs, the problem transforms from 
-maximization to minimization.
-
-
 \begin{figure*}
 \def\goo{18pt}
 \def\gum{14pt}
@@ -571,6 +456,118 @@ $V_j^{\prime M}(i) = - V_j^{M}(i)$}
 \end{figure*}
 
 
+
+\subsection{Perspicuous Haskell}
+
+Given a hidden Markov model, 
+an~established software package called HMMER (``hammer'') 
+can compute the probability
+that a new protein shares structure and
+evolutionary history with the proteins used to train the model.
+The computation finds the most likely path through the hidden Markov model.
+To~make best use of floating-point arithmetic, the software computes
+the \emph{logarithm} of the probability of each path, by summing
+the logs of the 
+probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
+(The logarithm function is monotonic, so the path that maximizes the
+log of the probability is the most likely path.)
+The~specification is shown on the left-hand side of \figref{viterbi}.
+The probability $V_j^M(i)$ \emph{[REPRESENTS WHAT EXACTLY?]}.
+
+To~be able to use Haskell, we had to reimplement this standard
+algorithm.
+Haskell made it possible for us to write code that looks like the
+math,
+which made the code easy to write and gives us confidence that it is
+correct.
+We~begin with our representations.
+
+In~idiomatic Haskell, 
+we might represent an individual amino acid~$x$
+using a value of algebraic data type, thus:
+\begin{smallverbatim}
+data Amino = Ala | Cys | Asp | Glu | Gly | ...
+\end{smallverbatim}
+But our primary goal was to get something working quickly with a
+legacy file format that represents each amino acid as a small integer.
+Our representation is therefore
+\begin{smallverbatim}
+type AA       = Int -- amino acid using HMMER coding
+\end{smallverbatim}
+Either way, a query sequence is (and should be) an immutable vector of
+amino acids.
+%type QuerySeq = Vector AA
+%\end{smallverbatim}
+
+A~transition probability is simply a number.
+For accuracy in computation, we add log probabilities instead of
+multiplying probabilities.
+And to distinguish a transition probability from other numbers, we wrap it in
+the value constructor \texttt{TProb}:
+\begin{smallverbatim}
+type LogProb = Double
+data TProb  = TProb { logProbability :: LogProb }
+\end{smallverbatim}
+
+We group transition probabilities into 7-tuples.
+Each tuple corresponds to a ``node'' in the hidden Markov model
+(a~dashed ovel in \figref{plan7}), and to a column of the original
+alignment.
+As~noted above, 
+a match state may transition to any state in the successor node;
+an insertion state may transition to itself or to its successor match
+state;
+and
+a~deletion may transition to its successor match
+state or deletion state.
+\begin{smallverbatim}
+data TProbs = 
+     TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
+            , i_m :: TProb, i_i :: TProb
+            , d_m :: TProb, d_d :: TProb }
+\end{smallverbatim}
+
+The
+and a vector of emission probabilities for the match and insertion states.
+\begin{smallverbatim}
+type EProbs = V.Vector LogProb
+data HmmNode = HmmNode { nodeNum :: Int
+                       , matEmissions :: EProbs
+                       , insEmissions :: EProbs
+                       , transitions :: TProbs
+                       }
+\end{smallverbatim}
+
+
+
+
+
+The Viterbi algorithm comprises a set of recurrence 
+relations (see Equation \ref{viterbi_eqn}) that seek to maximize the 
+probability of an observed sequence (in this case, of amino acid ``letters'') 
+being emitted by a particular finite-state automaton (the hidden Markov model).
+
+To be efficient, the Viterbi 
+algorithm relies on dynamic programming, or memoization, and the resulting 
+asymptotic complexity is $O(|M|\times|N|)$, when $M$ is the sequence of 
+distinct states (nodes in the automaton's graph) and $N$ is the sequence of 
+letters in the protein sequence.
+In our particular problem domain, both $M$ and 
+$N$ routinely contain several hundred to a few thousand elements.
+
+The textbook Viterbi recurrence relations refer to logs of probabilities, so 
+that the terms may be added rather than multiplying raw probabilities.
+For 
+reasons including floating point underflow, the HMMER software (with which we 
+maintain file format compatibility) stores all probabilities in a trained HMM 
+file as negative natural logs.
+Thus, the Viterbi recurrence relations are 
+simplified from the form in \ref{viterbi_eqn} to that in \ref{viterbi_log_eqn}, 
+and because they are \textit{negative} logs, the problem transforms from 
+maximization to minimization.
+
+
+
 We implemented the Viterbi algorithm in two distinct ways.
 We first wrote a 
 bottom-up dynamic-programming version, which began with the first node of the 
@@ -585,7 +582,7 @@ node or first observation (or both).
 The general case of this top-down, structurally recursive implementation closely
 resembles the Viterbi equations above.
 The match equation is thus:
-\begin{verbatim}
+\begin{smallverbatim}
 viterbi s n o
   | s == mat = 
        let trans t prev = 
@@ -596,7 +593,7 @@ viterbi s n o
            trans i_m ins,
            trans d_m del
            ]
-\end{verbatim}
+\end{smallverbatim}
 % Similarly, the insertion equation is:
 % \begin{verbatim}                    
 %   -- consume an observation but not a node
@@ -620,7 +617,7 @@ viterbi s n o
 %                     ]
 % \end{verbatim}
 
-In this second approach, we used the 
+In this second approach, we used the
 \texttt{Data.Memocombinators} library to provide the memoization container 
 (again, a three-dimensional array).
 We determined that the run-time 
