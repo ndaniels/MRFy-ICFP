@@ -466,7 +466,7 @@ V_j^{\prime M}(i) = - V_j^{M}(i)
 
 
 
-\subsection{Perspicuous Haskell}
+\subsection{Computing probabilities using perspicuous Haskell}
 
 Given a hidden Markov model, 
 an~established software package called HMMER (``hammer'') 
@@ -485,6 +485,9 @@ The probability $V_j^M(i)$ represents the probability of the most
 likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
 The probabilities $V_j^D(i)$ and $V_j^D(i)$ are similar.
+Equations like these can be found in more recent literature
+\cite{Durbin:1998wz,Eddy:1998ut}. 
+
 
 To~be able to use Haskell, we had to reimplement the standard
 algorithm for solving Viterbi's equations.
@@ -590,35 +593,25 @@ Moreover, to make the file more pleasant to read, the logarithms are
 negated.
 (The logarithm of a probability is typically negative, and negating
 the logarithm eliminates hordes of minus signs from the file.)
-The negated log probability is called a \texttt{Score}.
 We~therefore implement a transformed version of Viterbi's equations,
 shown on the right-hand side of \figref{viterbi}, which minimize the
 negated log probability for each combination of node~$j$, amino
 acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+Our implementation computes not only the minimum
+negated log probability, called a \texttt{Score},
+but also the path of states which leads to that most likely outcome. 
+Because the cases for all three states are so similar, 
+we~show only the code for the match state:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{smallverbatim}
-viterbi :: State -> Int -> Int -> (Score, StatePath)
-viterbi Mat j i = ( eProb j i + minimum $ [ trans m_m Mat
+viterbi' :: State -> Int -> Int -> (Score, [State])
+viterbi' Mat j i = ( eProb j i + minimum $ [ trans m_m Mat
                                           , trans i_m Ins
                                           , trans d_m Del 
                                           ]
                   , Mat : path )
   where (prevV, path) = viterbi prev (j-1) (i-1)
         trans t prev = prevV + tProb hmm (j-1) t
-\end{smallverbatim}
-ALTERNATE VERSION FOLLOWS
-\begin{smallverbatim}
-viterbi :: WHAT IS MY TYPE????
-viterbi s n o
-  | s == mat = 
-       let trans t prev = 
-        (scr + tProb (n-1) t + (eProb n o), mat:p)
-        where (scr, p) = viterbi prev (n-1) (o-1)
-       in minimum $ [
-           trans m_m mat,
-           trans i_m ins,
-           trans d_m del
-           ]
 \end{smallverbatim}
 % Similarly, the insertion equation is:
 % \begin{verbatim}                    
@@ -642,50 +635,64 @@ viterbi s n o
 %                     trans d_d del
 %                     ]
 % \end{verbatim}
+Programming the algorithm in this form was not only intellectually
+satisfying; keeping the code close to the math also helped us find
+bugs.
+The most memorable bug was that in one of our base cases, 
+we~mistakenly returned an empty path of states;
+the correct result was a singleton path containing the initial state.
+Very quickly after observing a missing state in the output, we were
+able to find the faulty case in the code.
 
-In this second approach, we used the
-\texttt{Data.Memocombinators} library to provide the memoization container 
-(again, a three-dimensional array).
-This combinator approach was easy to apply to the code after the fact:
+Whatever the attractions of the code above, in our work we also
+require high performance.
+To make the simple recursive code efficient, we used Luke Palmer's
+\texttt{Data.Memocombinators} package.
+The function \verb+viterbi'+ is unmemoized,
+and it makes recursive calls to \verb+viterbi+, which is memoized:
 \begin{smallverbatim}
-viterbi state node obs = 
-  Memo.memo3 (Memo.arrayRange (mat, end)) 
+viterbi state j i = 
+  Memo.memo3 (Memo.arrayRange (Mat, End)) 
              (Memo.arrayRange (0, numNodes))
              (Memo.arrayRange (0, seqlen)) 
-             viterbi' state node obs
+             viterbi' state j i
 \end{smallverbatim}
-We determined that the run-time 
-performances of both approaches were virtually indistinguishable, and we also 
-noted that the top-down version quite faithfully resembled the recurrence 
-relations found in a textbook~\cite{Durbin:1998wz} or the HMMER literature~\cite{Eddy:1998ut} 
-(see Equation \ref{viterbi_eqn}).
-We chose to keep the top-down version, which 
-later proved to be wise when we had to track down a bug in one of our base 
-cases.
-This bug was observed as a missing state in the alignment our program 
-displayed, and we quickly discovered that one of our base cases was missing 
-this state: it was returning an empty list as the base of the path, rather than 
-a list containing a single node.
-In this, we were grateful for the resemblance 
-between the mathematical description of the algorithm and the top-down 
-dynamic-programming approach in Haskell, which resulted in perspicuous code.
+The value
+\texttt{numNodes} represents~$\alignwidth$,
+and \texttt{seqlen} represents~$N$.\remark{I hope this is right. ---NR}
 
-Standard implementations of the Viterbi algorithm, such as in HMMER, spend much of their code
-managing the dynamic programming tables, as even when memoization libraries are available,
-they are rarely used.
-Furthermore, standard implementations in imperative languages typically avoid the natural
-recursive representations because of the associated costs in languages such as C++.
-The efficient machine code that GHC generates for recursive functions allowed us to write
-a program that faithfully reflected the mathematics, without paying great costs in run-time
-efficiency.
+This memoized recursive code performs just as well as the classic
+dynamic-programming code.
+And~the short fragment above is the \emph{only} part of the code
+devoted to improving performance.
+By contrast, standard implementations of the Viterbi algorithm, such as in HMMER,
+spend much of their code 
+managing dynamic-programming tables.
+Haskell enabled us write simple, performant code with little effort.
+%
+Because the memoized version so faithfully resembles the equations in
+\figref{viterbi}, we~retired the classic dynamic-programming version.
+
+
+\remark{NR doesn't think the bug story is that interesting.}
+
+%%  
+%%  
+%%  In this, we were grateful for the resemblance 
+%%  between the mathematical description of the algorithm and the top-down 
+%%  dynamic-programming approach in Haskell, which resulted in perspicuous code.
+%%  
+%%  
+
+
+\subsection{Solving new problems using perspicuous Haskell}
+
 
 %\subsection{MRFy Implementation}
 
 Our implementations of hidden Markov models and Viterbi's algorithm
-simply duplicate 
-functionality that is already implemented in the C++~package
-HMMER.
-These implementations form just one component of our new tool, MRFy.
+duplicate existing functionality.
+They form just one component of our new tool, MRFy.
 
 A hidden Markov model effectively uses local information about
 amino-acid sequences.
