@@ -21,6 +21,7 @@
 \newcommand\pairedwith[1]{{\pi(#1)}}
 
 \newcommand\naive{na\"\i ve}
+\usepackage{url}
 \usepackage{amsmath}
 \usepackage{array}
 \usepackage{listings}
@@ -1008,38 +1009,44 @@ Matt~\cite{Menke:2008wu} is used to create alignments like that shown
 in \figref{alignment}.
 It~comprises about 12,000 lines of~C++.
 The only external tool or library it uses is \texttt{zlib}.
-Its initial development took \emph{two years}.
+Its initial development took two years.
 \item
 SMURF
 \cite{Menke:2010ti} is used to detect homologous proteins in the presence
 of paired beta strands.
-It~comprises about 9,000 lines of~C++.
+It~comprises about 9,000 lines of~C++, of which about 1,000~lines are
+shared with~Matt.
+It~uses no external tools or libraries.
 Its initial development took a year and a half.
 \item
 MRFy is used to detect homologous proteins in the presence of paired
 beta strands.
 It~comprises about 1,200 lines of~Haskell
+It~uses several external tools and libraries, of which the most
+notable are PADS-Haskell, the \path{Data.MemoCombinators} library,
+the BioHaskell bioinformatics library, and the \path{Data.Vector} library.
 Its initial development took about three months.
 \remark{Others were mostly full-time work, but no need to distinguish.}
 \end{itemize}
+Like much research software, all three of these tools were written
+ in~haste.
+We~have experience modifying the older tools.
 
 
+
+We~modified Matt to use information about sequences as well as structure.
+The modification added 2,000 lines of code, and it calls
+external sequence aligners that we did not write.
+We~thought the modification would take three months, 
+but it took most of a~year.
 Matt uses such
 data structures such as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
-It relies on no external libraries beyond \texttt{zlib},
-but contains 1,000 lines of protein-structure code that ought
-to be in a library.
-
-We~modified Matt to use information about sequences as well as structure.
-We~thought the modification would take three months, 
-but it took most of a~year.
-This modification added 2,000 lines of code, and relies on
-system calls to external programs (sequence aligners) that we did not write.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was too clever for its own good: 
 nearly every change resulted in new segfaults.
-We~had hoped to add support for partial alignments,
+
+We~had hoped to extend Matt further, with support for partial alignments,
 which we~expected to require only 
 a cosmetic manipulation of the 
 output, but
@@ -1049,41 +1056,35 @@ and we had to give~up.
 We~believe we could write an equivalent tool in~Haskell,
 with most of Matt's performance, in at most nine months.
 
-Like many researchers, we~and our colleagues often write code hastily.
-Hastily written C++ code can get a job done, 
-but we have found it expensive in the long run.
-Our most painful experience was with an implementation of
-\textit{multidimensional}
-dynamic programming which was hastily added to the SMURF homology detector
-
-The implementation took 9,000~lines, including a single function of
-over 700 lines.
-When we added simulated evolution to this code, a relatively minor
-enhancement \cite{Daniels:2012}, 
+Our most painful experience was adding ``simulated evolution''
+to~SMURF \cite{Daniels:2012}. 
+Although simulated evolution represents a relatively minor
+enhancement,
 just understanding the existing code took several months.
-Part of SMURF's code includes the 1,000 lines of protein-structure code
-copied from the previous Matt software.
 
-For comparison, 
-building the first functioning version of MRFy took three months of part-time work.
-And we expect that higher-order functions will make extending MRFy
-easy.
-MRFy currently contains 1,200 lines of Haskell code, though it relies heavily on
-a number of libraries beyond the standard Prelude.
-We found that adapting our software to explore a new search heuristic was typically
-less than a day's work.
-There are two major research ideas we wish to add to MRFy eventually, one of which
-\remark{how much should I say about profiles and alpha helices? ---NMD}
-involves looking at another type of nonlocal dependency (\textit{alpha helices} in contrast
-to the current beta strands).
-We expect that thanks to algebraic data types and typeclasses, these
-enhancements will be at 
-most a few weeks of work; we do not believe these enhancements would
-even be feasible in SMURF. 
-Indeed, Daniels tried to add another of these enhancements to SMURF
-two years ago and gave up due 
-to the difficulty of the implementation.
-\remark{The above needs a lot of revision. It is a shitty first draft of a /P/. ---NMD}
+We~built MRFy quickly, and we expect that
+higher-order functions will MRFy easy to extend.
+Each new addition to MRFy's stochastic search has taken at most a day
+to implement.
+
+%
+% An Experience Report is about what you actually did, not what you
+% wish to do :-)
+%
+%%  There are two major research ideas we wish to add to MRFy eventually, one of which
+%%  \remark{how much should I say about profiles and alpha helices? ---NMD}
+%%  involves looking at another type of nonlocal dependency (\textit{alpha
+%%  helices} in contrast 
+%%  to the current beta strands).
+%%  We expect that thanks to algebraic data types and typeclasses, these
+%%  enhancements will be at 
+%%  most a few weeks of work; we do not believe these enhancements would
+%%  even be feasible in SMURF. 
+%%  Indeed, Daniels tried to add another of these enhancements to SMURF
+%%  two years ago and gave up due 
+%%  to the difficulty of the implementation.
+%%  \remark{The above needs a lot of revision. It is a shitty first
+%%  draft of a /P/. ---NMD} 
 
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
@@ -1103,8 +1104,8 @@ our hastily written Ruby and~C++.
 
 
 
-When we look beyond our own group to computational biology more
-broadly, our experiences with other software is better.
+Looking beyond our research group to computational biology more
+broadly, our experience with other software is better.
 Little of it is written in functional languages, 
 but much of the software shared by the community is excellent.
 MRFy's training component was derived from that of~HMMER,
