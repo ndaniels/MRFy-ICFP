@@ -1066,6 +1066,22 @@ to implement.
 %%  \remark{The above needs a lot of revision. It is a shitty first
 %%  draft of a /P/. ---NMD} 
 
+On the protein structures for which it was originally designed, SMURF can 
+compute the parse of a query sequence to a MRF based on those structures in 
+less than 10 seconds on a typical workstation.
+However, on somewhat more 
+complex protein structures, SMURF may take two to three minutes on the same 
+hardware. 
+On the most complex protein structures, SMURF exhausts all memory on 
+any system we have available, and must be killed. 
+In contrast, MRFy's runtime 
+for any of these protein structures is typically less than 30 seconds. 
+This 
+meets the performance goals we had, and means that MRFy is fast enough to scale 
+to whole-genome scans.
+
+
+
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
 which makes it hard to write very large functions.
