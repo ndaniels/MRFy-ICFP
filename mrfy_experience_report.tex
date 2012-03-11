@@ -847,15 +847,19 @@ than the generation it replaces.
 When it is first produced, the new generation is ``on trial.''
 The \texttt{accept} function decides whether to keep a new generation
 or to try \texttt{nextGen} again with a different seed.
-The \texttt{accept} considers the score of the best
-placement of the trial generation, along with the history of previous
-best scores.
-It~also considers the \texttt{Age} of the trial generation, which is
-the total number of 
-generations tried.
+The \texttt{accept} function considers a list of type
+\texttt{[Scored~Age]}.
+At~the head of this list is the score of the best
+placement of the trial generation, together with the \texttt{Age} of the trial
+generation, which is the total number of generations tried.
+The remaining elements of the list hold the history of scores and ages for
+previously \emph{accepted} generations.
+(The list omits generations that didn't survive the \texttt{accept} trial.)
+For convenience, the \texttt{accept} function also receives
+the \texttt{Age} of the trial generation as an additional parameter.
 \item
 Finally, the \texttt{quit} function decides when to stop the search.
-It~too considers the history of scores and the age of the current
+It~too considers the list of accepted generations and the age of the current
 generation. 
 \end{itemize}
 This interface provides ample leeway for experiments.
