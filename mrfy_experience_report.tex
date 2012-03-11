@@ -126,33 +126,7 @@ For other software, considerations of convenience, readability, and
 productivity are more important;
 this software is usually written in a high-level, dynamically-typed
 ``scripting'' or domain-specific language like
-Perl, Python, Ruby, SPSS, or~R.\remark{Don't forget audience.}
-In~this Experience Report, we show that computational biologists can
-successfully replace both these families of languages with Haskell:
-\begin{itemize}
-\item
-Our experimental Haskell programs are as easy to understand and change
- as the programs our group writes using scripting languages.
-\item
-The performance of our Haskell code is comparable to the performance
-of~C++.
-\item
-Although we have had to write a new implementation of a standard
-algorithm, the cost was low, and the connection between code and
-algorithm is unusually strong (\secref{viterbi}).
-\item
-We have experienced barriers to entry, of which the most salient has been
-the difficulty of understanding and tuning  the performance of Haskell
-programs. 
-We found the other barriers 
-relatively easy to overcome.
-\end{itemize}
-Our experience is based on MRFy (pronounced ``Murphy''), which
-implements a novel family of algorithms for finding remote homologs to 
-newly discovered proteins. 
-
-\emph{[Alternate introduction, trying to tie the points more closely
-to the content of the paper:\\
+Perl, Python, Ruby, SPSS, or~R.
 In~this paper, we report on an attempt to replace both these families
 of languages with Haskell: 
 \begin{itemize}
@@ -161,7 +135,8 @@ Although had to write a new implementation of a standard
 algorithm, the cost was low, and the connection between code and
 algorithm is unusually strong (\secref{viterbi}).
 The performance of our new implementation is comparable to the
-performance of~C++ (\secref{perf}).
+performance of~C++, and parallel performance was easy to achieve
+(\secref{perf}). 
 \item
 As expected, higher-order functions made it unusually easy to
 implement and experiment with a family of related algorithms
@@ -170,19 +145,21 @@ implement and experiment with a family of related algorithms
 Haskell is surrounded by a penumbra of libraries and tools that
 promise powerful abstractions.
 Some deliver very high leverage, but others are not ready for prime
-time (\secref{penumbra}).
-We~found it difficult to tell which is which in advance.
+time.
+We~found it difficult to tell which is which in advance (\secref{penumbra}).
 \item
 It is possible to use Haskell successfully for research even with a
-very modest background in functional programming. We found our Haskell
-implementation to be more flexible about adding new research ideas
-than our past C++ code (\secref{comparo}).
+very modest background in functional programming. 
+Modifying our group's C++ code to try out new research ideas has been
+difficult;
+trying new ideas in Haskell has been easy
+(\secref{comparo}).
 \item
 The only significant impediment that Haskell has presented to our
-research has been the difficulty of understanding and tuning the
-performance of Haskell programs.
+research has been the difficulty of understanding and improving the
+performance of Haskell programs (\secref{awkward-profiling}).
 \end{itemize}
-]}
+
 
 
 
@@ -284,7 +261,6 @@ experimenting with variants of the algorithm.}
 
 %% \subsection{The Viterbi Algorithm}
 
-\seclabel{viterbi}
 
 Homology-detection software is most often used in one of two ways:
 to test a hypothesis about 
@@ -492,6 +468,9 @@ V_j^{\prime M}(i) = - V_j^{M}(i)
 
 
 \subsection{Computing probabilities using perspicuous Haskell}
+
+\seclabel{viterbi}
+
 
 Given a hidden Markov model, 
 an~established software package called HMMER (``hammer'') 
@@ -902,6 +881,7 @@ Understandably, though, the complexities of representing ``crossover'' of parent
 placements required forty lines of code and much of a day of thought.
 
 \subsection{Performance}
+
 \seclabel{perf}
 
 In MRFy, the \texttt{score} function calls \texttt{viterbi} several
