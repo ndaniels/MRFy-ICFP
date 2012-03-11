@@ -776,39 +776,36 @@ Finally, the \texttt{quit} function decides when to stop the search.
 It~too considers the list of accepted generations and the age of the current
 generation. 
 \end{itemize}
-This interface provides ample leeway for experiments.
-For~example, random-mutation hill climbing accepts only generations
-with better scores than their predecessors,
-while simulated annealing may accept a generation with a worse score.
-A~genetic algorithm uses \texttt{nextGen} to
-combine placements from the previous generation, while
-random-mutation
-hill climbing simply permutes a placement into a new one.
-The \texttt{quit} interface makes it easy
-to implement such termination criteria as a fixed number of generations
-or a limit of going $k$~generations without achieving more than $E$
-improvement in score. 
-
-\seclabel{search}
-
+\seclabel{search}%
 We hope you find the search simple and straightforward:
 \smallfuzzverbatiminput{11pt}{search}
 
-
-We found it easy to write several stochastic search heuristics thanks to
-this framework.
-We first implemented random-mutation hill climbing in one day and roughly
-fifty lines of code.
-We next implemented simulated annealing, and thanks to Haskell's module system,
-we imported the \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} functions
-from the random-mutation hill climbing module.
-Indeed, we had only to write a new \texttt{accept} function, comprising only ten
-lines of code and half an hour of our time.
-We then implemented a genetic algorithm approach; this was still able to import
-existing \texttt{gen0} and \texttt{quit} functions, and its \texttt{accept}
+The \texttt{SearchStrategy} interface provides ample scope for
+experiments. 
+Random-mutation hill took fifty lines of code and one~day to
+implement.
+Simulated annealing reuses
+ \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} 
+from random-mutation hill climbing.
+Simulated annealing's  new \texttt{accept} function took ten
+lines of code and half an hour to implement.
+(Hill climbing accepts a generation only if it scores better than its
+predecessor;
+simulated annealing may accept a generation with a worse score.)
+Our genetic algorithm reuses the same
+\texttt{gen0} and \texttt{quit} functions, and its \texttt{accept}
 function was only a few lines of code.
-Understandably, though, the complexities of representing ``crossover'' of parent
-placements required forty lines of code and much of a day of thought.
+But~the recombination of parent
+placements in a new \texttt{nextGen} function took forty lines of code
+and a full day to implement.
+Our~current \texttt{quit} function simply runs for a fixed number of
+generations, but its interface will enable us to try other criteria,
+such as stopping once $k$~generations have passed without more than $E$
+improvement in score. 
+
+
+
+
 
 \subsection{Performance}
 
