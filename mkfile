@@ -36,4 +36,5 @@ viterbi.tex vscore.tex:D: ./xsource Smurf2/Viterbi.hs
 	lua ./xsource Smurf2/Viterbi.hs
 
 vfix.tex:D: viterbi.tex mkfile
-	sed "s/vpaper'/viterbi/;s/pathCons Mat/Mat:/" viterbi.tex > $target
+	sed "s/vpaper'/viterbi/;s/pathCons Mat/Mat:/;s/DL.minimum/minimum/" \
+	  viterbi.tex > $target
