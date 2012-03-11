@@ -699,20 +699,6 @@ MRFy explores new methods of \emph{approximating}
 maximum likelihood.
 
 
-\begin{figure}
-\ifpdfmadness
-\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
-\else
-\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.eps}} 
-\fi
-In this Markov random field,
-each shaded node represents a beta-strand position.
-Nodes connected by dashed edges are hydrogen-bonded.
-
-\caption{A Markov random field with two beta-stand pairs}
-\label{mrf} 
-\end{figure}
-
 
 
 MRFy treats the beta 
@@ -735,6 +721,22 @@ We~are exploring several stochastic algorithms: random-mutation hill
 climbing, simulated  
 annealing, multistart simulated annealing, and a genetic algorithm.
 Our~exploration relies on higher-order functions.
+
+
+\begin{figure}
+\ifpdfmadness
+\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
+\else
+\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.eps}} 
+\fi
+In this Markov random field,
+each shaded node represents a beta-strand position.
+Nodes connected by dashed edges are hydrogen-bonded.
+
+\caption{A Markov random field with two beta-strand pairs}
+\label{mrf} 
+\end{figure}
+
 
 MRFy's search computes a sequence of \emph{generations}.
 A~generation is a collection of scored {placements}.
