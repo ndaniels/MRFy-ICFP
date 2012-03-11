@@ -92,18 +92,17 @@
 %
 %
 \begin{abstract}
-The Experience Report series is
-a body of published, refereed, citable \emph{evidence} that functional
-programming really works---or descriptions of obstacles that prevent
-it from working.   
-In~this Experience Report, we show that for computational biologists,
+An Experience Report provides {evidence} that functional
+programming really works, or it describes obstacles that prevent
+functional programming from working.   
+Here, we show that for computational biologists,
 Haskell combines the flexibility and rapid prototyping of a scripting
 language with performance comparable to~C++.
-The Haskell language and libraries provide powerful abstractions, 
-but we couldn't always get them to work!
+The~Haskell language and libraries provide powerful abstractions, 
+but we couldn't always get them to work.
 Despite some speed bumps around profiling, debugging, and the
-uncertain status of any given package, we~found Haskell's ecosystem
-provided fine support for developing new algorithms in computational
+uncertain status of any given package, we~found that Haskell's ecosystem
+made it easy for us to develop new algorithms in computational
 biology.
 \end{abstract}
 
@@ -124,8 +123,8 @@ For some software, considerations of performance are paramount; this
 software is usually written in C~or~C++. 
 For other software, considerations of convenience, readability, and
 productivity are more important;
-this software is usually written in a high-level, dynamically-typed
-``scripting'' or domain-specific language like
+this software is usually written in a high-level
+or domain-specific language like
 Perl, Python, Ruby, SPSS, or~R.
 In~this paper, we report on an attempt to replace both these families
 of languages with Haskell: 
@@ -134,30 +133,30 @@ of languages with Haskell:
 Although had to write a new implementation of a standard
 algorithm, the cost was low, and the connection between code and
 algorithm is unusually strong (\secref{viterbi}).
-The performance of our new implementation is comparable to the
-performance of~C++, and parallel performance was easy to achieve
+Our new Haskell code performs competitively with~C++,
+and parallel performance was easy to achieve
 (\secref{perf}). 
 \item
-As expected, higher-order functions made it unusually easy to
+Higher-order functions made it unusually easy to
 implement and experiment with a family of related algorithms
 (\secref{hofs}).
 \item
-Haskell is surrounded by a penumbra of libraries and tools that
-promise powerful abstractions.
-Some deliver very high leverage, but others are not ready for prime
-time.
-We~found it difficult to tell which is which in advance (\secref{penumbra}).
+The only significant impediment that Haskell presented to our
+research was the difficulty of understanding and improving the
+performance of Haskell programs (\secref{awkward-profiling}).
 \item
-It is possible to use Haskell successfully for research even with a
-very modest background in functional programming. 
-Modifying our group's C++ code to try out new research ideas has been
+We~used Haskell successfully even though we are computational
+biologists with little background in functional programming.
+Modifying our group's C++ code to try new research ideas has been
 difficult;
 trying new ideas in Haskell has been easy
 (\secref{comparo}).
 \item
-The only significant impediment that Haskell has presented to our
-research has been the difficulty of understanding and improving the
-performance of Haskell programs (\secref{awkward-profiling}).
+The Haskell language is surrounded by a penumbra of libraries and tools that
+promise powerful abstractions.
+Some deliver very high leverage, but others are not ready for prime
+time.
+We~found the two families difficult to distinguish in advance (\secref{penumbra}).
 \end{itemize}
 
 
@@ -167,11 +166,10 @@ performance of Haskell programs (\secref{awkward-profiling}).
 
 Proteins are cellular machinery. They interact with one another and with other 
 molecules to carry out the functions of living cells: metabolism, regulation, 
-signalling, and more.
+signalling, and so on.
 A~protein's function is determined by its structure, 
 and its structure is determined by the sequence of amino acids that
 form the protein.
-\remark{Lost: there are only 20-odd amino acids}
 The amino-acid sequence is ultimately determined by a sequence of
 nucleic acids in DNA, which we call a gene.
 Given a genetic sequence, biologists wish to know the cellular
@@ -189,7 +187,7 @@ the problem of identifying proteins similar to a \textit{query sequence} is call
 
 
 Computational biologists detect homologies by building 
-algorithms which, given a \emph{query sequence} of amino acids,
+algorithms which, given a {query sequence} of amino acids,
 find known proteins of similar structure.
 When the similar proteins are formed from amino-acid sequences that
 are not too different from the query sequence, the homology can be
@@ -199,7 +197,8 @@ a family of algorithms called
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
-Our~research contribution---the MRFy algorithm---can detect homologies
+Our~research contribution---a software tool called MRFy (pronounced
+``Murphy'')---can detect homologies 
 in amino-acid sequences that are only distantly related.
 %
 %We will explain an 
@@ -207,59 +206,20 @@ in amino-acid sequences that are only distantly related.
 %explain MRFy, our novel approach for detecting more distantly related sequences 
 %for proteins that share similar structure and function.
 %
-To~enable you to understand our experience with Haskell,
-we~sketch not only the MRFy algorithm (\secref{mrfy})
-but also one of the older hidden-Markov algorithms (\secref{viterbi}),
-which is incorporated into~MRFy.
 
-\remark{LOST: We conclude that implementations of mathematically-intensive 
-algorithms such as these lend themselves to the Haskell language, particularly 
-when the programmer needs a flexible implementation that simplifies 
-experimenting with variants of the algorithm.}
+%
+% I hope the new intro renders these two sentences unnecessary. ---NR
+%
+%
+%%  
+%%  To~enable you to understand our experience with Haskell,
+%%  we~sketch not only the MRFy algorithm (\secref{mrfy})
+%%  but also one of the older hidden-Markov algorithms (\secref{viterbi}),
+%%  which is incorporated into~MRFy.
 
-
-% As a brief refresher in the standard dogma of genetics, recall that genes 
-% (strands of deoxyribonucleic acid (DNA), which are sequences of the nucleotides 
-% adenosine, cytosine, guanine, and thymine, represented by the letters A, C, G, 
-% and T) are transcribed into ribonucleic acid (RNA). Some RNA is then translated 
-% into the 20 naturally-occuring amino acids, which form peptide chains -- 
-% proteins -- which fold into complex structures in the cell. These proteins are 
-% cellular machinery, performing the varied functions an organism needs to 
-% survive. 
-
-% However, determining what newly sequenced genes actually do -- when they become 
-% proteins, what structures those proteins fold into, and what functions they 
-% perform -- has not kept pace. Determining the atomic coordinates of a newly 
-% discovered protein may require as much as two graduate-student-years in a lab! 
-% Fortunately, determining the full structure of a protein is not always 
-% necessary. Often, we can identify well-known proteins of similar sequence or 
-% structure to a new protein, and thus make educated guesses as to the structure 
-% and function of the new protein.
-% 
-% The problem of taking a newly found protein sequence about which only the 
-% sequence is known, and determining what existing proteins of known structure 
-% and function most closely resemble that new protein, is known as homology 
-% detection. When proteins of similar sequence can be found, this problem is 
-% largely solved. To solve the homology detection problem, computational 
-% biologists have developed fast, approximate methods for determining the 
-% structure and function of proteins based on their sequence. The most popular 
-% software for homology detection is called HMMER, which uses a hidden Markov 
-% model to capture evolutionary change.
-
-% However, when there are no known proteins of similar sequence, only 
-% evolutionarily distant proteins that may share similar structure, this problem 
-% is called remote homology detection. Hidden Markov model approaches begin to 
-% fail as sequence similarity falls off. Recently, Markov random field 
-% approaches, which capture non-local interactions in the protein structure, have 
-% been shown to perform well. However, these approaches face the challenge of 
-% increased computational complexity; the SMURF program exhibits exponential time 
-% complexity, while SMURFLite (work by one of the authors) bounds the exponent by 
-% simplifying the Markov random field's dependency graph. MRFy is a 
-% stochastic search approach to Markov random fields.
 
 \section{The Software}
 
-%% \subsection{The Viterbi Algorithm}
 
 
 Homology-detection software is most often used in one of two ways:
