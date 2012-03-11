@@ -628,11 +628,24 @@ with scores, so we have defined a small abstraction:
 \smallverbatiminput{vscore}
 We~made \texttt{Scored} an instance of~\texttt{Ord} and of
 \texttt{Functor}.
+Think of a value of type \texttt{Scored~a} as a container holding
+ an~``\texttt a'' with a number written on the side.
+The \texttt{/+/} function adds to the number without touching the
+ container.
+Function 
+\begin{smallverbatim}
+fmap :: (a -> b) -> (Scored a -> Scored b)
+\end{smallverbatim}
+applies a function to what's inside the container, without touching
+the number.
+And containers are ordered purely by number, so applying
+\texttt{minimum} to a list of scored things chooses the thing with the
+smallest (and therefore best) score.
 
 Given the \texttt{Scored} abstraction, we can easily implement
-Viterbi's equations for a match state: 
-we~choose the best solution
-from among the three predecessor states; 
+Viterbi's equations for a match state.
+We~choose the best solution
+from among the three predecessor states;
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
 encountered up to this point:
