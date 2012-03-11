@@ -998,11 +998,29 @@ We~can't wait.
 
 When performance has mattered, the members of our group, like other
 computational biologists, have used~C++.
-Our~prior experience therefore includes building,
-maintaining, and extending research tools written in~C++.
-One~such tool is~Matt,
-a~structural protein aligner~\cite{Menke:2008wu}.
-Matt comprises about 12,000 lines of~C++.
+We~compare our experience with three tools:
+\begin{itemize}
+\item
+Matt~\cite{Menke:2008wu} is used to create alignments like that shown
+in \figref{alignment}.
+It~comprises about 12,000 lines of~C++.
+The only external tool or library it uses is \texttt{zlib}.
+Its initial development took \emph{[HOW LONG?]}.
+\item
+SMURF
+\cite{Menke:2010ti} is used \emph{[FOR WHAT?]}
+It~comprises about \emph{[HOW MANY?]} lines of~C++.
+Its initial development took \emph{[HOW LONG?]}.
+\item
+MRFy is used to detect homologous proteins in the presence of paired
+beta strands.
+It~comprises about \emph{[HOW MANY?]} lines of~Haskell
+Its initial development took about three months of part-time work.
+\remark{Loss of parallel structure---do we distinguish part time from
+full time?}
+\end{itemize}
+
+
 It uses such
 data structures such as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
@@ -1034,7 +1052,7 @@ but we have found it expensive in the long run.
 Our most painful experience was with an implementation of
 \textit{multidimensional}
 dynamic programming which was hastily added to the SMURF homology detector
-\cite{Menke:2010ti}.
+
 The implementation took 9,000~lines, including a single function of
 over 700 lines.
 When we added simulated evolution to this code, a relatively minor
@@ -1055,9 +1073,12 @@ There are two major research ideas we wish to add to MRFy eventually, one of whi
 \remark{how much should I say about profiles and alpha helices? ---NMD}
 involves looking at another type of nonlocal dependency (\textit{alpha helices} in contrast
 to the current beta strands).
-We expect that thanks to algebraic data types and typeclasses, these enhancements will be at
-most a few weeks of work; we do not believe these enhancements would even be feasible in SMURF.
-Indeed, Daniels tried to add another of these enhancements to SMURF two years ago and gave up due
+We expect that thanks to algebraic data types and typeclasses, these
+enhancements will be at 
+most a few weeks of work; we do not believe these enhancements would
+even be feasible in SMURF. 
+Indeed, Daniels tried to add another of these enhancements to SMURF
+two years ago and gave up due 
 to the difficulty of the implementation.
 \remark{The above needs a lot of revision. It is a shitty first draft of a /P/. ---NMD}
 
