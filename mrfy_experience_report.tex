@@ -4,6 +4,8 @@
 
 \newif\ifnotcutting \notcuttingfalse % set if not cutting down to size
 
+\newif\iffinaldraft \finaldraftfalse % true if it's the final version
+
 
  \newif\ifpdfmadness
 
@@ -1177,6 +1179,7 @@ Larsen, and Nathan Ricci.
 
 \bibliography{mrfy_experience_report}
 
+\iffinaldraft
 
 
 \vfill
@@ -1189,37 +1192,38 @@ drown.}
 \par
 \endgroup
 
+\fi
 
-\break
-
-
-\appendix
-
-
-\section{Orphaned text}
-
-
-In~our C++ work, the faults we encounter most frequently are
-segmentation faults, 
-memory errors caused by pointer arithmetic or uninitialized 
-memory,
-and heap exhaustion.
-In~our Haskell work, the faults we encounter most frequently are
-type errors and bounds-checking errors in array and vector accesses.
-While we have found the bounds-checking errors difficult to debug,
-they are less difficult than memory errors.
-
-
-Implementing the equation in this form was not only intellectually
-satisfying; it~also helped us find
-bugs.
-The most memorable bug was that in one of our base cases, 
-we~mistakenly returned an empty path of states;
-the correct result was a singleton path containing the initial state.
-Very quickly after observing a missing state in the output, we were
-able to find the faulty case in the code.
-
-
-
+%%%%    \break
+%%%%    
+%%%%    
+%%%%    \appendix
+%%%%    
+%%%%    
+%%%%    \section{Orphaned text}
+%%%%    
+%%%%    
+%%%%    In~our C++ work, the faults we encounter most frequently are
+%%%%    segmentation faults, 
+%%%%    memory errors caused by pointer arithmetic or uninitialized 
+%%%%    memory,
+%%%%    and heap exhaustion.
+%%%%    In~our Haskell work, the faults we encounter most frequently are
+%%%%    type errors and bounds-checking errors in array and vector accesses.
+%%%%    While we have found the bounds-checking errors difficult to debug,
+%%%%    they are less difficult than memory errors.
+%%%%    
+%%%%    
+%%%%    Implementing the equation in this form was not only intellectually
+%%%%    satisfying; it~also helped us find
+%%%%    bugs.
+%%%%    The most memorable bug was that in one of our base cases, 
+%%%%    we~mistakenly returned an empty path of states;
+%%%%    the correct result was a singleton path containing the initial state.
+%%%%    Very quickly after observing a missing state in the output, we were
+%%%%    able to find the faulty case in the code.
+%%%%    
+%%%%    
+%%%%    
 
 \end{document}
