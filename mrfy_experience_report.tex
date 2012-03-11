@@ -882,8 +882,21 @@ improvement in score.
 
 We hope you find the search code simple and straightforward:
 \smallfuzzverbatiminput{11pt}{search}
-\emph{[MENTION AND QUANTIFY NOAH'S SUCCESSES IN ADDING NEW HEURISTICS.]}
 
+We found it easy to write several stochastic search heuristics thanks to
+this framework.
+We first implemented random-mutation hill climbing in one day and roughly
+fifty lines of code.
+We next implemented simulated annealing, and thanks to Haskell's module system,
+we imported the \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} functions
+from the random-mutation hill climbing module.
+Indeed, we had only to write a new \texttt{accept} function, comprising only ten
+lines of code and half an hour of our time.
+We then implemented a genetic algorithm approach; this was still able to import
+existing \texttt{gen0} and \texttt{quit} functions, and its \texttt{accept}
+function was only a few lines of code.
+Understandably, though, the complexities of representing ``crossover'' of parent
+placements required forty lines of code and much of a day of thought.
 
 \subsection{Performance}
 
@@ -968,7 +981,10 @@ littered our code,
 even when moved from our main code to wrapper functions.
 We~weren't aware of the backtrace feature of GHC's profiler,
 and even after we discovered that feature, the results weren't good enough.
-\emph{[WHY WASN'T THE BACKTRACE FEATURE GOOD ENOUGH?]}
+Specifically, because the backtrace feature required profiling mode,
+it could only be used in very small test cases that didn't always trigger
+run-time errors, and one of us was unable to overcome difficulties in building
+various libraries in profiling mode.
 In~August 2011, 
 Lennart Augustsson said that the biggest advantage of Strict
 Haskell is getting a stack trace on error,
@@ -990,10 +1006,15 @@ Matt comprises about 12,000 lines of~C++.
 It uses such
 data structures such as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
+It relies on no external libraries beyond \texttt{zlib},
+but contains 1,000 lines of protein-structure code that ought
+to be in a library.
 
 We~modified Matt to use information about sequences as well as structure.
 We~thought the modification would take three months, 
 but it took most of a~year.
+This modification added 2,000 lines of code, and relies on
+system calls to external programs (sequence aligners) that we did not write.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was too clever for its own good: 
 nearly every change resulted in new segfaults.
@@ -1014,17 +1035,31 @@ Our most painful experience was with an implementation of
 \textit{multidimensional}
 dynamic programming which was hastily added to the SMURF homology detector
 \cite{Menke:2010ti}.
-The implementation took 12,000~lines, including a single function of
+The implementation took 9,000~lines, including a single function of
 over 700 lines.
 When we added simulated evolution to this code, a relatively minor
 enhancement \cite{Daniels:2012}, 
 just understanding the existing code took several months.
+Part of SMURF's code includes the 1,000 lines of protein-structure code
+copied from the previous Matt software.
+
 For comparison, 
 building the first functioning version of MRFy took three months of part-time work.
 And we expect that higher-order functions will make extending MRFy
 easy.
-\remark{I'm thinking this \P\ is not so strong. ---NR}
-
+MRFy currently contains 1,200 lines of Haskell code, though it relies heavily on
+a number of libraries beyond the standard Prelude.
+We found that adapting our software to explore a new search heuristic was typically
+less than a day's work.
+There are two major research ideas we wish to add to MRFy eventually, one of which
+\remark{how much should I say about profiles and alpha helices? ---NMD}
+involves looking at another type of nonlocal dependency (\textit{alpha helices} in contrast
+to the current beta strands).
+We expect that thanks to algebraic data types and typeclasses, these enhancements will be at
+most a few weeks of work; we do not believe these enhancements would even be feasible in SMURF.
+Indeed, Daniels tried to add another of these enhancements to SMURF two years ago and gave up due
+to the difficulty of the implementation.
+\remark{The above needs a lot of revision. It is a shitty first draft of a /P/. ---NMD}
 
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
