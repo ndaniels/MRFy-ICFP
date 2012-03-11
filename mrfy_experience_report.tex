@@ -608,36 +608,23 @@ from among the three predecessor states;
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
 encountered up to this point:
-\remark{TODO: 
-(1)~Call the inner function \texttt{vee}
-(2)~Use \texttt{minimum (map from [Mat, Ins, Del])}
-(3)~Explain the recursive call
-}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \smallverbatiminput{vfix}
 Functions \texttt{tProb} and \texttt{edge} combine to select the
 appropriate transition score (one of the $a'$~values).
-Implementing the equation in this form was not only intellectually
-satisfying; it~also helped us find
-bugs.\remark{NR doesn't think the bug story is that interesting.}
-The most memorable bug was that in one of our base cases, 
-we~mistakenly returned an empty path of states;
-the correct result was a singleton path containing the initial state.
-Very quickly after observing a missing state in the output, we were
-able to find the faulty case in the code.
-
-Whatever the attractions of the code above, our work also
-requires high performance.
-To make the simple recursive code efficient, we used Luke Palmer's
-\texttt{Data.Memocombinators} package.
-The function \verb+viterbi'+ is unmemoized,
-and it makes recursive calls to \verb+viterbi+, which is memoized:
+Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+,
+so
+the call to~\verb+vee''+ produces the same result as a recursive call
+to~\verb+vee'+, but faster:
 \smallverbatiminput{memo}
+Functions \texttt{Memo.memo3} and \texttt{Memo.arrayRange} come from
+Luke Palmer's
+\path{Data.Memocombinators} package.
 The value
 \texttt{numNodes} represents~$\alignwidth$,
-and \texttt{seqlen} represents~$N$.\remark{I hope this is right. ---NR}
+and \texttt{seqlen} represents~$N$.
 
-This memoized recursive code performs just as well as the classic
+Memoization makes \verb+vee'+ perform just as well as the classic
 dynamic-programming code.
 And~the call to \texttt{Memo.memo3} is the \emph{only} part of the code
 devoted to improving performance.
@@ -804,8 +791,9 @@ improvement in score.
 
 \seclabel{search}
 
-We hope you find the search code simple and straightforward:
+We hope you find the search simple and straightforward:
 \smallfuzzverbatiminput{11pt}{search}
+
 
 We found it easy to write several stochastic search heuristics thanks to
 this framework.
@@ -1221,6 +1209,14 @@ While we have found the bounds-checking errors difficult to debug,
 they are less difficult than memory errors.
 
 
+Implementing the equation in this form was not only intellectually
+satisfying; it~also helped us find
+bugs.
+The most memorable bug was that in one of our base cases, 
+we~mistakenly returned an empty path of states;
+the correct result was a singleton path containing the initial state.
+Very quickly after observing a missing state in the output, we were
+able to find the faulty case in the code.
 
 
 
