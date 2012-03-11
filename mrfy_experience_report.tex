@@ -665,16 +665,14 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{hofs}
 \seclabel{mrfy}
 
-%\subsection{MRFy Implementation}
-
 Our implementations of hidden Markov models and Viterbi's algorithm
 duplicate existing functionality.
-They form just one component of our new tool, MRFy.
+In~MRFy, they are used to implement new functionality.
 
 A hidden Markov model uses local information about
 amino-acid sequences.
-But real proteins are three-dimensional,
-and when a real protein folds, groups of amino acids
+But when a real protein folds in three dimensions, 
+groups of amino acids 
 that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
 We~are studying adjacent groups called \emph{beta strands}, which
@@ -685,9 +683,9 @@ A~mutation in a paired beta strand may break the pairing, in which
  case the mutated protein will not fold properly and is unlikely to
  survive natural selection.
 But a mutation in a paired beta strand \emph{can} survive if it is
- accompanied by a compensatory mutation in the strand with which it is
+ accompanied by a \emph{compensatory} mutation in the strand with which it is
  paired. 
-The probability of finding amino acid $x_i$ in column~$j$ of an alignment may
+The probability of finding amino acid~$x_i$ in column~$j$ of an alignment may
  therefore depend on the amino acid in the paired column
  $\pairedwith j$.
 This nonlocal interaction changes
@@ -704,13 +702,13 @@ models,
 but with a pair of sequences of match states.
 Each of the subsequences \emph{between} paired beta strands is then
 modeled with an ordinary hidden Markov model.
-The~combined model, as shown in \figref{mrf}, is called a
+The~combined model, an~example of which is shown in \figref{mrf}, is called a
 \textit{Markov random field}. 
 Because of nonlocal interactions between paired beta strands, 
-the likelihood-maximization for a Markov random field does not
+the likelihood-maximization problem for a Markov random field does not
  exhibit optimal substructure, and dynamic
  programming cannot solve it quickly \cite{Menke:2010ti,Daniels:2012}.
-The~purpose of MRFy is to explore new methods of \emph{approximating}
+MRFy explores new methods of \emph{approximating}
 maximum likelihood.
 
 
@@ -731,9 +729,10 @@ Nodes connected by dashed edges are hydrogen-bonded.
 
 
 MRFy treats the beta 
-strands, which are build into the model,
- as ``beads'' which can be slid along the query sequence to determine
- a \emph{placement} of the beta strands.
+strands, which are built into the model,
+ as ``beads'' which can be slid along the query sequence.
+A~set of positions of beta strands is called
+ a \emph{placement}.
 A~placement's probability is computed
 based on observed frequencies of paired amino acids in 
 hydrogen-bonded beta strands~\cite{Cowen:2002p588}.
@@ -742,27 +741,20 @@ Given a placement, the maximum likelihood of any subsequence that appears
 efficiently using Viterbi's algorithm.
 (The result of the exact computation is a probability that is
 \emph{conditioned} on the placement.)
-The likelihood is computed by a function \texttt{score},
-which given a model and a {placement} returns the {placement}
-paired with a \emph{score}.
-A~score is a negated log probability, so lower scores are better.
 
 MRFy searches for placements stochastically,
 trying to minimize scores.
 We~are exploring several stochastic algorithms: random-mutation hill
 climbing, simulated  
 annealing, multistart simulated annealing, and a genetic algorithm.
-\remark{It would be pleasant to connect these to the functions below,
-but we probably lack room.}
 Our~exploration relies on higher-order functions.
 
-MRFy's search works with a sequence of \emph{generations}.
-A~generation is a collection of scored \emph{placements}.
+MRFy's search computes a sequence of \emph{generations}.
+A~generation is a collection of scored {placements}.
 We~pass the
-search function a \texttt{Scorer}, which is the result of partially
-applying \texttt{score} to the model.
+search function a \texttt{Scorer}, which runs Viterbi's algorithm.
 \smallverbatiminput{scoredecl}
-A~search algorithm is characterized by four functions, which are
+A~search heuristic is characterized by four functions, which are
 bundled into a record called \texttt{SearchStrategy}.
 \smallfuzzverbatiminput{2.3pt}{strategy}
 In this record,
@@ -777,7 +769,7 @@ and some placements may persist from the old generation to the new
 generation, \texttt{nextGen} works with \emph{scored} placements, not
 bare placements.
 \item
-A~new generation produced by \texttt{nextGen} may not be any better
+A~new generation produced by \texttt{nextGen} may be no better
 than the generation it replaces.
 When it is first produced, the new generation is ``on trial.''
 The \texttt{accept} function decides whether to keep a new generation
@@ -791,7 +783,7 @@ The remaining elements of the list hold the history of scores and ages for
 previously \emph{accepted} generations.
 (The list omits generations that didn't survive the \texttt{accept} trial.)
 For convenience, the \texttt{accept} function also receives
-the \texttt{Age} of the trial generation as an additional parameter.
+the \texttt{Age} of the trial generation.
 \item
 Finally, the \texttt{quit} function decides when to stop the search.
 It~too considers the list of accepted generations and the age of the current
@@ -805,7 +797,7 @@ A~genetic algorithm uses \texttt{nextGen} to
 combine placements from the previous generation, while
 random-mutation
 hill climbing simply permutes a placement into a new one.
-The interface \texttt{quit} makes it easy
+The \texttt{quit} interface makes it easy
 to implement such termination criteria as a fixed number of generations
 or a limit of going $k$~generations without achieving more than $E$
 improvement in score. 

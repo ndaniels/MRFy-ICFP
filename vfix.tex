@@ -1,4 +1,4 @@
-viterbi Mat j i = fmap (Mat:)
-  (eProb j i /+/ myminimum [from Mat, from Ins, from Del])
+vee' Mat j i = fmap (Mat:)
+  (eProb j i /+/ minimum (map from [Mat, Ins, Del]))
  where from prev = tProb (edge prev Mat) (j-1) /+/
-                               viterbi' prev (j-1) (i-1)
+                               vee'' prev (j-1) (i-1)
