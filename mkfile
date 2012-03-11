@@ -3,6 +3,8 @@ TGT=mrfy_experience_report
 all:V: $TGT.dvi $TGT.pdf
 dvi:V: $TGT.dvi
 pdf:V: $TGT.pdf
+bibtex:V:
+	bibtex $TGT
 
 DIAGRAMS=Plan7 alignment mrf_interleave_diagram
 
