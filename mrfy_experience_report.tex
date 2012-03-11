@@ -775,8 +775,10 @@ For convenience, the \texttt{accept} function also receives
 the \texttt{Age} of the trial generation.
 \item
 Finally, the \texttt{quit} function decides when to stop the search.
+\ifnotcutting
 It~too considers the list of accepted generations and the age of the current
 generation. 
+\fi
 \end{itemize}
 \seclabel{search}%
 We hope you find the search simple and straightforward:
@@ -784,27 +786,27 @@ We hope you find the search simple and straightforward:
 
 The \texttt{SearchStrategy} interface provides ample scope for
 experiments. 
-Random-mutation hill took fifty lines of code and one~day to
+Random-mutation hill climbing took fifty lines of code and one~day to
 implement.
-Simulated annealing reuses
- \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} 
-from random-mutation hill climbing.
+Simulated annealing reuses hill climbing's
+ \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} functions.
 Simulated annealing's  new \texttt{accept} function took ten
 lines of code and half an hour to implement.
 (Hill climbing accepts a generation only if it scores better than its
 predecessor;
-simulated annealing may accept a generation with a worse score.)
+simulated annealing may accept a generation that scores worse.)
 Our genetic algorithm reuses the same
 \texttt{gen0} and \texttt{quit} functions, and its \texttt{accept}
-function was only a few lines of code.
+function took only a few lines of code.
 But~the recombination of parent
-placements in a new \texttt{nextGen} function took forty lines of code
+placements in its \texttt{nextGen} function took forty lines of code
 and a full day to implement.
+\ifnotcutting
 Our~current \texttt{quit} function simply runs for a fixed number of
 generations, but its interface will enable us to try other criteria,
 such as stopping once $k$~generations have passed without more than $E$
 improvement in score. 
-
+\fi
 
 
 
