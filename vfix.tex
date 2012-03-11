@@ -1,4 +1,4 @@
-vpaper' Mat j i = fmap (pathCons Mat)
+viterbi Mat j i = fmap (Mat:)
   (eProb j i /+/ minimum [from Mat, from Ins, from Del]) 
  where from prev = tProb (edge prev Mat) (j-1) /+/
                                viterbi' prev (j-1) (i-1)

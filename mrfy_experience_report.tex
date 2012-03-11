@@ -358,6 +358,11 @@ probability that a homologous protein has gained amino acid~$x$ by
 insertion at column~$j$.
 \end{itemize}
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
+We~represent a state using an algebraic data type:
+\begin{smallverbatim}
+data HMMState = Mat | Ins | Del | Beg | End
+\end{smallverbatim}
+
 
 The particular hidden Markov model we use requires that every nonempty
 sequence of insertions be followed by a match, and similarly for
@@ -584,7 +589,7 @@ thousand.
 
 Another of us was curious to try to code Viterbi's equations
 directly as recursive functions.
-But like the classic recursive Fibonacci function, Viterbi's functions,
+Like the classic recursive Fibonacci function, Viterbi's functions,
 when implemented \naive ly,
 perform extraordinarily badly.
 But just like the Fibonacci function, Viterbi's functions can be
@@ -602,23 +607,27 @@ We~therefore implement a transformed version of Viterbi's equations,
 shown on the right-hand side of \figref{viterbi}, which minimize the
 negated log probability for each combination of node~$j$, amino
 acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+
 Our implementation computes not only the minimum
 negated log probability, called a \texttt{Score},
 but also the path of states which leads to that most likely outcome. 
-Because the cases for all three states are so similar, 
-we~show only the code for the match state:
+Elsewhere, MRFy pairs not only paths but also other types of values
+with scores, so we have defined a small abstraction:
+\verbatiminput{vscore}
+We~made \texttt{Scored} an instance of~\texttt{Ord} and of
+\texttt{Functor}.
+
+Given the \texttt{Scored} abstraction, we can easily implement
+Viterbi's equations for a match state: 
+we~choose the best solution
+from among the three predecessor states; 
+we~use~\texttt{/+/} to add transition and emission scores,
+and we use \texttt{fmap} to add \texttt{Mat} to the list of states
+encountered up to this point:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\smallverbatiminput{viterbi}
-\begin{smallverbatim}
-viterbi' :: State -> Int -> Int -> (Score, [State])
-viterbi' Mat j i = ( eProb j i + minimum $ [ trans m_m Mat
-                                          , trans i_m Ins
-                                          , trans d_m Del 
-                                          ]
-                  , Mat : path )
-  where (prevV, path) = viterbi prev (j-1) (i-1)
-        trans t prev = prevV + tProb hmm (j-1) t
-\end{smallverbatim}
+\smallverbatiminput{vfix}
+Functions \texttt{tProb} and \texttt{edge} combine to select the
+appropriate transition score (one of the $a'$~values).
 % Similarly, the insertion equation is:
 % \begin{verbatim}                    
 %   -- consume an observation but not a node
@@ -822,8 +831,8 @@ Finally, the \texttt{quit} function decides when to stop the search.
 It~too considers the history of scores and the age of the current
 generation. 
 \end{itemize}
-This interface allows for considerable variation.
-For example, random-mutation hill climbing accepts only generations
+This interface provides considerable leeway for experiments.
+For~example, random-mutation hill climbing accepts only generations
 with better scores than their predecessors,
 while simulated annealing may accept a generation with a worse score.
 A~genetic algorithm uses \texttt{nextGen} to
@@ -835,146 +844,102 @@ to implement such termination criteria as a fixed number of generations
 or a limit of going $k$~generations without achieving more than $E$
 improvement in score. 
 
-We hope you find the code simple and straightforward:
+\seclabel{search}
+
+We hope you find the search code simple and straightforward:
 \smallverbatiminput{search}
+\emph{[MENTION AND QUANTIFY NOAH'S SUCCESSES IN ADDING NEW HEURISTICS.]}
 
 
+\subsection{Performance}
 
 
+In MRFy, the \texttt{score} function calls \texttt{viterbi} several
+ times
+for each placement in each search generation.
+Calls on query sequences between beta strands are independent,
+as are calls on different placements.
+We~found them easy to parallelize
+using
+\texttt{Control.Parallel},
+simply substituting
+\texttt{parmap rseq} for \texttt{map}.
+Even when there is just one placement per generation,
+MRFy can keep six cores busy,
+and when our search algorithm uses multiple placements per generation,
+it~can use all forty-eight cores on a compute server.
 
 
-In MRFy, the Viterbi function is called several times (once for each 
-non-beta-strand region) for each search generation.
-Furthermore, in a 
-population-based search such as \textit{multistart simulated annealing}, the 
-scoring function (which itself calls Viterbi) is called many times per 
-generation.
-Beyond traditional profiling, we found parallelization to be an 
-obvious way to improve runtime performance.
-We found this to be trivial thanks 
-to the \texttt{Control.Parallel} library.
-We pass the Viterbi function to a map over all 
-non-beta-strand regions of the model and query sequence, and these regions are 
-independent of one another.
-Similarly, we pass the scoring function to a map 
-over the population of potential solutions, which are also independent.
-We 
-merely substituted \texttt{parmap rseq} for map.
-MRFy now efficiently uses all six 
-cores on an AMD workstation for a non-population-based simulated annealing 
-search, and all forty-eight cores on a compute server for population-based 
-searches.
+In~\secref{viterbi} above, the example case for the \texttt{viterbi}
+function computes not just a score but also an optimal path.
+MRFy's \texttt{search} function, in \secref{search}, uses only the
+score.
+Even though Haskell evaluation is lazy, the \texttt{viterbi} function
+is still allocating thunks.
+We~tried cloning and modifying the \texttt{viterbi} code to compute
+only a score, with no path, and this change improved 
+run-time performance by nearly 50\%.
+But when \texttt{search} finally decides on a placement, we need a
+version of \texttt{viterbi} that \emph{does} compute path, so we can
+extract the optimal parse for that placement.
 
-
-
-
-Despite the beauty of some of the code we were able to write, we found several 
-instances where the easiest path seemed to be to write ugly code.
-The first of 
-these relates to the otherwise elegant Viterbi function.
-Our stochastic search 
-approach calls the Viterbi function a tremendous number of times, and most of 
-the program's runtime is spent in this function.
-However, the Viterbi algorithm 
-retains not just a score (the probability of the sequence given a state path) 
-but also the state path itself.
-We implemented this state path as a list of 
-\texttt{Int}, and every step in the recursion conses a new element onto the 
-list.
-However, at each step of the stochastic search, we discard the state 
-path; we are searching to optimize score only.
-We only need the state path at 
-the termination of the search, when we wish the program to output an alignment 
-of the query sequence to the Markov random field model.
-We found that 
-optimizing the Viterbi function by removing this state path entirely improved 
-runtime performance by nearly 50\%.
-However, we still needed the Viterbi 
-function to provide a state path when we called it after search finally 
-terminated.
-Thus, we wondered how to implement the Viterbi function so that a 
-state path was optional.
-
-In order to determine if this optimization was even worthwhile, we first wrote 
-a quick and dirty approach that is shameful in any language, but easy: we 
-duplicated code.
-We copied \texttt{viterbi} to produce a \texttt{viterbiF} 
-which did not retain state path.
-Next, however, we wondered how to avoid code 
-duplication.
-Clearly, littering the code with conditionals would produce code 
-that was ugly as well as less efficient.
-We knew how we would solve this 
-problem in other languages; we would have used macros in Lisp, or 
-metaprogramming via \texttt{eval} in Ruby, to produce two versions of the 
-function from one prototype.
-We struggled, however, to solve this problem 
-idiomatically in Haskell.
-
-Rather than attempt to use \texttt{TemplateHaskell} to generate two versions of 
-the Viterbi function, we wrote a higher-order function type 
-\lstinline!type ScorePathCons a = a -> [a] -> [a]! and two functions conforming to that type:
-\begin{smallverbatim}
-consPath :: ScorePathCons a
-consPath x xs = x:xs
-
-consNoPath :: ScorePathCons a
-consNoPath _ _ = []
-\end{smallverbatim}
-
-Then, depending on whether \texttt{viterbi} was called with \texttt{consPath} 
-or \texttt{consNoPath} as a parameter, the path would or would not be 
-allocated.
-We found this higher-order function approach to be simple in code 
-and in concept, and it imposes negligible run-time overhead as compared to 
-having two distinct functions.
+How could we keep the performance improvement without having to
+maintain two versions of \texttt{viterbi}?
+In~Lisp or Ruby we would have used macros or metaprogramming,
+but we were not confident of our ability to metaprogram a solution
+using Template Haskell.
+Instead, we replaced the primitive cons in \texttt{viterbi} with a
+call to a function of the same type, which we passed~in.
+Passing the primitive~``\texttt{:}'' gives us a path,
+and passing \verb+\_ _ -> []+ gives us the same
+speedup as the cloned and modified~code.
+But~although
+this trick is simple and easy to implement, 
+we~have an uneasy feeling that it may work only because of undocumented
+properties of GHC's inliner, which may be subject to change without
+notice. 
 
 \subsection{Awkward Haskell}
 
-Another source of ugliness resulted from adding cost-center annotations when we 
-wished to profile our code.
-GHC will happily add cost centers to top-level 
-functions, but much of our program relies on sub-functions.
-We found that 
-manually adding \texttt{\{-SCC -\}} annotations to dozens of guard clauses and 
-sub-functions harmed the readability of our program, such that we felt 
-compelled to remove all such annotations as soon as we could.
-In our prior 
-experience with profiling tools such as kcachegrind, simply compiling with 
-debug symbols -- rather than manually annotating many lines of code -- allowed 
-the profiling tools to provide us enough information.
-Without these 
-annotations, both call-site and allocation profiles are relatively useless in 
-GHC.
-Perhaps a compile-time flag that would auto-annotate every equation -- 
-even if the resulting cost center is simply named with a line number -- would 
-make this task easier.
+In two major areas, our lack of skills or knowledge resulted in ugly
+Haskell.
+The first is profiling.
+GHC's profiling is based on cost centers \cite{sansome-peyton-jones},
+and although GHC 
+will happily add cost centers to top-level 
+functions, much of our code is in nested functions.
+We~know of no better technique than to add cost-center annotations to
+each guard clause and nested function,
+but these annotations made our code so ugly that we felt compelled to
+remove them as soon as possible.
+And without the annotations, we found GHC's call-site and allocation
+profiles did not provide enough information to be useful.
+We~miss valgrind, whose callgrind profiler gives us enough information
+without \emph{any} annotations in the source.
 
-The final source of ugliness in our code came from attempts at debugging 
+Our other ugly code came from  attempts to debug
 run-time errors.
-MRFy relies on a source of input data -- the paired beta 
-strands in the Markov random field -- which is represented in an awkward manner 
-by the original SMURF program, and which is outside our control.
-Rather than 
-represent beta strands directly, SMURF represents pairings of residues, leaving 
-us to infer and reconstruct beta strands.
-This task was difficult due to 
-unclear invariants around overlapping, doubly-paired beta strands (and it would 
-have been difficult in any programming language; the difficulty was one of 
-representation).
-However, the debugging tools in GHC caused us some 
-difficulties in determining the sources of run-time errors.
-We used 
-\texttt{trace} extensively, but this style of ``\texttt{printf} debugging'' 
-littered our code.
-Being initially unaware of the backtrace feature of the GHC 
-profiler, we wrote wrappers around \texttt{Vector.slice} and \texttt{Vector.!} 
-which themselves called trace, which at least kept our ``\texttt{printf} 
-debugging'' less cluttered.
-Nonetheless, we struggled with these runtime errors 
-due to an awkward representation, and wished for debugging tools such as we 
-might find in gdb, which would allow us to examine the stack when a backtrace 
-occurs.
+MRFy uses a Markov random field which is represented in a legacy file
+format that uses a poorly documented representation---when beta
+strands overlap and are doubly paired, the invariants of the
+representation are not clear.
+Dealing with this representation is difficult no matter what
+programming language is used, and faults are to be expected.
+Using GHC, we had a hard time diagnosing run-time errors.
+Extensive use of 
+\texttt{trace} 
+littered our code,
+even when moved from our main code to wrapper functions.
+We~weren't aware of the backtrace feature of GHC's profiler,
+and even after we discovered that feature, the results weren't good enough.
+\emph{[WHY WASN'T THE BACKTRACE FEATURE GOOD ENOUGH?]}
+In~August 2011, 
+Lennart Augustsson said that the biggest advantage of Strict
+Haskell is getting a stack trace on error,
+and Simon Marlow said that he may have figured out how to track call
+stacks properly in a lazy functional language.
+We~can't wait.
+
  
  
 \section{Our previous code base compared}

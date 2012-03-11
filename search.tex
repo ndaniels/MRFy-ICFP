@@ -1,8 +1,8 @@
 search :: SearchStrategy -> Scorer -> [Seed]
        -> (Scored Placement, [Score])
-search strat score (s:seeds) = runFrom seeds firstGen [] 0
+search strat score (s0:seeds) = runFrom seeds firstGen [] 0
  where
-  firstGen = map score $ gen0 strat s
+  firstGen = map score $ gen0 strat s0
   runFrom :: [Seed] -> [Scored Placement] -> [Score]
           -> Age -> (Scored Placement, [Score])
   runFrom (s1:s2:seeds) oldPop oldHist age =
