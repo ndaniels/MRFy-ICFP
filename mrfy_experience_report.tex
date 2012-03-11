@@ -1,3 +1,6 @@
+\newif\ifnotcutting \notcuttingfalse % set if not cutting down to size
+
+
  \newif\ifpdfmadness
 
 \ifx\pdfoutput\undefined
@@ -899,10 +902,12 @@ notice.
 
 \subsection{Awkward Haskell}
 
+\seclabel{awkward-profiling}
+
 In two major areas, our lack of skills or knowledge resulted in ugly
 Haskell.
 The first is profiling.
-GHC's profiling is based on cost centers \cite{sansome-peyton-jones},
+GHC's profiling is based on cost centers \cite{sansom-pj},
 and although GHC 
 will happily add cost centers to top-level 
 functions, much of our code is in nested functions.
@@ -940,224 +945,208 @@ We~can't wait.
 
  
  
-\section{Our previous code base compared}
+\section{Our previous experience compared}
 
-Our previous computational biology projects include an enhancement to a protein 
-structural aligner that previously came from our group, Matt~\cite{Menke:2008wu}.
+When performance has mattered, the members of our group, like other
+computational biologists, have used~C++.
+Our~prior experience therefore includes building,
+maintaining, and extending research tools written in~C++.
+One~such tool is~Matt,
+a~structural protein aligner~\cite{Menke:2008wu}.
+Matt comprises about 12,000 lines of~C++.
+It uses such
+data structures such as mutable oct-trees, vectors, and arrays.
+It~uses clever pointer arithmetic.
 
-Matt's code base contains approximately 12,000 lines of C++ code, and relies on 
-data structures such as mutable oct-trees, vectors, and arrays, with 
-significant amounts of clever pointer arithmetic.
-Our enhancement involved 
-modifying Matt to incorporate sequence information along with the structural 
-aligner.
-While we initially estimated this would be a three-month project, it 
-took most of a year because the mutable data structures were difficult to 
-repurpose, and the pointer arithmetic was too clever for its own good: since 
-invariants were not clear, nearly every change resulted in new segfaults.
-One 
-enhancement, partial alignments (essentially a cosmetic manipulation of the 
-output, but requiring deep information about some of the data structures) was 
-deemed infeasible.
-We believe we could have completed a ground-up rewrite in 
-Haskell, with most of the run-time performance, in fewer than nine months.
+We~modified Matt to use information about sequences as well as structure.
+We~thought the modification would take three months, 
+but it took most of a~year.
+The mutable data structures were difficult to 
+repurpose, and the pointer arithmetic was too clever for its own good: 
+nearly every change resulted in new segfaults.
+We~had hoped to add support for partial alignments,
+which we~expected to require only 
+a cosmetic manipulation of the 
+output, but
+this feature wound up
+ requiring deep information about some data structures,
+and we had to give~up.
+We~believe we could write an equivalent tool in~Haskell,
+with most of Matt's performance, in at most nine months.
+
+Like many researchers, we~and our colleagues often write code hastily.
+Hastily written C++ code can get a job done, 
+but we have found it expensive in the long run.
+Our most painful experience was with an implementation of
+\textit{multidimensional}
+dynamic programming which was hastily added to the SMURF homology detector
+\cite{Menke:2010ti}.
+The implementation took 12,000~lines, including a single function of
+over 700 lines.
+When we added simulated evolution to this code, a relatively minor
+enhancement \cite{Daniels:2012}, 
+just understanding the existing code took several months.
+For comparison, 
+building the first functioning version of MRFy took three months of part-time work.
+And we expect that higher-order functions will make extending MRFy
+easy.
+\remark{I'm thinking this \P\ is not so strong. ---NR}
 
 
-In general, the failure modes we encounter most in C++ programming are 
-segmentation faults, memory errors (due to pointer arithmetic and uninitialized 
-memory) and heap exhaustion.
-In contrast, the failure modes we most commonly 
-see in Haskell code are type-check failures, or at worst, runtime errors around 
-bounds checking of arrays and vectors.
-While bounds checking failures have 
-proved difficult to debug, they are still less so than C++ memory errors.
+Haskell encourages hasty programmers to slow down.
+We~have to get the types right,
+which makes it hard to write very large functions.
+To~get the code to typecheck, we~have to write type signatures, which
+also serve as documentation.
+And once the types are accepted by the compiler,
+it~is not much more work to write contracts for important functions.
+MRFy is still hasty work.
+Many types could be simplified;
+we're~sure we've missed opportunities for abstraction;
+and we know that MRFy's decomposition into modules could be improved.
+But despite being hasty programmers, we produced code 
+that is easy to understand and easy to extend.
+Our hastily written Haskell beats
+our hastily written Ruby and~C++.
 
 
-Haskell makes it difficult to write code in haste, because Haskell militates 
-towards careful type-checking and clearly thought-out function contracts.
 
-Unlike dynamic languages such as Ruby, and unlike C++, Haskell punishes the 
-programmer who attempts to write code quickly with the goal of later making it 
-work correctly.
-We have found MRFy to be easier to enhance and maintain than 
-our existing C++ code bases.
-Despite the learning curve of Haskell, we 
-implemented most of MRFy in roughly three months of part-time work.
-
- 
-\section{State of the practice}
-
-\subsection{Our group then}
-Programmers generally avoid reimplementing algorithms, but there may be good reasons for doing so.
-Although the HMMER software contains an mature C++ implementation of the Viterbi algorithm,
-a previous member of our group implemented \textit{multidimensional} dynamic programming for SMURF
-in haste, resulting in 12,000 lines of undocumented code (including one function of 700 lines).
-Though we are using the same Viterbi algorithm HMMER implements, we chose to reimplement it because
-we wished to explore the design space of stochastic search techniques using higher order functions
-in Haskell.
-We found that reimplementing the Viterbi algorithm in Haskell was easy and pleasant.
-In contrast, the programming effort to transform SMURF into SMURFLite, a minor evolution, required
-several months of research to simply understand the SMURF codebase.
-
-A set of enhancements to another large C++ implementation, the Matt~\cite{Menke:2008wu} structural
-aligner, required nearly a year of programming due to complex mutable data structures being 
-hard to repurpose.
-In fact, we deemed one enhancement infeasible.
-Our experience working with these C++ codebases largely involved the failure modes of
-segmentation faults, memory errors, and heap exhaustion.
-
-\subsection{Our group now}
-Implementing MRFy in Haskell allowed us great flexibility to explore the space of stochastic search
-techniques, initial guess heuristics, and search termination.
-Higher order functions militate towards more flexibility, so that adding several planned features 
-to MRFy should be easy.
-The first functioning version of MRFy took roughly three months of part-time work.
-The Haskell failure modes we have experienced have largely been typecheck errors; at the worst,
-we have seen runtime errors around bounds checking of arrays and vectors, though we wanted
-better debugging tools for these runtime errors.
-
-\subsection{Computational biology at large}
-There exists some excellent software in the computational biology community, though little of it
-has been written in Haskell.
-The training component of MRFy was modified from that of HMMER, and working with the HMMER
-codebase was relatively pleasant, as data structures and their mutators are well documented.
-BioHaskell exists (and we use \texttt{Bio.Sequence.Fasta} as a parser) but is not nearly as
+When we look beyond our own group to computational biology more
+broadly, our experiences with other software is better.
+Little of it is written in functional languages, 
+but much of the software shared by the community is excellent.
+MRFy's training component was derived from that of~HMMER,
+and
+working with HMMER 
+codebase was pleasant;
+data structures and their
+mutators are well documented. 
+There is a 
+BioHaskell library, part of which we use,
+but it is not nearly as 
 complete as BioPython or BioRuby, which are heavily used in the community.
-We hope that BioHaskell and other tools for computational biology in Haskell continue to mature.
-\section{What we think about it}
+We hope that tools for computational biology in
+Haskell continue to mature. 
 
-\subsection{Our Background}
+\section{What can you learn from our experience?}
 
-\remark{I moved this section from the Intro as per NR's suggestion. ---AG}
-All three authors are members of the Tufts University Department of Computer
-Science.
-Noah Daniels has taken a graduate seminar in advanced functional
-programming, which included some Haskell, and spent ten years in industry as a
-professional programmer in languages such as Ruby, C, and C++.
-Andrew Gallant has taken a programming languages course heavily focused on 
-functional programming, but with no Haskell.
-Norman Ramsey is the local expert, but he wrote no code for this project.
+If~you are a computational biologist, 
+you can be productive in Haskell without extensive
+experience.
+Two~of us (Daniels and Gallant) are graduate students.
+Daniels has taken a graduate seminar in functional programming, which
+included some Haskell;
+Gallant has taken a programming-languages course which included
+significant functional programming but no Haskell.
+Ramsey is a professor who has used Haskell and other functional
+languages for several medium-sized projects,
+but his contribution was limited to minor ranting and refactoring.
+
 
 \subsection{Barriers}
-\remark{I feel like a lot of this is a summary of some of the problems we've
-  discussed previously in the paper. Is that okay? A summary may be worth it. 
----AG}
 
-As inexperienced functional programmers developing a complex piece of
-software in Haskell, we encountered some barriers.
-The first of these was profiling with GHC.
-We previously mentioned that profiling with GHC required annotating
-cost centers by hand, producing ugly code.
-Beyond that, we also found it very difficult to profile code at all.
-In particular, profiling required that all installed libraries be re-compiled
-with profiling support,which was a process that we could not replicate
-consistently.
-
-Another barrier we faced was how to test our code using QuickCheck.
-Indeed, the barrier was so formidable in our case that we still have not been 
-able to use it.
-The problems we faced specifically were two-fold: How do we start testing
-a complex module? How can we use QuickCheck to generate random inputs with 
-complex constraints? 
-We wished to test invariants around beta-strand placement 
-(potential solutions in our stochastic search), but found the QuickCheck generator
-to be difficult to write.
-
-Finally, one last barrier we faced was debugging runtime errors.
-Runtime errors in the form of out-of-bounds indexing were particularly 
-difficult to track down because they were not accompanied by a stack trace.
-(While profiling with GHC could help remedy this, profiling was itself a 
-barrier, as previously mentioned.)
-We had to resort to polluting our code with calls to the \texttt{trace} function 
-in order to track down where the out-of-bounds errors were occurring.
-
-% - profiling 
-% - debugging 
- % [ talk about profiling and debugging problems where?] 
-% [ something about quickcheck: how do we know when we have enough QC props? How do we start testing a complex module? ] 
-
-\subsection{What you must know to succeed}
-If others would like to follow in our footsteps, there are a few
-things we believe one must know in order to succeed.
-Firstly, some experience with functional programming concepts is a necessity. 
-Specifically, coming from an imperative background, we found transforming input data 
-from the HMMER file format without the ability to mutate state was difficult.
-In contrast, writing ``pure math'' like the Viterbi algorithm felt easier
-and more natural than it would have been in C++.
-
-Secondly, identifying existing tools and libraries from Hackage that are mature 
-is also important.
-We found that some packages that could have been immensely useful---like one 
-that provides backtraces---were either not maintained or contained bugs.
-Some other packages like Pads were functional but immature, which resulted in 
-additional code to work around the parts of Pads that had not been implemented 
-yet. 
-In contrast, other packages such as \texttt{Data.Memocombinators} were
-useful and mature.
-
-Finally, a ``local expert'' or someone available to talk to with functional 
-programming expertise, can make the transition to a language like Haskell 
-easier.
-We don't believe a local expert is absolutely necessary, but answers 
-specifically related to functional programming idioms were easier to find when 
-a local expert was available.
+In~\secref{awkward-profiling} above, we~mention the awkwardness of the
+cost-center annotations required for profiling.
+But~we also found it difficult just to get the profiler working.
+In~particular, profiling requires that all installed libraries be recompiled
+with profiling support.
+We~were not able to achieve such recompilations consistently.
 
 
-\subsection{Evaluation}
-\remark{I think we need more in this section. ---AG}
-In hindsight, we feel that there are several key facets of our project in 
-Haskell that deserve evaluation.
-Firstly, we found that existing tools and libraries were plentiful and 
-typically helped us greatly.
-In particular, \texttt{Data.Memocombinators} made dynamic 
-programming with Viterbi exquisitely simple and elegant.
-\texttt{Control.Parallel.Strategies} also made the parallelization of Viterbi trivial.
-Most of the tools we used came straight from Hackage, and although 
-documentation of some form was almost always present, it was sometimes 
-difficult to tell if a particular tool was right for us.
-In particular, parts of the documentation were inaccessible to us as beginning 
-functional programmers.
-Documentation that was accessible to us typically contained straight-forward 
-examples showing how to use that particular tool or library.
+We~faced another barrier in testing.
+One of us (Ramsey) kept ranting that we should test our code using 
+QuickCheck \cite{claessen:quickcheck},
+but we could never figure out~how.
+We~were stumped by two problems:
+how to break down a complex module into parts that can usefully be
+unit tested,
+and how to implement QuickCheck generators for representations of complex
+data like beta-strand placements.
+We~know that QuickCheck is a powerful and proven tool,
+yet we were not smart enough to figure out how to use~it.
 
-Another component worthy of evaluation is the debugging process.
-Debugging in Haskell often takes the form of fixing type errors; which we think 
-is a great thing.
-However, in the case where debugging extends into runtime behavior, we couldn't 
-find any clearly defined approach to effective debugging.
-Stack traces are available via profiling, but this was difficult to find and 
-as we mentioned, profiling had its own barriers.
-
-Finally, we believe that we could have achieved a better division of modules in 
-our project, but that conflicted with one our goals: to get publishable results
-quickly. Despite being hasty programmers, we were still able to produce code 
-that is easy to understand and easily extensible. Namely, in our experience, 
-hasty Haskell code beats hasty code in a language like C or C++.
-
-In summary, with Haskell, we didn't have to master a completely different 
-design and development style but we did have to wrap our heads around 
-functional programming.\remark{Andrew, look at the comments below this
-part of the manuscript. See what you can do with them.}
+Like other functional programmers, we~have found that often enough,
+once we have the types right, the code is right.
+But~much of our work involves computing with arrays and array indices,
+and in that domain, types don't help much.
+And we haven't been able to identify any systematic way of debugging
+run-time errors in Haskell programs.
+GHC's profiler can provide stack traces, but we~found this information
+difficult to discover, and as noted above,
+there are barriers to profiling.
+We're~aware that debugging lazy functional programs has been a topic
+of some research,\remark{Do we cite Hood, Hat, or Freya?}
+but one of the biggest barriers we encountered to using Haskell is
+that we have had to abandon our old approaches to debugging,
+and we~see no clear path to follow.
 
 
-% - What does the local expert do? Do you have to have one? 
-%  
-% - To the FP community: Those who want us to abandon our old tools for debugging imperative code have not provided a clear path to follow (both intellectually, and via software tools). 
-%  
+\subsection{Information that will help you succeed}
+
+If~you want to use Haskell in your research, we~believe that you must
+have enough experience with functional programming that you can build
+\emph{all} the code you need, not only the code that is easy to write
+in a functional language.
+Implementing Viterbi's equations in Haskell was pure joy.
+Writing an iterative search in purely functional style was not
+difficult.
+When we had to transform data in the HMMER file format, \emph{without}
+using mutable state the way the C++ code does, we~struggled.
+
+You~also need to know that while the Haskell community offers many
+enticing tools, libraries, and packages,
+not all of them are worth using.
+Some are not ready for prime time, and some were once great but are
+no~longer maintained.
+The great packages, like \texttt{Data.Memocombinators} and Parallel
+Strategies, are truly great.
+But~for amateurs, it's not always easy to tell them from the wannabes
+and the has-beens.
+
+Most of the software we used came from Hackage, which is the Haskell
+community's software repository.
+We~sometimes found it hard to tell
+if a particular Hackage package was right for us.
+In particular, as beginning 
+functional programmers, we~found some documentation inaccessible.
+The documentation that we found most accessible typically contained
+examples showing how to use a particular tool or library.
+\remark{So what's our message here? What are we telling people to
+think or do differently? ---NR}
+
+
+As~in any endeavor, it's helpful to have access to experts.
+We~would have been better off if our in-house expert had been an
+enthusiastic student and not a busy professor.
+But we have been surprised and pleased by the help available from
+faraway experts on Stack Overflow and on Haskell mailing lists.
+Although a local expert makes things easier, one is not
+ absolutely necessary.
+
+
+\section{Conclusion}
+
+A~little knowledge of and a lot of love for functional programming was
+enough for us to carry out a successful research project in a language
+that is rarely used in computational biology.
+If~you \emph{want} to use Haskell---or one of your graduate students
+wants to use Haskell---you can
+succeed. 
+
+
+
+
 % - No obvious body of knowledge on code improvement. 
 %  
-% - The ecosystem contains tools that look promising and work great: Data.Memocombinators, Quickcheck, Parallel Strategies. 
-% How to tell what's good? How did we discover what's good? 
-% - Profiler can produce backtraces, but this was hard to discover. 
 
-% \appendix
-% \section{Appendix Title}
-% 
-% This is the text of the appendix, if you need one.
+ 
 
+\ifnotcutting
 \acks
 
-We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and Nathan Ricci.
+We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford
+Larsen, and Nathan Ricci. 
+\fi
 
 
 \bibliographystyle{plainnat}
@@ -1167,13 +1156,38 @@ We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford Larsen, and N
 \bibliography{mrfy_experience_report}
 
 
+
 \vfill
 
 \begingroup
-\advance\leftskip by 0pt plus 10em
-\emph{The Haskell wave passes, and if you slide off the crest, you
+\parfillskip=0pt
+\advance\leftskip by 0pt plus 30em
+\emph{We live to surf the Haskell wave, but~if you slide off the crest, you
 drown.}
+\par
 \endgroup
+
+
+\break
+
+
+\appendix
+
+
+\section{Orphaned text}
+
+
+In~our C++ work, the faults we encounter most frequently are
+segmentation faults, 
+memory errors caused by pointer arithmetic or uninitialized 
+memory,
+and heap exhaustion.
+In~our Haskell work, the faults we encounter most frequently are
+type errors and bounds-checking errors in array and vector accesses.
+While we have found the bounds-checking errors difficult to debug,
+they are less difficult than memory errors.
+
+
 
 
 
