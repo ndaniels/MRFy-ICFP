@@ -1,3 +1,7 @@
+\newif\ifpagetuning
+
+\pagetuningtrue % trying to get page breaks in the best spots
+
 \newif\ifnotcutting \notcuttingfalse % set if not cutting down to size
 
 
@@ -17,8 +21,14 @@
 
 \newcommand\txprobj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
-\newcommand\alignwidth{\ensuremath R} % number of columns in an alignment
+\newcommand\alignwidth{\ensuremath C} % number of columns in an alignment
 \newcommand\pairedwith[1]{{\pi(#1)}}
+
+\ifpagetuning
+  \newcommand\tuningbox{\vbox}
+\else
+  \newcomming\tuningbox{\relax}
+\fi
 
 \newcommand\naive{na\"\i ve}
 \usepackage{url}
@@ -233,26 +243,25 @@ on a group of proteins that share function and structure.
 These proteins are identified by a biologist, who puts
 their amino-acid sequences into a correspondence, also called an
 \emph{alignment}. 
-This alignment represents structural
-correspondence among individual amino acids in a set of homologous proteins.
+This alignment relates individual amino acids in a set of homologous proteins.
 An~alignment may be represented as a matrix
-(Figure~\ref{alignment}) 
 in which each row corresponds to the amino-acid sequence of a protein,
 and each column groups amino acids that play similar roles in
-different proteins.
+different proteins (Figure~\ref{alignment}).
 
 
-An alignment may contain \emph{gaps} (notated as dashes in
-\figref{alignment}) for some proteins.
+An alignment may contain \emph{gaps}, which in 
+\figref{alignment} are shown as dashes.
 A~gap in row~2, column~$j$ indicates that as proteins evolved, either 
 protein~2 lost its amino acid in position~$j$, or 
 other proteins gained an amino acid in position~$j$.
 If~column~$j$ contains few gaps, 
 it~is considered a \emph{consensus column},
 and the few proteins with gaps probably lost amino acids via
-\emph{deletions}.\remark{NMD: Missing is the fact that all these models
-are directionless; they don't care whether something was gained or lost
-over time. Perhaps this doesn't matter.}
+\emph{deletions}.
+%%  \remark{NMD: Missing is the fact that all these models
+%%  are directionless; they don't care whether something was gained or lost
+%%  over time. But this doesn't matter.}
 If~column~$j$ contains \emph{mostly} gaps, 
 it~is considered a \emph{non-consensus column},
 and the few proteins without gaps probably gained amino acids via
@@ -278,13 +287,13 @@ which we write~\alignwidth.
 \centerline{\includegraphics[width=6cm]{alignment.eps}} 
 \fi
 
-
-
-\caption{A~structural alignment of four proteins $(\alignwidth = 4)$}
+\caption{A~structural alignment of four proteins $(\alignwidth = 12)$}
 \label{alignment} 
 \end{figure}
 
-A~hidden Markov model carries probabilities on its states and on its
+
+
+A~hidden Markov model carries probabilities on some states and on all
 state transitions.
 Both the probabilities and the
 the states are determined by the alignment:
@@ -318,29 +327,26 @@ data HMMState = Mat | Ins | Del | Beg | End
 The particular hidden Markov model we use requires that every nonempty
 sequence of insertions be followed by a match, and similarly for
 deletions.
-\remark{citation needed?}
 In~other words, insertions and deletions cannot be mixed without an
 intervening match.
-This restriction means that between two adjacent columns, six
-transitions are possible.
-An~insertion state may also transition to itself.
+This restriction means that there are only seven possible transitions
+into the states of any one column \cite{Eddy:1998ut}. 
 \begin{itemize} 
 \item
 A~transition into a match state in
 column~$j$ is more likely when column~$j$ is a consensus column.
 Depending on the predecessor state, 
-the probability of such a transition is notated
+the probability of such a transition is 
 $\txprobj M M$, $\txprobj I M$, or $\txprobj D M$.
 \item
 A~transition into a deletion state in
  column~$j$ is more likely when column~$j$ is a non-consensus column.
-The probability of such a transition is notated
+The probability of such a transition is 
 $\txprobj M D$ or $\txprobj D D$.
 \item
 A~transition into an insertion state in
- column~$j$ is relatively unlikely,
-but it is more likely when column~$j$ is a non-consensus column.
-The probability of such a transition is notated
+ column~$j$ is more likely when column~$j$ is a non-consensus column.
+The probability of such a transition is 
 $\txprobjj M I$ or $\txprobjj I I$.
 \end{itemize}
 
@@ -433,7 +439,7 @@ V_j^{\prime M}(i) = - V_j^{M}(i)
 
 
 Given a hidden Markov model, 
-an~established software package called HMMER (``hammer'') 
+an~established software package called HMMER (pronounced ``hammer'') 
 can compute the probability
 that a new protein shares structure and
 evolutionary history with the proteins used to train the model.
@@ -442,15 +448,17 @@ To~make best use of floating-point arithmetic, the software computes
 the \emph{logarithm} of the probability of each path, by summing
 the logs of the 
 probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
-(The logarithm function is monotonic, so the path that maximizes the
-log of the probability is the most likely path.)
-The~specification is shown on the left-hand side of \figref{viterbi}.
-The probability $V_j^M(i)$ represents the probability of the most
+The logarithm function is monotonic, so the path that maximizes the
+log of the probability is the most likely path.
+
+The computation is specified on the left-hand side of \figref{viterbi}.
+A~probability $V_j^M(i)$ represents the probability of the most
 likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
-The probabilities $V_j^D(i)$ and $V_j^D(i)$ are similar.
-Equations like these can be found in more recent literature
-\cite{Durbin:1998wz,Eddy:1998ut}. 
+Probabilities $V_j^D(i)$ and $V_j^D(i)$ are similar.
+These
+equations are very clearly explained by
+\citet[Chapter~5]{Durbin:1998wz}
 
 
 To~be able to use Haskell, we had to reimplement the standard
@@ -459,35 +467,37 @@ Haskell made it possible for us to write code that looks like the
 math,
 which made the code easy to write and gives us confidence that it is
 correct.
-We~begin with our representations.
+To~present some code,
+we~begin with representations.
 
 In~idiomatic Haskell, 
 we might represent an individual amino acid~$x$
-using a value of algebraic data type, thus:
+using a value of algebraic data type:
 \begin{smallverbatim}
 data Amino = Ala | Cys | Asp | Glu | Gly | ...
 \end{smallverbatim}
-But our primary goal was to get something working quickly with a
+But our primary goal was to get something working quickly,
+and our hidden Markov models are stored using a
 legacy file format that represents each amino acid as a small integer.
 Our representation is therefore
 \begin{smallverbatim}
-type AA       = Int -- amino acid using HMMER coding
+type AA = Int -- amino acid using HMMER coding
 \end{smallverbatim}
 Either way, a query sequence is (and should be) an immutable vector of
 amino acids.
 %type QuerySeq = Vector AA
 %\end{smallverbatim}
 
-The log of a probability is simply a number.
+The log of a probability is just a number.
 To distinguish a transition probability from other numbers, we wrap it in
-the value constructor \texttt{TProb}:
+a value constructor:
 \begin{smallverbatim}
 type LogProb = Double
 data TProb   = TProb { logProbability :: LogProb }
 \end{smallverbatim}
 We group transition probabilities into 7-tuples.
 Each tuple corresponds to a ``node'' in the hidden Markov model
-(a~dashed ovel in \figref{plan7}), and to a column of the original
+(a~dashed oval in \figref{plan7}) and to a column of the original
 alignment.
 As~noted above, 
 a match state may transition to any state in the successor node;
@@ -502,9 +512,14 @@ data TProbs =
             , i_m :: TProb, i_i :: TProb
             , d_m :: TProb, d_d :: TProb }
 \end{smallverbatim}
+In~our code, we select from this 7-tuple using the \texttt{edge}
+function:
+\smallverbatiminput{edge}
+In MRFy, the first two arguments to \texttt{edge} are known at compile
+time, and we expect \texttt{edge} to be inlined.
 
 The representation of a node includes the probabilities of transitions
-into the three states of that node, plus the tables
+into the states of that node, plus the tables
 of emission probabilities for the match and insertion states.
 \begin{smallverbatim}
 type EProbs  = Vector LogProb
@@ -515,19 +530,17 @@ data HmmNode = HmmNode { transitions  :: TProbs
 \end{smallverbatim}
 
 In~Viterbi's equations,
-the probability in each state is a simple function of the probability
+the probability in each state is a function of the probabilities
 in its predecessor states, 
 and all probabilities can be computed by a classic dynamic-programming
-algorithm
-which starts at the begin state,
+algorithm.
+This algorithm starts at the begin state,
 computes probabilites in nodes $1$~through~$\alignwidth$ in
 succession, and terminates at the end state.
 One of us implemented this algorithm, storing the probabilities in an array.
-\remark{Why is the number of dimensions 3 and not 2 (indices $i$, $j$,
-and what??) and why do we care?}
 The cost was
 $O(|N|\times|\alignwidth|)$;
-in our work, $\alignwidth$~and~$N$ range from several hundred to a few
+in~MRFy, $\alignwidth$~and~$N$ range from several hundred to a few
 thousand.
 
 
@@ -541,116 +554,94 @@ thousand.
 %%  and because they are \textit{negative} logs, the problem transforms from 
 %%  maximization to minimization.
 
-Another of us was curious to try to code Viterbi's equations
+Another of us was curious to try coding Viterbi's equations
 directly as recursive functions.
 Like the classic recursive Fibonacci function, Viterbi's functions,
 when implemented \naive ly,
 perform extraordinarily badly.
 But just like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
-To~show the memoized code, we have to confess to a small
+To~show our code, we have to confess to a 
 transformation of Viterbi's equations.
-The logarithms on the left of \figref{viterbi} are computed when the
+The~logarithms on the left of \figref{viterbi} are computed when the
 hidden Markov model is constructed, and the resulting numbers are
 stored in a file.
-Moreover, to make the file more pleasant to read, the logarithms are
+And~to~make this file more pleasant to read, the logarithms are
 negated.
 (The logarithm of a probability is typically negative, and negating
-the logarithm eliminates hordes of minus signs from the file.)
+the logarithm eliminates hordes of minus signs.)
 We~therefore implement a transformed version of Viterbi's equations,
-shown on the right-hand side of \figref{viterbi}, which minimize the
+shown on the right-hand side of \figref{viterbi}.
+The transformed equations minimize the
 negated log probability for each combination of node~$j$, amino
 acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+A~negated log probability is called a~\emph{score}.
 
-Our implementation computes not only the minimum
-negated log probability, called a \texttt{Score},
-but also the path of states which leads to that most likely outcome. 
-Elsewhere, MRFy pairs not only paths but also other types of values
-with scores, so we have defined a small abstraction:
+MRFy computes not only the minimum score but
+also the path of states which produces that score.
+Scores can be usefully paired with many types of values,
+so we have defined a small abstraction:
 \smallverbatiminput{vscore}
-We~made \texttt{Scored} an instance of~\texttt{Ord} and of
-\texttt{Functor}.
 Think of a value of type \texttt{Scored~a} as a container holding
- an~``\texttt a'' with a number written on the side.
-The \texttt{/+/} function adds to the number without touching the
+ an~``\texttt a'' with a score written on the side.
+The \texttt{/+/} function adds to the score without touching the
  container.
-Function 
+
+\tuningbox{
+We~also made \texttt{Scored} an instance of~\texttt{Ord} and of
+\texttt{Functor}, so
 \begin{smallverbatim}
 fmap :: (a -> b) -> (Scored a -> Scored b)
 \end{smallverbatim}
 applies a function to what's inside the container, without touching
-the number.
-And containers are ordered purely by number, so applying
+the score.
+And containers are ordered by score alone, so applying
 \texttt{minimum} to a list of scored things chooses the thing with the
 smallest (and therefore best) score.
+}
 
 Given the \texttt{Scored} abstraction, we can easily implement
 Viterbi's equations for a match state.
-We~choose the best solution
+To~implement the equation at the top right of \figref{viterbi},
+we~choose the best solution
 from among the three predecessor states;
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
 encountered up to this point:
-\remark{TODO: (1)~Call the inner function \texttt{vee}.
+\remark{TODO: 
+(1)~Call the inner function \texttt{vee}
 (2)~Use \texttt{minimum (map from [Mat, Ins, Del])}
+(3)~Explain the recursive call
 }
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \smallverbatiminput{vfix}
 Functions \texttt{tProb} and \texttt{edge} combine to select the
 appropriate transition score (one of the $a'$~values).
-% Similarly, the insertion equation is:
-% \begin{verbatim}                    
-%   -- consume an observation but not a node
-%   | s == ins = let trans t prev =
-%                    (score + tProb n t + (eProb n o), ins:path)
-%                     where (score, path) = viterbi prev n (o - 1)
-%                 in minimum [
-%                     trans m_i mat,
-%                     trans i_i ins
-%                     ]
-% \end{verbatim}
-% Finally, the deletion equation is:
-% \begin{verbatim}                    
-%   -- consume a node but not an observation
-%   | s == del = let trans t prev = 
-%                       (score + tProb (n-1) t, del:path)
-%                       where (score, path) = viterbi prev (n - 1) o
-%                 in minimum [
-%                     trans m_d mat,
-%                     trans d_d del
-%                     ]
-% \end{verbatim}
-Programming the algorithm in this form was not only intellectually
-satisfying; keeping the code close to the math also helped us find
-bugs.
+Implementing the equation in this form was not only intellectually
+satisfying; it~also helped us find
+bugs.\remark{NR doesn't think the bug story is that interesting.}
 The most memorable bug was that in one of our base cases, 
 we~mistakenly returned an empty path of states;
 the correct result was a singleton path containing the initial state.
 Very quickly after observing a missing state in the output, we were
 able to find the faulty case in the code.
 
-Whatever the attractions of the code above, in our work we also
-require high performance.
+Whatever the attractions of the code above, our work also
+requires high performance.
 To make the simple recursive code efficient, we used Luke Palmer's
 \texttt{Data.Memocombinators} package.
 The function \verb+viterbi'+ is unmemoized,
 and it makes recursive calls to \verb+viterbi+, which is memoized:
-\begin{smallverbatim}
-viterbi state j i = 
-  Memo.memo3 (Memo.arrayRange (Mat, End)) 
-             (Memo.arrayRange (0, numNodes))
-             (Memo.arrayRange (0, seqlen)) 
-             viterbi' state j i
-\end{smallverbatim}
+\smallverbatiminput{memo}
 The value
 \texttt{numNodes} represents~$\alignwidth$,
 and \texttt{seqlen} represents~$N$.\remark{I hope this is right. ---NR}
 
 This memoized recursive code performs just as well as the classic
 dynamic-programming code.
-And~the short fragment above is the \emph{only} part of the code
+And~the call to \texttt{Memo.memo3} is the \emph{only} part of the code
 devoted to improving performance.
-By contrast, standard implementations of the Viterbi algorithm, such as in HMMER,
+By~contrast, standard implementations of the Viterbi algorithm, such as in HMMER,
 spend much of their code 
 managing dynamic-programming tables.
 Haskell enabled us write simple, performant code with little effort.
@@ -659,7 +650,6 @@ Because the memoized version so faithfully resembles the equations in
 \figref{viterbi}, we~retired the classic dynamic-programming version.
 
 
-\remark{NR doesn't think the bug story is that interesting.}
 
 %%  
 %%  

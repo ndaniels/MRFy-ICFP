@@ -1,0 +1,5 @@
+viterbi' state j i =
+  Memo.memo3 (Memo.arrayRange (Mat, End)) 
+             (Memo.arrayRange (0, numNodes))
+             (Memo.arrayRange (0, seqlen)) 
+             viterbi'' state j i

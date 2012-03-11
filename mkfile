@@ -20,7 +20,7 @@ $TGT.dvi: $TGT.tex
 $TGT.pdf: $TGT.tex
 	latexmk -pdf $TGT.tex
 
-CODES=strategy search viterbi scoredecl vscore vfix
+CODES=strategy search viterbi scoredecl vscore vfix edge memo
 
 latex:V: ${CODES:%=%.tex}
 	latex $TGT
@@ -32,7 +32,7 @@ $TGT.pdf: ${CODES:%=%.tex}
 strategy.tex search.tex scoredecl.tex:D: ./xsource Smurf2/SearchModel.hs
 	lua $prereq
 
-viterbi.tex vscore.tex:D: ./xsource Smurf2/Viterbi.hs
+memo.tex edge.tex viterbi.tex vscore.tex:D: ./xsource Smurf2/Viterbi.hs
 	lua ./xsource Smurf2/Viterbi.hs
 
 vfix.tex:D: viterbi.tex mkfile
