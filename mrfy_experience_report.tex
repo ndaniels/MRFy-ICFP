@@ -79,7 +79,7 @@
 
 \authorinfo{Noah M. Daniels \and Andrew Gallant \and Norman Ramsey}
            {Department of Computer Science, Tufts University}
-           {\{ndaniels, agallant, nr\}@cs.tufts.edu}
+           {\char`\{ndaniels, agallant, nr\char`\}@cs.tufts.edu}
 
 
 \maketitle
@@ -703,6 +703,8 @@ Because the memoized version so faithfully resembles the equations in
 
 \subsection{Exploring new algorithms using higher-order functions}
 
+\seclabel{hofs}
+\seclabel{mrfy}
 
 %\subsection{MRFy Implementation}
 
@@ -803,7 +805,7 @@ applying \texttt{score} to the model.
 \smallverbatiminput{scoredecl}
 A~search algorithm is characterized by four functions, which are
 bundled into a record called \texttt{SearchStrategy}.
-\smallverbatiminput{strategy}
+\smallfuzzverbatiminput{2.3pt}{strategy}
 In this record,
 \begin{itemize}
 \item
@@ -832,7 +834,7 @@ Finally, the \texttt{quit} function decides when to stop the search.
 It~too considers the history of scores and the age of the current
 generation. 
 \end{itemize}
-This interface provides considerable leeway for experiments.
+This interface provides ample leeway for experiments.
 For~example, random-mutation hill climbing accepts only generations
 with better scores than their predecessors,
 while simulated annealing may accept a generation with a worse score.
@@ -848,7 +850,7 @@ improvement in score.
 \seclabel{search}
 
 We hope you find the search code simple and straightforward:
-\smallverbatiminput{search}
+\smallfuzzverbatiminput{11pt}{search}
 \emph{[MENTION AND QUANTIFY NOAH'S SUCCESSES IN ADDING NEW HEURISTICS.]}
 
 
@@ -1093,6 +1095,8 @@ difficult.
 When we had to transform data in the HMMER file format, \emph{without}
 using mutable state the way the C++ code does, we~struggled.
 
+\seclabel{penumbra}
+
 You~also need to know that while the Haskell community offers many
 enticing tools, libraries, and packages,
 not all of them are worth using.
@@ -1162,7 +1166,7 @@ Larsen, and Nathan Ricci.
 \begingroup
 \parfillskip=0pt
 \advance\leftskip by 0pt plus 30em
-\emph{We live to surf the Haskell wave, but~if you slide off the crest, you
+\emph{You can live to surf the Haskell wave, but~if you slide off the crest, you
 drown.}
 \par
 \endgroup
