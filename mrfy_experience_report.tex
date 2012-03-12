@@ -148,7 +148,7 @@ In~this paper, we report on an attempt to replace both these families
 of languages with Haskell: 
 \begin{itemize}
 \item
-Although had to write a new implementation of a standard
+Although we had to write a new implementation of a standard
 algorithm, the cost was low, and the connection between code and
 algorithm is unusually strong (\secref{viterbi}).
 Our new Haskell code performs competitively with~C++,
@@ -184,7 +184,7 @@ We~found the two families difficult to distinguish in advance (\secref{penumbra}
 
 Proteins are cellular machinery. They interact with one another and with other 
 molecules to carry out the functions of living cells: metabolism, regulation, 
-signalling, and so on.
+signaling, and so on.
 A~protein's function is determined by its structure, 
 and its structure is determined by the sequence of amino acids that
 form the protein.
@@ -236,7 +236,7 @@ in amino-acid sequences that are only distantly related.
 %%  which is incorporated into~MRFy.
 
 
-\section{The Software}
+\section{The software}
 
 
 
@@ -303,8 +303,7 @@ which we write~\alignwidth.
 
 A~hidden Markov model carries probabilities on some states and on all
 state transitions.
-Both the probabilities and the
-the states are determined by the alignment:
+Both the probabilities and the states are determined by the alignment:
 \begin{itemize}
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
@@ -601,7 +600,7 @@ We~also made \texttt{Scored} an instance of~\texttt{Ord} and of
 \begin{smallverbatim}
 fmap :: (a -> b) -> (Scored a -> Scored b)
 \end{smallverbatim}
-applies a function to what's inside the container, without touching
+applies a function to the thing inside the container, without touching
 the score.
 And containers are ordered by score alone, so applying
 \texttt{minimum} to a list of scored things chooses the thing with the
@@ -905,6 +904,13 @@ We~weren't aware of the backtrace feature of GHC's profiler,
 and even after we discovered that feature, the results weren't good enough:
 the profiler can be used only on very small test cases that didn't always trigger
 run-time errors.
+This same limitation affected the GHCi debugger; our \texttt{vee'} function
+shown in \secref{viterbi}, when it is not compiled with
+optimizations, requires too much run time to be practical on non-trivial
+inputs.
+Moreover, the GHCi debugger can only set breakpoints at top-level functions
+or at specific column/line positions, which made debugging the memoized
+\texttt{vee''} function impractical.
 In~August 2011, 
 Lennart Augustsson said that the biggest advantage of Strict
 Haskell is getting a stack trace on error,
@@ -981,7 +987,7 @@ enhancement,
 just understanding the existing code took several months.
 
 We~built MRFy quickly, and we expect that
-higher-order functions will MRFy easy to extend.
+higher-order functions will make MRFy easy to extend.
 Each new addition to MRFy's stochastic search has taken at most a day
 to implement.
 
@@ -1085,7 +1091,7 @@ unit-tested,
 and how to implement QuickCheck generators for representations of complex
 data like beta-strand placements.
 We~know that QuickCheck is a powerful and proven tool,
-but we could figure out how to exploit~it.
+but we could not figure out how to exploit~it.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
