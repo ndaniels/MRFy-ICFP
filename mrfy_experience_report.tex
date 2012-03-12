@@ -817,41 +817,41 @@ improvement in score.
 
 \seclabel{perf}
 
-In MRFy, the \texttt{score} function calls \texttt{viterbi} several
+MRFy calls \verb+vee'+ several
  times
 for each placement in each search generation.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
 We~found them easy to parallelize
 using
-\texttt{Control.Parallel},
-simply substituting
+\texttt{Control.Parallel}:
+we substituted
 \texttt{parmap rseq} for \texttt{map}.
 Even when there is just one placement per generation,
-MRFy can keep six cores busy,
-and when our search algorithm uses multiple placements per generation,
-it~can use all forty-eight cores on a compute server.
+MRFy can keep six cores busy.
+Given multiple placements per generation,
+it~can use forty-eight cores.
 
 
-In~\secref{viterbi} above, the example case for the \texttt{viterbi}
+In~\secref{viterbi} above, the example case for the \verb+vee'+
 function computes not just a score but also an optimal path.
 MRFy's \texttt{search} function, in \secref{search}, uses only the
 score.
-Even though Haskell evaluation is lazy, the \texttt{viterbi} function
-is still allocating thunks.
-We~tried cloning and modifying the \texttt{viterbi} code to compute
+Even though Haskell evaluation is lazy, the \verb+vee'+ 
+still allocates thunks that could compute paths.
+We~cloned \verb+vee'+ and modified it to compute
 only a score, with no path, and this change improved 
-run-time performance by nearly 50\%.
+run-time performance by nearly~50\%.
 But when \texttt{search} finally decides on a placement, we need a
-version of \texttt{viterbi} that \emph{does} compute path, so we can
+version of \verb+vee'+ that \emph{does} compute a path, so we can
 extract the optimal parse for that placement.
 
 How could we keep the performance improvement without having to
-maintain two versions of \texttt{viterbi}?
+maintain two versions of \verb+vee'+?
 In~Lisp or Ruby we would have used macros or metaprogramming,
 but we were not confident of our ability to metaprogram a solution
 using Template Haskell.
-Instead, we replaced the primitive cons in \texttt{viterbi} with a
+Instead, we replaced the primitive cons in \verb+vee'+ with a
 call to a function of the same type, which we passed~in.
 Passing the primitive~``\texttt{:}'' gives us a path,
 and passing \verb+\_ _ -> []+ gives us the same
@@ -866,8 +866,8 @@ notice.
 
 \seclabel{awkward-profiling}
 
-In two major areas, our lack of skills or knowledge resulted in ugly
-Haskell.
+We~think \verb+vee'+ is beautiful, but we wrote some ugly code, too,
+because we lack skills and knowledge in two areas.
 The first is profiling.
 GHC's profiling is based on cost centers \cite{sansom-pj},
 and although GHC 
@@ -877,30 +877,28 @@ We~know of no better technique than to add cost-center annotations to
 each guard clause and nested function,
 but these annotations made our code so ugly that we felt compelled to
 remove them as soon as possible.
-And without the annotations, we found GHC's call-site and allocation
-profiles did not provide enough information to be useful.
-We~miss valgrind, whose callgrind profiler gives us enough information
+And without the annotations, GHC's call-site and allocation
+profiles did not give us enough information to be useful.
+We~miss valgrind, whose callgrind profiler gives useful information
 without \emph{any} annotations in the source.
 
 Our other ugly code came from  attempts to debug
 run-time errors.
-MRFy uses a Markov random field which is represented in a legacy file
-format that uses a poorly documented representation---when beta
+Our~group's legacy file
+format is poorly documented: when beta
 strands overlap and are doubly paired, the invariants of the
 representation are not clear.
-Dealing with this representation is difficult no matter what
+These files are hard to deal with no matter what
 programming language is used, and faults are to be expected.
-Using GHC, we had a hard time diagnosing run-time errors.
-Extensive use of 
+But using Haskell, we had a hard time diagnosing run-time errors.
+Calls to
 \texttt{trace} 
 littered our code,
-even when moved from our main code to wrapper functions.
+even when relegated to wrapper functions.
 We~weren't aware of the backtrace feature of GHC's profiler,
-and even after we discovered that feature, the results weren't good enough.
-Specifically, because the backtrace feature required profiling mode,
-it could only be used in very small test cases that didn't always trigger
-run-time errors, and one of us was unable to overcome difficulties in building
-various libraries in profiling mode.
+and even after we discovered that feature, the results weren't good enough:
+the profiler can be used only on very small test cases that didn't always trigger
+run-time errors.
 In~August 2011, 
 Lennart Augustsson said that the biggest advantage of Strict
 Haskell is getting a stack trace on error,
@@ -913,7 +911,7 @@ We~can't wait.
 \section{Our previous experience compared}
 \seclabel{comparo}
 
-When performance has mattered, the members of our group, like other
+When performance has mattered, members of our group, like other
 computational biologists, have used~C++.
 We~compare our experience with three tools:
 \begin{itemize}
@@ -921,16 +919,16 @@ We~compare our experience with three tools:
 Matt~\cite{Menke:2008wu} is used to create alignments like that shown
 in \figref{alignment}.
 It~comprises about 12,000 lines of~C++.
-The only external tool or library it uses is \texttt{zlib}.
-Its initial development took two years.
+The only external tool or library it uses is \texttt{zlib}, and
+its initial development took two years.
 \item
 SMURF
 \cite{Menke:2010ti} is used to detect homologous proteins in the presence
 of paired beta strands.
 It~comprises about 9,000 lines of~C++, of which about 1,000~lines are
 shared with~Matt.
-It~uses no external tools or libraries.
-Its initial development took a year and a half.
+It~uses no external tools or libraries, and
+its initial development took a year and a half.
 \item
 MRFy is used to detect homologous proteins in the presence of paired
 beta strands.
@@ -939,7 +937,7 @@ It~uses several external tools and libraries, of which the most
 notable are PADS-Haskell, the \path{Data.MemoCombinators} library,
 the BioHaskell bioinformatics library, and the \path{Data.Vector} library.
 Its initial development took about three months.
-\remark{Others were mostly full-time work, but no need to distinguish.}
+%%%% \remark{Others were mostly full-time work, but no need to distinguish.}
 \end{itemize}
 Like much research software, all three of these tools were written
  in~haste.
@@ -956,15 +954,16 @@ Matt uses such
 data structures such as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
 The mutable data structures were difficult to 
-repurpose, and the pointer arithmetic was too clever for its own good: 
+repurpose, and the pointer arithmetic was \emph{too} clever: 
 nearly every change resulted in new segfaults.
 
 We~had hoped to extend Matt further, with support for partial alignments,
 which we~expected to require only 
 a cosmetic manipulation of the 
-output, but
+output.
+But
 this feature wound up
- requiring deep information about some data structures,
+requiring deep information about Matt's data structures,
 and we had to give~up.
 We~believe we could write an equivalent tool in~Haskell,
 with most of Matt's performance, in at most nine months.
@@ -999,22 +998,6 @@ to implement.
 %%  \remark{The above needs a lot of revision. It is a shitty first
 %%  draft of a /P/. ---NMD} 
 
-On the protein structures for which it was originally designed, SMURF can 
-compute the parse of a query sequence to a MRF based on those structures in 
-less than 10 seconds on a typical workstation.
-However, on somewhat more 
-complex protein structures, SMURF may take two to three minutes on the same 
-hardware. 
-On the most complex protein structures, SMURF exhausts all memory on 
-any system we have available, and must be killed. 
-In contrast, MRFy's runtime 
-for any of these protein structures is typically less than 30 seconds. 
-This 
-meets the performance goals we had, and means that MRFy is fast enough to scale 
-to whole-genome scans.
-
-
-
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
 which makes it hard to write very large functions.
@@ -1030,6 +1013,17 @@ But despite being hasty programmers, we produced code
 that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
+
+We~can also make a preliminary comparison of performance.
+SMURF can parse a simple protein structure, optimally, in under 10~seconds.
+It~can parse some more complex structures in 2--3~minutes.
+But when asked to parse the most complex structures, it runs out of
+memory and has to be killed, even on a system with 128GB of~RAM.
+By~contrast, MRFy can parse any of these structures, approximately,
+in 30~seconds.
+This performance
+meets our goals, and it means that MRFy can be used to scan whole genomes.
+
 
 
 
@@ -1053,19 +1047,19 @@ Haskell continue to mature.
 \section{What can you learn from our experience?}
 
 If~you are a computational biologist, 
-you can be productive in Haskell without extensive
+you can be productive in Haskell, and you don't need extensive
 experience.
 Two~of us (Daniels and Gallant) are graduate students.
 Daniels has taken a graduate seminar in functional programming, which
 included some Haskell;
 Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
-Ramsey is a professor who has used Haskell and other functional
-languages for several medium-sized projects,
-but his contribution was limited to minor ranting and refactoring.
+Ramsey is a professor who has used Haskell 
+for medium-sized projects,
+but his contribution to MRFy was limited to minor ranting and refactoring.
 
 
-\subsection{Barriers}
+\subsection{Barriers to be overcome}
 
 In~\secref{awkward-profiling} above, we~mention the awkwardness of the
 cost-center annotations required for profiling.
@@ -1080,19 +1074,19 @@ One of us (Ramsey) kept ranting that we should test our code using
 QuickCheck \cite{claessen:quickcheck},
 but we could never figure out~how.
 We~were stumped by two problems:
-how to break down a complex module into parts that can usefully be
-unit tested,
+how to break down MRFy into parts that could be
+unit-tested,
 and how to implement QuickCheck generators for representations of complex
 data like beta-strand placements.
 We~know that QuickCheck is a powerful and proven tool,
-yet we were not smart enough to figure out how to use~it.
+but we could figure out how to exploit~it.
 
-Like other functional programmers, we~have found that often enough,
-once we have the types right, the code is right.
-But~much of our work involves computing with arrays and array indices,
+Like other functional programmers, we~have found that 
+once we have our types right, our code is often right.
+But~MRFy computes with arrays and array indices,
 and in that domain, types don't help much.
-And we haven't been able to identify any systematic way of debugging
-run-time errors in Haskell programs.
+Bounds violations lead to run-time errors, which we have not been able
+to identify any systematic way to~debug.
 GHC's profiler can provide stack traces, but we~found this information
 difficult to discover, and as noted above,
 there are barriers to profiling.
@@ -1110,10 +1104,9 @@ have enough experience with functional programming that you can build
 \emph{all} the code you need, not only the code that is easy to write
 in a functional language.
 Implementing Viterbi's equations in Haskell was pure joy.
-Writing an iterative search in purely functional style was not
-difficult.
-When we had to transform data in the HMMER file format, \emph{without}
-using mutable state the way the C++ code does, we~struggled.
+Writing an iterative search in purely functional style was~easy.
+Transforming data in the HMMER file format, \emph{without}
+using mutable state the way the C++ code does, was difficult.
 
 \seclabel{penumbra}
 
@@ -1150,8 +1143,8 @@ Although a local expert makes things easier, one is not
 
 \section{Conclusion}
 
-A~little knowledge of and a lot of love for functional programming was
-enough for us to carry out a successful research project in a language
+A~little knowledge of and a lot of love for functional programming
+enabled us to carry out a successful research project in a language
 that computational biologists seldom use.
 If~you \emph{want} to use Haskell---or one of your graduate students
 wants to use Haskell---you can
