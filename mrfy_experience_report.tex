@@ -70,6 +70,12 @@
          \itshape\noindent #1\par}%
       \fi}
 
+\iffinaldraft
+  \newcommand\finalremark{\remark}
+\else
+  \newcommand\finalremark[1]{\relax}
+\fi
+
 \usepackage[authoryear]{natbib}
 \bibpunct();A{},
 \let\cite\citep
@@ -1091,7 +1097,7 @@ GHC's profiler can provide stack traces, but we~found this information
 difficult to discover, and as noted above,
 there are barriers to profiling.
 We're~aware that debugging lazy functional programs has been a topic
-of some research,\remark{Do we cite Hood, Hat, or Freya?}
+of some research,\finalremark{Do we cite Hood, Hat, or Freya?}
 but one of the biggest barriers we encountered to using Haskell is
 that we have had to abandon our old approaches to debugging,
 and we~see no clear path to follow.
