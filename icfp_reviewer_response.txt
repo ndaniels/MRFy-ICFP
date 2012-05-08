@@ -1,0 +1,271 @@
+We thank the reviewers for their insigful comments, and if our manuscript is 
+accepted, we will incorporate changes that reflect these comments. We detail 
+our responses to the reviewers below:
+
+Reviewer A writes:
+
+-- More discussion of the comparison between previous C++ software in 
+-- that authors' research group and the new Haskell software would be 
+-- much more interesting. In particular, the C++ tools described in 
+-- section 4 seem significantly more complex than MRFy. Would Haskell 
+-- scale to these problems just as well? 
+
+The C++ tools described are actually no more complex in terms of the algorithms 
+they implement, though they comprise many more lines of code. We will clarify 
+this language, and better contrast them.
+
+-- Additionally, the performance discussion is so brief as to be almost 
+-- uniterpretable. For example, it seems that MRFy parses protein 
+-- structure (in what format?) in constant time, whereas SMURF seems to 
+-- take longer on more complex proteins. Are the two tools implementing 
+-- the same algorithm? Why is Haskell slower by a factor of 3 on the 
+-- small structures? The discussion on parallelism is even briefer -- 
+-- it's great to keep 48 cores warm, but what kind of parallel speedup is 
+-- achieved? 
+
+We agree, and will provide more comprehensive quantitative results. In point of 
+fact, MRFy is not implementing the same algorithm as SMURF, and we will better 
+clarify this. We will also correct our wording to indicate that it's not 
+*parsing* protein structures that we're talking about, but *computing* the 
+optimal parse of a protein sequence onto a Markov random field. The complexity 
+of the protein structures used to build the Markov random field is at issue 
+here, and we will make this clearer. We will provide a better analysis of 
+parallel performance, as well. In addition, while SMURF and MRFy differ 
+algorithmically, we can and will provide a quantitative comparison of the 
+run-time performance of the algorithm they share in common: Viterbi's algorithm.
+
+-- The discussion of Viterbi's equations is extremely hard to follow for 
+-- the uninitiated. This is especially true since the level of detail 
+-- presented doesn't seem necessary for the larger points of the paper. 
+
+We agree, and given the request for more quantitative results, we will try to 
+clarify the Viterbi discussion while at the same time going into less detail.
+
+-- Is MRFy available? Can we try it out? 
+
+We plan to make MRFy publicly available by the time ICFP opens (and by which 
+time we will have also published scientific results based on MRFy). We can make 
+MRFy available for review if desired, but the primary investigator (Daniels' 
+PhD advisor) is reluctant to release source code prior to publication of 
+results.
+
+-- I'm not sure that other structural biologists would agree that 
+-- searching for homologous proteins is the "best known method of 
+-- discovering" protein function. 
+
+We will clarify this to indicate that searching for homologous proteins is a 
+well known and cost-effective approach that works in the absence of genetic 
+interaction networks, given that protein sequence information is widely 
+available. We will cite Pandey et al. 2007, "Computational Approaches for 
+Protein Function Prediction: A Survey"
+
+-- Why does the definition of HMMState on page 2 contain no data, just 
+-- tags?
+
+We realize that our use of "state" is misleading; our representation uses this 
+HMMState data type as a tag, which along with node index and sequence residue 
+index, allows us to index into our memoization table. We will change the data 
+type to "StateLabel" and clarify this in the manuscript.
+
+Reviewer B writes:
+
+
+-- There is a report of positive experience using parallelism in Haskell, which is 
+-- striking in its brevity. You could easily miss it! Apparently, at least for 
+-- trivially parallel problems such as this, parallelism with GHC just works and 
+-- there was nothing more to say. I'd like to see a bit more made of this result, 
+-- since as a community we're often asked for evidence to support our hypothesis 
+-- that functional programming is good for parallelism. Perhaps give parallelism a 
+-- separate subsection and include a few numbers?
+
+We plan to break parallelsm out into its own subsection, and include a 
+quantitative analysis of scaling on several multi-core systems.
+
+-- 3.1 
+--    "data TProb" - why not use a newtype? 
+
+This is a historical artifact; TProb used to contain multiple fields. We will 
+fix it.
+
+-- 3.2 
+--    - the code for "search" is a bit compressed - consider adding some line
+--      breaks and blank lines to make it more readable 
+
+We will give "search" a bit more space.
+
+-- 3.3 
+--    - it sounds like your solution for vee' might be relying on lazy 
+--      evaluation rather than properties of GHC's inliner, but it's hard 
+--      to tell without more details. 
+
+We don't believe this to be the case, but it seems like a worthwhile and simple 
+experiment. We will attempt to add strictness to vee' and report whether or not 
+there is any impact.
+
+-- 3.4 
+--    - since version 7.4.1, GHC's profiler now annotates nested 
+--      functions automatically. 
+
+This is terrific news! We plan to try GHC 7.4.1 once we resolve some library 
+dependencies that are currently problematic. We will update the text to reflect 
+this new support.
+
+--   - it's not clear why the profiler could only be used on very small 
+--     test cases: is it speed, memory use, or something else? If speed, 
+--     does it help to use fewer annotations? 
+
+It was definitely runtime speed that was the problem here, for any test case 
+large enough to be interesting, even if few annotations. We will state this 
+more clearly and provide a more thorough evaluation of our profiling 
+experiences.
+
+-- 4. 
+--    "working with HMMER codebase" -> "working with the HMMER codebase"
+
+We will correct this.
+
+Reviewer C writes:
+
+-- The main thing I'm missing is more discussion of the effect of laziness -- in 
+-- general and on the specific points mentioned. Was laziness useful for the 
+-- algorithms described? Was it perhaps even instrumental? Or was it rather a 
+-- hurdle (in particular with respect to the issues of debugging, profiling and 
+-- performance)? Perhaps the authors can try to make some informed guess whether, 
+-- with everything else being equal, a strict language might or might not have 
+-- worked better for their problem domain.
+
+We will include more discussion of laziness. We used laziness in two essential 
+places, though one of them was not preserved: our original bottom-up 
+dynamic-programming approach to Viterbi, and our use of a lazy infinite list of 
+random numbers in our search implementation. We will discuss this in more 
+detail.
+
+In general, though, we don't particularly feel that laziness had a significant
+bearing on our experience; other than one bug which we thought was due to
+laziness, but actually turned out to be a mis-implemented typeclass derivation,
+laziness was neither an impediment nor instrumental to our success.
+
+-- Sec 3.1: In the type definition for Scored, what is type Score? 
+
+We will add this to section 3.1; as it happens it is "newtype Score = Score 
+Double"
+
+-- Does the code for vee' omit some cases, or what's happening for other 
+-- HMMStates? Also, what is eProb? 
+
+Yes, this is only the Match case; we omitted the other recursive and base cases 
+in the interests of brevity. We will enumerate the cases we've omitted, and 
+refer the reader to Figure 3, but it would require too much space to include 
+all of the code.
+
+-- Sec 3.2: "Our implementation of hidden Markov models and Viterbi's algorithm 
+-- duplicate existing functionality." I didn't get this. What functionality? 
+
+We will clarify this; we meant that we were reimplmenting some algorithms 
+(namely, Viterbi) that have already been implemented (in C++) in SMURF and 
+HMMER. The point of this contrast is to acknowledge that had we simply extended 
+the SMURF code base to implement our new algorithm, we would not have had to 
+reimplement Viterbi, for better or worse.
+
+-- In the type definition for Scorer, what is type Placement? 
+
+In this case, [Int], but our real code is polymorphic. We ask the reviewers and 
+committee: should we show the polymorphic version instead, though it may be 
+less clear how it relates to this particular problem domain?
+
+-- You say the use of higher-order functions was useful, e.g. for abstracting over 
+-- search strategies. But isn't your type SearchStrategy effectively defining an 
+-- object type? That is, wouldn't this have been as convenient with conventional 
+-- object-oriented techniques? 
+
+We don't believe this would have been as convenient with conventional 
+object-oriented techniques, as we are closing over a great deal of environment 
+information (command-line parameters, some of which are search-strategy 
+specific) which would have required instantiating various types of 
+search-strategy-specific objects.
+
+-- Sec 4: Typo: "Matt uses such data structures such as..." - double "such"
+
+Indeed; we will fix this.
+
+Reviewer D writes:
+
+-- Perhaps the most useful feature of Haskell that is used here is function 
+-- memoization which comes naturally to dynamic programming and is cumbersome in 
+-- other programming languages save for the efficiency of the implementation of 
+-- memoization in Haskell itself. It would have been useful to compare this to 
+-- implementing table lookups in other programming languages. 
+
+We can provide a contrast to our experience implementing dynamic programming in 
+C++ (unsurprisingly, there is a great deal more bookkeeping to be done). We do 
+not feel we have the experience to provide a comparison over a wide range of 
+programming languages.
+
+-- While in the introduction the authors state that "considerations of performance 
+-- are paramount" no numerical comparison is presented in the paper about 
+-- performance of their implementations compared to others written in C or C++. 
+-- Also, no viable way of comparing "convenience, readability, and productivity" 
+-- to other implementations is presented in a quantitative manner that can help 
+-- attract would-be Haskell programmers except for section on the use of 
+-- memoization. 
+
+We promise a quantitative comparison should this manuscript be accepted. This 
+comparison will largely have to be limited to code size and development time, 
+but we can and will provide a quantitative comparison of the Viterbi algorithm 
+run-time performance between SMURF and MRFy. However, the overall MRFy 
+algorithm differs from SMURF, so overall run-time differences cannot be 
+attributed to language choices as opposed to algorithmic differences.
+
+-- Can the Authors identify other problems in computational biology, other than 
+-- protein amino acid sequence comparison, where their experience presented in the 
+-- paper would apply and be useful? I doubt it. For example in Section 5, "What 
+-- can you learn from our experience?" The Authors state "If you are a 
+-- computational biologist, you can be productive in Haskell, and you don’t need 
+-- extensive experience." I would ask them to name one more problem in 
+-- computational biology that would make use of their experience. 
+
+In fact, we can name several other problems we can (and may) address based on 
+this experience. For example, we have applied graph-theoretic algorithms to the 
+problems of gene functional annotation given a genetic interaction graph, as 
+well as the problem of identifying compensatory genetic pathways 
+("Between-pathway models") in the Yeast genome. We have written some Haskell 
+code for the former problem (very much a work in progress), and while we 
+approached the latter problem using Python, we feel that Haskell would have 
+suited nicely. We will expand upon this discussion in the paper.
+
+-- As stated earlier, identifying homologous proteins is a very important problem, 
+-- but it is misleading to state that there are no other problems in computational 
+-- biology that are important, the filed so very vast and problems so numerous 
+-- which makes the title of the paper misleading. If the Conference Committee 
+-- decides to accept the paper, I would urge them to ask the Authors to change the 
+-- title of the paper. 
+
+If accepted, we will choose a more appropriately narrow title. It was not our 
+intent to suggest that protein remote homology detection is the only field 
+within computational biology, but rather that many computational biologists are 
+unfamiliar with Haskell, and most computational biology software is written, as 
+we suggest in the introduction, in C++, Java, or Python.
+
+-- Also, In making a decision to accept or reject the paper, the Conference 
+-- Committee should compare their decision with that of accepting or rejecting a 
+-- paper that describes implementation of a dynamic programming algorithm in 
+-- Hasekell. The phrase "computational biology" should not be a factor in their 
+-- decision; the same methods presented in the paper could have been used in 
+-- implementing an algorithm for comparing sequences of strings over a finite 
+-- alphabet without change, regardless of the fact that in this case the alphabet 
+-- encodes names of amino acids.
+
+Clearly, we have not adequately explained the difference between our 
+implementation (which combines dynamic programming, stochastic search, and a 
+relatively new graphical model for Markov random fields, which are not the same 
+as hidden Markov models) and past work from our group. We intend our experience 
+report to be an exemplar of what computational biologists may experience should 
+they choose to implement novel, performance-intensive algorithms in Haskell 
+(or, perhaps, other functional languages). We will endeavor to make this goal 
+clearer should our paper be accepted.
+
+We would also like to better explain that MRFy represents a novel algorithm for 
+solving Markov random fields, but whose components include implementations of 
+the standard techniques of dynamic programming and stochastic search. We hope 
+that some readers not yet familiar with Haskell will find this higher-order 
+stochastic search implementation useful as well.
