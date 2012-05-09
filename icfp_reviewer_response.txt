@@ -84,20 +84,3 @@ evidence we present supports the use of Haskell for the new problem.
 Perhaps a member of the program committee can suggest a title that is
 accurate but is not so narrow as to rule out many problems in
 computational biology?
-
-Reviewer D also implies that we have merely reimplemented a standard
-dynamic programming algorithm.
-Clearly, we have not adequately explained the difference between our 
-implementation (which combines dynamic programming, stochastic search, and a 
-relatively new graphical model for Markov random fields, which are not the same 
-as hidden Markov models) and past work from our group. We intend our experience 
-report to be an exemplar of what computational biologists may experience should 
-they choose to implement novel, performance-intensive algorithms in Haskell 
-(or, perhaps, other functional languages). We will endeavor to make this goal 
-clearer should our paper be accepted.
-
-We would also like to better explain that MRFy represents a novel algorithm for 
-solving Markov random fields, but whose components include implementations of 
-the standard techniques of dynamic programming and stochastic search. We hope 
-that some readers not yet familiar with Haskell will find this higher-order 
-stochastic search implementation useful as well.
