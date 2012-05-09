@@ -61,7 +61,7 @@ with table lookups in other languages.  We will contrast our Haskell
 experience with our prior work implementing dynamic programming in C++.  
 C++ requires much more bookkeeping.
 
-Referee D asks for other problems in computational biology that would
+Reviewer D asks for other problems in computational biology that would
 make use of our experience.  We have applied Haskell to problems of
 gene functional annotation given a genetic-interaction graph, using
 standard graph algorithms.  We are also prototyping code to identify
@@ -69,7 +69,7 @@ compensatory genetic pathways ("Between-pathway models") in the yeast
 genome.   Both of these efforts are much less mature than MRFy, and we
 are not sure what, if anything, to say about them in the paper.
 
-Referee D suggests the paper's title is too broad.  We certainly want
+Reviewer D suggests the paper's title is too broad.  We certainly want
 the title to reflect our experience accurately; if the paper does not
 deliver on the promise implicit in the title, that's bad for us and
 for ICFP.  But we would also like the paper to reach an audience
