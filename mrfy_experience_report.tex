@@ -918,6 +918,39 @@ and Simon Marlow said that he may have figured out how to track call
 stacks properly in a lazy functional language.
 We~can't wait.
 
+\remark{The following \P\ will need to be connected up to the last \S\
+on ``our old approach to debugging.''}
+
+Debugging led also not to awkward code, but to awkward interactions on
+our team.
+The two junior members of the team wanted to apply the debugging
+skills they had honed through years of imperative programming.
+The senior partner kept nattering on about QuickCheck properties.
+No~progress was made until the first draft of this paper was prepared.
+At~that point, we were quickly about to write QuickCheck
+specifications for several properties of the Viterbi algorithm:
+\begin{itemize}
+\item
+The total number of \verb+Mat+ and \verb+Ins+ states returned equals
+the number of amino acids in the query sequence.
+\item
+The total number of matches, insertions, and deletions returned equals the
+number of nodes in the hidden Markov model,
+\emph{provided} that a maximal, nonempty, contiguous subsequence
+of~\verb+Ins+ states counts as a single node,
+and \verb+Mat+ and \verb+Del+ states count as one node each.
+\item
+The sequence returned satisfies the Plan7 invariant, that is, states
+\verb+Ins+ and \verb+Del+ are never adjacent.
+\end{itemize}
+\textbf{These properties need to be followed by more ambitious
+properties},
+such as proving that nearby sequences are less likely than the
+sequence returned by \verb+vee'+.
+
+
+
+
  
  
 \section{Our previous experience compared}
