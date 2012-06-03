@@ -21,6 +21,8 @@
 
 \documentclass[preprint,nonatbib,blockstyle,nocopyrightspace,times]{sigplanconf}
 
+\newcommand\mrfy{MRFy} % damn you Noah
+
 \newcommand\txprobj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
 \newcommand\alignwidth{\ensuremath C} % number of columns in an alignment
@@ -744,9 +746,56 @@ Nodes connected by dashed edges are hydrogen-bonded.
 \label{mrf} 
 \end{figure}
 
-
 MRFy's search computes a sequence of \emph{generations}.
 A~generation is a collection of scored {placements}.
+\begingroup\em\relax
+Ideally, MRFy's search would use now-classic lazy, modular
+technique advocated by \citet{hughes:why}, in which one function
+computes an infinite sequence of generations, and another function
+uses a finite prefix to decide on an approximation.
+But making MRFy's search lazy and modular search is not so easy.
+ because MRFy's search is stochastic.
+
+In~a stochastic search, \emph{movement} between points in the search
+space is not the same as \emph{progress}.
+For example, suppose you are searching for the top of a hill
+and you take a small jump in a random direction.
+If~you arrive at a higher point than your point of origin, you have
+made progress.
+Otherwise you have just moved.
+\smallverbatiminput{movequality}
+We~hoped to implement \mrfy's search by composing functions:
+\begin{itemize}
+\item
+From a given point, a \emph{generator} produces an infinite sequence
+of moves.
+\item
+From such a sequence, a \emph{classifier} chooses the first move that
+represents progress.
+What sort of move constitutes progress is not only different for
+different kinds of searches, but may also be different at different
+\emph{times} in a search.
+\end{itemize}
+A~generator and classifier can be composed to produce a sequence of
+progressing generations, and a test function can terminate the search
+after examining a finite
+prefix.
+But this sketch contains a fatal flaw:
+a generator may produce an infinite sequence of generations without any
+progress.
+And then, when the test function tries to examine a finite prefix of
+progressing generations, it will diverge.
+We~might conclude that
+\mrfy's search algorithm is inherently non-modular:
+production of progressing generations cannot be decoupled from the
+test for termination.
+
+
+
+
+
+N.B.~The following transition no longer makes any sense:
+\endgroup
 We~pass the
 search function a \texttt{Scorer}, which runs Viterbi's algorithm.
 \smallverbatiminput{scoredecl}
@@ -790,6 +839,12 @@ generation.
 \seclabel{search}%
 We hope you find the search simple and straightforward:
 \smallfuzzverbatiminput{11pt}{search}
+
+\remark{We need to explain why we don't just generate an infinite lazy
+list of thingies.  And perhaps we can consider an infinite tree!}
+
+
+
 
 The \texttt{SearchStrategy} interface provides ample scope for
 experiments. 
