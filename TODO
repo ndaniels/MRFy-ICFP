@@ -1,0 +1,22 @@
+want to look at Age outside of mrfy in order to do SCIENCE!!!
+
+  - not just implementing search; doing research on search algorithsm
+
+  - therefore we want age to escape
+
+  - accept function: every node has an infinite sequence of children,
+    then you pick the first good one  (might need splittable random
+    numbers and unsafe performio)
+
+  - using gen0, you centralize the consumption of randomness
+
+
+eliminate these stupid (Bool, Bool) argument to Viterbi
+
+
+  possibility:  pass out *all* explored nodes with no age labels, tag
+  accepted nodes
+  *or* pass out only accepted nodes, tag each with age
+
+  either way, age has to be used internally, because it's used to
+  decide acceptance
