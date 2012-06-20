@@ -1,5 +1,5 @@
-vee'' state j i =
+vee'' =
   Memo.memo3 (Memo.arrayRange (Mat, End)) 
              (Memo.arrayRange (0, numNodes))
-             (Memo.arrayRange (0, seqlen)) 
-             vee' state j i
+             (Memo.arrayRange (-1, seqlen)) 
+             vee'

@@ -1,0 +1,5 @@
+data SearchGen pt r = 
+ SG { pt0     :: Rand r (Scored pt)
+    , nextPt  :: Scored pt -> Rand r (Scored pt)
+    , utility :: Move pt -> Rand r (Utility (Scored pt))
+    }

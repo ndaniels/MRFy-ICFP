@@ -2,7 +2,7 @@
 
 \pagetuningtrue % trying to get page breaks in the best spots
 
-\newif\ifnotcutting \notcuttingfalse % set if not cutting down to size
+\newif\ifnotcutting \notcuttingtrue % set if not cutting down to size
 
 \newif\iffinaldraft \finaldraftfalse % true if it's the final version
 
@@ -54,6 +54,7 @@
 
 \newenvironment{smallverbatim}{\par\small\verbatim}{\endverbatim}
 \newcommand\smallverbatiminput[1]{{\par\unskip\small\verbatiminput{#1}}}
+\newcommand\smallverbatiminputx[1]{\vspace*{-8pt}{\small\verbatiminput{#1}}} % WTF?? {\LaTeX} hell
 \newcommand\smallfuzzverbatiminput[2]{{\par\unskip\small\hfuzz=#1 \verbatiminput{#2}}}
 
 \renewcommand\ttdefault{aett}
@@ -729,7 +730,9 @@ trying to minimize scores.
 We~are exploring several stochastic algorithms: random-mutation hill
 climbing, simulated  
 annealing, multistart simulated annealing, and a genetic algorithm.
-Our~exploration relies on higher-order functions.
+Our~exploration exploits higher-order functions, existentially
+quantified types, and (to a degree) lazy evaluation.
+
 
 
 \begin{figure}
@@ -746,66 +749,178 @@ Nodes connected by dashed edges are hydrogen-bonded.
 \label{mrf} 
 \end{figure}
 
-MRFy's search computes a sequence of \emph{generations}.
-A~generation is a collection of scored {placements}.
-\begingroup\em\relax
+
+
+
+
+We~describe \mrfy's search abstractly: \mrfy\ computes a sequence
+of \emph{points}. 
+Each point contains
+a collection of {placements}; different searches represent
+collections differently.
+Each point also has a \texttt{Score}; \mrfy\ looks for points with
+good scores.
+
 Ideally, MRFy's search would use now-classic lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
-computes an infinite sequence of generations, and another function
+computes an infinite sequence of points, and another function
 uses a finite prefix to decide on an approximation.
-But making MRFy's search lazy and modular search is not so easy.
- because MRFy's search is stochastic.
+But because MRFy's search is stochastic, 
+making MRFy's search lazy and modular is not so easy.
 
-In~a stochastic search, \emph{movement} between points in the search
-space is not the same as \emph{progress}.
-For example, suppose you are searching for the top of a hill
-and you take a small jump in a random direction.
-If~you arrive at a higher point than your point of origin, you have
-made progress.
-Otherwise you have just moved.
-\smallverbatiminput{movequality}
-We~hoped to implement \mrfy's search by composing functions:
-\begin{itemize}
-\item
-From a given point, a \emph{generator} produces an infinite sequence
-of moves.
-\item
-From such a sequence, a \emph{classifier} chooses the first move that
-represents progress.
-What sort of move constitutes progress is not only different for
-different kinds of searches, but may also be different at different
-\emph{times} in a search.
-\end{itemize}
-A~generator and classifier can be composed to produce a sequence of
-progressing generations, and a test function can terminate the search
-after examining a finite
-prefix.
-But this sketch contains a fatal flaw:
-a generator may produce an infinite sequence of generations without any
-progress.
-And then, when the test function tries to examine a finite prefix of
-progressing generations, it will diverge.
-We~might conclude that
-\mrfy's search algorithm is inherently non-modular:
-production of progressing generations cannot be decoupled from the
-test for termination.
+To illustrate the difficulties, we~use our simplest search:
+random hill climbing.
+The space of beta-strand placements has no notion of slope or
+gradient,
+so at any given point in the search space, this search moves a random
+distance in a random 
+direction.
+If~it leads to a better point, the move
+is \emph{useful};
+otherwise it is \emph{useless}.
+\smallverbatiminput{utility}
+(We~also use \texttt{Useful} and \texttt{Useless} to tag \emph{points}.)
+With luck, an~infinite sequence of useful moves converges
+at a local optimum.
+
+\mrfy's search path follows only useful moves;
+if a move proves useless, 
+\mrfy\ abandons it and tries again (with a new random seed) at the
+previous point.
+Ideally, \mrfy\ would search by composing a \emph{generator}
+that produces an infinite sequence of moves, 
+a \emph{filter} that selects the useful moves, and 
+a \emph{test} function that enumerates finitely many useful moves
+and returns the final destination.
+But the generator may produce an infinite sequence of useless moves.
+(For example, if \mrfy\ should find a global optimum, every move from
+that point is guaranteed to be useless.)
+Given an infinite sequence of useless inputs, a filter would not be
+productive, and a test function would diverge.
+
+We~address this problem by combining ``generate and filter'' into a
+single abstraction, which has type \texttt{SearchGen pt r}.
+Type variable~\texttt{pt} is a point in the search
+space, and type variable~\texttt{r} is a
+random-number generator:
+\smallverbatiminput{gen.tex}
+The monadic computation \texttt{pt0} randomly selects a starting point
+for search;
+\texttt{nextPt} produces a new point from
+an existing point.
+Because scoring may be expensive, both \texttt{pt0}
+and \texttt{nextPt} use \emph{scored} points, and they can
+reuse scores from previous points.
+
+Why do we have \texttt{pt0} and \texttt{nextPt}
+instead 
+of a single function with type \mbox{\texttt{Rand r [Scored pt]}},
+which could produce an infinite list?
+Because after the first move
+the starting point for the next move depends on whether the first move
+was useful.\remark{I hate this ``explanation.'' ---NR}
+That decision is made by the \texttt{utility} function,
+which scrutinizes a move represented as follows:
+\smallverbatiminput{move}
+The decision about utility uses not only a source of randomness but
+also the \emph{age} of the \texttt{younger} point which is
+moved~to.\remark{This word ``age'' is \emph{entirely} bogus!}
+For example, in~simulated annealing, as the search progresses,
+the \texttt{utility} function becomes less likely to express a move
+that results in a worse score.\remark{And I hate this explanation
+too.} 
+
+\noindent
+\vbox{
+Using these pieces, function \texttt{everyGen} produces an infinite
+sequence containing a mix of useful and useless moves:
+\smallverbatiminput{everygen}
+}
+\noindent
+Because both \texttt{nextPt} and \texttt{utility} consume randomness,
+the computation is very sequential, but it does use a little bit of
+laziness:
+from its starting point, \texttt{everyPt} provides an infinite list of
+randomly chosen successor points, then calls \texttt{agedUtility} to
+tag each one with its age and utility.\remark{There's that bogus age
+again.}
+The Prelude function \texttt{span} finds the first useful successor,
+but in case there \emph{is} no successor, the code must also produce
+all the useless successors.
+If~we do find a useful successor, we start searching anew from that
+point, with a recursive call to \texttt{everyPt}.
+
+The most telling line of code in \texttt{everyPt} is the last line of
+the body, which shows that the result begins with a useful point,
+is followed by a (possibly infinite, possibly empty) list of useless
+points, and then continues recursively with another useful point.
+When the computation returned by \texttt{everyPt} is evaluated against
+a random-number generator, it returns an infinite list containing a
+mix of useful and useless points.
+This mix can be passed to a test function of type \texttt{SearchStop~pt}:\\
+\vbox{
+\smallverbatiminput{strat}
+\smallverbatiminputx{stop}
+\smallverbatiminputx{search}
+}
+\noindent
+We have implemented two kinds of stop functions...
+
+
+
+N.B. WE HAVE TWO KINDS OF NON-MODULARITY.  FIRST, TERMINATION HAS TO
+LOOK AT \emph{ALL} STATES, EVEN THOUGH WE WOULD PREFER THAT IT LOOK
+ONLY AT USEFUL STATES.  SECOND, AGE IS EVERYWHERE.  IN PARTICULAR, WE
+CANNOT SEPARATE THE AGE OF THE CURRENT STATE FROM THE UTILITY
+DECISION.
 
 
 
 
 
-N.B.~The following transition no longer makes any sense:
-\endgroup
+\remark{We need to explain why we don't just generate an infinite lazy
+list of thingies.  And perhaps we can consider an infinite tree!}
+
+
+
+
+The \texttt{SearchStrategy} interface provides ample scope for
+experiments.\remark{\P\ needs rewriting}
+Random-mutation hill climbing took fifty lines of code and one~day to
+implement.
+Simulated annealing reuses hill climbing's
+ \texttt{nextPt}, \texttt{pt0}, and \texttt{quit} functions.
+Simulated annealing's  new \texttt{accept} function took ten
+lines of code and half an hour to implement.
+(Hill climbing accepts a point only if it scores better than its
+predecessor;
+simulated annealing may accept a point that scores worse.)
+Our genetic algorithm reuses the same
+\texttt{pt0} and \texttt{quit} functions, and its \texttt{accept}
+function took only a few lines of code.
+But~the recombination of parent
+placements in its \texttt{nextPt} function took forty lines of code
+and a full day to implement.
+\ifnotcutting
+Our~current \texttt{quit} function simply runs for a fixed number of
+generations, but its interface will enable us to try other criteria,
+such as stopping once $k$~generations have passed without more than $E$
+improvement in score. 
+\fi
+
+
+\subsection*{The old search algorithm}
+
 We~pass the
 search function a \texttt{Scorer}, which runs Viterbi's algorithm.
-\smallverbatiminput{scoredecl}
+\smallverbatiminput{orig-scoredecl}
 A~search heuristic is characterized by four functions, which are
 bundled into a record called \texttt{SearchStrategy}.
-\smallfuzzverbatiminput{2.3pt}{strategy}
+\smallfuzzverbatiminput{2.3pt}{orig-strategy}
 In this record,
 \begin{itemize}
 \item
-Function \texttt{gen0} produces the first generation of placements.
+Function \texttt{pt0} produces the first generation of placements.
 \item
 Function \texttt{nextGen} produces a new generation of placements from
 an existing generation.
@@ -838,37 +953,7 @@ generation.
 \end{itemize}
 \seclabel{search}%
 We hope you find the search simple and straightforward:
-\smallfuzzverbatiminput{11pt}{search}
-
-\remark{We need to explain why we don't just generate an infinite lazy
-list of thingies.  And perhaps we can consider an infinite tree!}
-
-
-
-
-The \texttt{SearchStrategy} interface provides ample scope for
-experiments. 
-Random-mutation hill climbing took fifty lines of code and one~day to
-implement.
-Simulated annealing reuses hill climbing's
- \texttt{nextGen}, \texttt{gen0}, and \texttt{quit} functions.
-Simulated annealing's  new \texttt{accept} function took ten
-lines of code and half an hour to implement.
-(Hill climbing accepts a generation only if it scores better than its
-predecessor;
-simulated annealing may accept a generation that scores worse.)
-Our genetic algorithm reuses the same
-\texttt{gen0} and \texttt{quit} functions, and its \texttt{accept}
-function took only a few lines of code.
-But~the recombination of parent
-placements in its \texttt{nextGen} function took forty lines of code
-and a full day to implement.
-\ifnotcutting
-Our~current \texttt{quit} function simply runs for a fixed number of
-generations, but its interface will enable us to try other criteria,
-such as stopping once $k$~generations have passed without more than $E$
-improvement in score. 
-\fi
+\smallfuzzverbatiminput{11pt}{orig-search}
 
 
 
@@ -1264,7 +1349,11 @@ succeed.
 \ifnotcutting
 \acks
 
-We thank Lenore Cowen, Kathleen Fisher, Benjamin Hescott, Bradford
+An~anonymous referee\remark{Just one referee?} spurred us to think
+more deeply about laziness.
+Josef Svenningsson suggested a correspondence between \mrfy's search
+and stream fusion, which led us eventually to the \texttt{Utility} type.
+We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci. 
 \fi
 

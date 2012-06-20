@@ -1,0 +1,14 @@
+everyPt :: SearchGen pt r -> Age -> Scored pt
+         -> Rand r [Aged (Utility (Scored pt))]
+everyPt ss age startPt = do
+  successors <- mapM (nextPt ss) (repeat startPt)
+  tagged <- zipWithM agedUtility successors [succ age..]
+  let (useless, Aged (Useful newPt) newAge : _) =
+                        span (isUseless . unAged) tagged
+  nextPts <- everyPt ss newAge newPt
+  return $ Aged (Useful startPt) age : useless ++ nextPts
+
+  where agedUtility pt age =
+           utility ss move >>= \u -> return $ Aged u age
+         where move = Move { older = startPt, younger = pt
+                           , youngerAge = age }

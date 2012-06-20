@@ -1,0 +1,2 @@
+fullSearch :: FullSearchStrategy a r -> Rand r (History a)
+fullSearch (FSS gen stop best) = fmap (fmap best . stop) . everyPt gen 0 =<< pt0 gen

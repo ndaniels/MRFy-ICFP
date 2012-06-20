@@ -14,13 +14,23 @@ $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 # &.eps: &.pdf
 #	convert $prereq $target  # hideous, but workable
 
-$TGT.dvi: $TGT.tex
-	latexmk $TGT.tex
+CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move strat stop history
+
+$TGT.dvi: $TGT.tex ${CODES:%=%.tex}
+	# latexmk $TGT.tex
+    latex '\scrollmode \input '"$TGT"
+	ltxcount=3
+	while egrep -s 'Rerun (LaTeX|to get cross-references right|to get citations correct)' $stem.log &&
+	      [ $ltxcount -gt 0 ]
+	do
+	  latex '\scrollmode \input '"$TGT"
+	  ltxcount=`expr $ltxcount - 1`
+	done
+
 
 $TGT.pdf: $TGT.tex
 	latexmk -pdf $TGT.tex
 
-CODES=strategy search viterbi scoredecl vscore vfix edge memo
 
 latex:V: ${CODES:%=%.tex}
 	latex $TGT
@@ -29,11 +39,14 @@ latex:V: ${CODES:%=%.tex}
 $TGT.dvi: ${CODES:%=%.tex}
 $TGT.pdf: ${CODES:%=%.tex}
 
-strategy.tex search.tex scoredecl.tex:D: ./xsource Smurf2/SearchModel.hs
-	lua $prereq
+strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
+ 	lua $prereq
 
-memo.tex edge.tex viterbi.tex vscore.tex:D: ./xsource Smurf2/Viterbi.hs
-	lua ./xsource Smurf2/Viterbi.hs
+vscore.tex:D: ./xsource Smurf2/Score.hs
+ 	lua $prereq
+
+memo.tex edge.tex viterbi.tex:D: ./xsource Smurf2/Viterbi.hs
+	lua $prereq
 
 vfix.tex:D: viterbi.tex mkfile
 	sed -e "s/vpaper'/viterbi/" \
