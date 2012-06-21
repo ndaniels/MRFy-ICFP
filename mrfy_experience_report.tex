@@ -329,6 +329,7 @@ insertion at column~$j$.
 \end{itemize}
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
 We~represent a state using an algebraic data type:
+\remark{we promised a better name for HMMState. Thoughts?}
 \begin{smallverbatim}
 data HMMState = Mat | Ins | Del | Beg | End
 \end{smallverbatim}
@@ -617,7 +618,7 @@ we~choose the best solution
 from among the three predecessor states;
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
-encountered up to this point:
+encountered up to this point:\remark{we promised to characterize the missing cases}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \smallverbatiminput{vfix}
 Functions \texttt{tProb} and \texttt{edge} combine to select the
@@ -663,8 +664,14 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{mrfy}
 
 Our implementations of hidden Markov models and Viterbi's algorithm
-duplicate existing functionality.
-In~MRFy, they are used to implement new functionality.
+duplicate existing functionality; these same algorithms were
+implemented in C++ for HMMER and SMURF.
+This reimplementation is a cost of using Haskell, and one that
+other researchers may have to pay as well.
+However, the authors of SMURF and HMMER implemented these algorithms
+anew, even though existing implementations existed in C++.
+In~MRFy, we use these algorithms as building blocks to implement
+new functionality.
 
 A hidden Markov model uses local information about
 amino-acid sequences.
@@ -876,8 +883,6 @@ DECISION.
 
 
 
-
-
 \remark{We need to explain why we don't just generate an infinite lazy
 list of thingies.  And perhaps we can consider an infinite tree!}
 
@@ -951,8 +956,20 @@ It~too considers the list of accepted generations and the age of the current
 generation. 
 \fi
 \end{itemize}
+This \texttt{SearchStrategy} interface somewhat resembles an object-oriented
+style of programming.
+However, it is \textit{easier} to create a SearchStrategy
+in Haskell than using conventional object-oriented techniques, because
+all the functions in a SearchStrategy are partial applications of
+other functions.
+If we were using conventional object-oriented
+techniques, we would have to declare subclasses with instance
+variables and would have to write code to initialize objects of those
+subclasses. 
+
 \seclabel{search}%
 We hope you find the search simple and straightforward:
+
 \smallfuzzverbatiminput{11pt}{orig-search}
 
 
@@ -976,7 +993,33 @@ Even when there is just one placement per generation,
 MRFy can keep six cores busy.
 Given multiple placements per generation,
 it~can use forty-eight cores.
+However, we have found that MRFy performs best, at least on our
+hardware, with between 12 and 16 cores. We have access to only
+one 48-core system, and while MRFy will keep all 48 cores busy, it
+performs better when given no more than 16 cores.\remark{give specific
+numbers here}
 
+MRFy's predecessor, SMURF, does not perform stochastic search,
+and thus its overall run-time performance cannot be compared directly to MRFy.
+However, both programs implement the Viterbi algorithm.
+On an exceedingly large, contrived example, comprising 56,000 amino acids
+(larger than any known protein) and 343 nodes, and ignoring all beta-strand
+information, SMURF's Viterbi implementation completed in 0.497 seconds on a
+2.6GHz Core i7.
+On the same benchmark, MRFy's Viterbi implementation required 1 minute 57
+seconds.
+Despite the inferior runtime performance, MRFy still meets our performance
+goals.
+This is because the stochastic search algorithm relies on the Viterbi algorithm
+applied to many, significantly smaller hidden Markov models than SMURF's
+multidimensional programming must tackle.
+MRFy computes an alignment for a 12-stranded ``beta sandwich'' structure in
+generally less than one minute, while SMURF consumes over 16GB of memory
+and does not terminate even after eight hours.
+Had we implemented the SMURF algorithm in Haskell, we believe that performance
+would be unacceptable.
+However, for the algorithm underlying MRFy, we are satisfied with the runtime
+performance of Haskell and GHC.
 
 In~\secref{viterbi} above, the example case for the \verb+vee'+
 function computes not just a score but also an optimal path.
@@ -1015,9 +1058,9 @@ We~think \verb+vee'+ is beautiful, but we wrote some ugly code, too,
 because we lack skills and knowledge in two areas.
 The first is profiling.
 GHC's profiling is based on cost centers \cite{sansom-pj},
-and although GHC 
+and for most of MRFy's development, we used GHC 7.0, which
 will happily add cost centers to top-level 
-functions, much of our code is in nested functions.
+functions only, while much of our code is in nested functions.
 We~know of no better technique than to add cost-center annotations to
 each guard clause and nested function,
 but these annotations made our code so ugly that we felt compelled to
@@ -1026,6 +1069,9 @@ And without the annotations, GHC's call-site and allocation
 profiles did not give us enough information to be useful.
 We~miss valgrind, whose callgrind profiler gives useful information
 without \emph{any} annotations in the source.
+Late in MRFy's development, we began using GHC 7.4, which provides much
+better profiling tools.
+We are thrilled by these tool developments.
 
 Our other ugly code came from  attempts to debug
 run-time errors.
@@ -1103,7 +1149,8 @@ We~compare our experience with three tools:
 \item
 Matt~\cite{Menke:2008wu} is used to create alignments like that shown
 in \figref{alignment}.
-It~comprises about 12,000 lines of~C++.
+It~comprises about 12,000 lines of~C++.\remark{reviewers seemed to want a
+table of this information, but that seems like a huge waste of space.}
 The only external tools or libraries it uses are \texttt{zlib}
 and \texttt{OpenMP}, and its initial development took two years.
 \item
@@ -1119,7 +1166,7 @@ MRFy is used to detect homologous proteins in the presence of paired
 beta strands.
 It~comprises about 1,200 lines of~Haskell.
 It~uses several external tools and libraries, of which the most
-notable are PADS-Haskell, the BioHaskell bioinformatics library, and
+notable are Parsec, the BioHaskell bioinformatics library, and
 the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
 Its initial development took about three months.
@@ -1165,25 +1212,6 @@ higher-order functions will make MRFy easy to extend.
 Each new addition to MRFy's stochastic search has taken at most a day
 to implement.
 
-%
-% An Experience Report is about what you actually did, not what you
-% wish to do :-)
-%
-%%  There are two major research ideas we wish to add to MRFy eventually, one of which
-%%  \remark{how much should I say about profiles and alpha helices? ---NMD}
-%%  involves looking at another type of nonlocal dependency (\textit{alpha
-%%  helices} in contrast 
-%%  to the current beta strands).
-%%  We expect that thanks to algebraic data types and typeclasses, these
-%%  enhancements will be at 
-%%  most a few weeks of work; we do not believe these enhancements would
-%%  even be feasible in SMURF. 
-%%  Indeed, Daniels tried to add another of these enhancements to SMURF
-%%  two years ago and gave up due 
-%%  to the difficulty of the implementation.
-%%  \remark{The above needs a lot of revision. It is a shitty first
-%%  draft of a /P/. ---NMD} 
-
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
 which makes it hard to write very large functions.
@@ -1206,7 +1234,7 @@ It~can parse some more complex structures in 2--3~minutes.
 But when asked to parse the most complex structures, it runs out of
 memory and has to be killed, even on a system with 128GB of~RAM.
 By~contrast, MRFy can parse any of these structures, approximately,
-in 30~seconds.
+in 30~seconds.\remark{reconcile this vague paragraph with performance section above}
 This performance
 meets our goals, and it means that MRFy can be used to scan whole genomes.
 
