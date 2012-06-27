@@ -161,10 +161,14 @@ algorithm already implemented in~C++,
 but the implementation required little effort,
 and the connection between code and
 algorithm is unusually clear (\secref{viterbi}).
-Our new Haskell code performs competitively with~C++,
+Our new Haskell code performs slower than the~C++
+implementation of the same algorithm,
+but still meets our performance goals,
 and it was easy to parallelize
-(\secref{perf}). 
-\remark{Can we summarize the performance results?  Speedup?}
+(\secref{perf}).
+However, this algorithm is only one part of a larger
+algorithm, which on the whole performs significantly
+better than the~C++ software that precedes it.
 \item
 Higher-order functions made it unusually easy to
 create and experiment with new stochastic-search algorithms
