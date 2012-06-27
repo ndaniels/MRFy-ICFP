@@ -507,7 +507,7 @@ and our hidden Markov models are stored using a
 legacy file format that represents each amino acid as a small integer.
 Our representation is therefore
 \begin{smallverbatim}
-type AA = Int -- amino acid using HMMER coding
+newtype AA = AA Int -- amino acid using HMMER coding
 \end{smallverbatim}
 Either way, a query sequence is (and should be) an immutable vector of
 amino acids.
