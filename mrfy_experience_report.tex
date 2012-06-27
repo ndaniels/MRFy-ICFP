@@ -19,7 +19,7 @@
    \fi
 \fi
 
-\documentclass[preprint,nonatbib,blockstyle,nocopyrightspace,times]{sigplanconf}
+\documentclass[nonatbib]{sigplanconf}
 
 \newcommand\mrfy{MRFy} % damn you Noah
 
@@ -89,9 +89,9 @@
 \begin{document}
 
 
-\conferenceinfo{ICFP '12}{September 9-15, Copenhagen.} 
-\copyrightyear{2012} 
-\copyrightdata{[to be supplied]} 
+\conferenceinfo{ICFP'12,} {September 9--15, 2012, Copenhagen, Denmark.}
+\CopyrightYear{2012}
+\copyrightdata{978-1-4503-1054-3/12/09}
 
 %\titlebanner{banner above paper title}        % These are ignored unless
 \preprintfooter{Haskell in Computational Biology}   % 'preprint' option specified.
@@ -1110,8 +1110,7 @@ We~compare our experience with three tools:
 \item
 Matt~\cite{Menke:2008wu} is used to create alignments like that shown
 in \figref{alignment}.
-It~comprises about 12,000 lines of~C++.\remark{reviewers seemed to want a
-table of this information, but that seems like a huge waste of space.}
+It~comprises about 12,000 lines of~C++.
 The only external tools or libraries it uses are \texttt{zlib}
 and \texttt{OpenMP}, and its initial development took two years.
 \item
@@ -1122,9 +1121,13 @@ It~comprises about 9,000 lines of~C++, of which about 1,000~lines are
 shared with~Matt.
 It~uses no external tools or libraries, and
 its initial development took a year and a half.
+It uses multidimensional dynamic programming to exactly compute the alignments
+for which MRFy relies on stochastic search.
+As a result, in the presence of complex beta-strand topologies, SMURF is
+computationally intractable.
 \item
 MRFy is used to detect homologous proteins in the presence of paired
-beta strands.
+beta strands; it effectively supplants SMURF.
 It~comprises about 1,200 lines of~Haskell.
 It~uses several external tools and libraries, of which the most
 notable are Parsec, the BioHaskell bioinformatics library, and
@@ -1317,6 +1320,7 @@ faraway experts on Stack Overflow and on Haskell mailing lists.
 Although a local expert makes things easier, one is not
  absolutely necessary.
 
+MRFy is available at \url{mrfy.cs.tufts.edu}
 
 \section{Conclusion}
 
