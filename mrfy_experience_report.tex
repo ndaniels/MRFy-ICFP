@@ -1110,7 +1110,18 @@ One practice we recommend for those following in our footsteps is to
 write instances of \texttt{Arbitrary} for data types as those data types
 are written, when relevant invariants are fresh in memory.
 
-
+This was a practice that the junior members of our team did not follow, and
+they sorely regret it.
+We speculate that one reason why we didn't follow this practice was a poor 
+understanding of the \texttt{Arbitrary} type class.
+Namely, a lot of the examples we had seen using QuickCheck focused 
+predominantly on writing and testing properties with data types that already 
+implemented \texttt{Arbitrary}.
+We recall a smattering about \texttt{Arbitrary}, but we were still too baffled 
+by the \texttt{Gen} monad to truly grasp its importance in using QuickCheck.
+When it finally came time to use QuickCheck, we were overwhelmed by the amount 
+of work that had to be done to write and test implementations of 
+\texttt{Arbitrary} for each of our data types.
 
 
  
