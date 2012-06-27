@@ -124,7 +124,7 @@ monads really worked, but
 profiling and debugging presented obstacles.
 Haskell libraries varied greatly:
 libraries providing memoization combinators and parallel-evaluation
-strategies gave us tremendous leverage,
+strategies helped us a lot,
 but other, nameless libraries mostly got in our way.
 Despite the obstacles and the uncertain quality of some libraries,
 Haskell's ecosystem
@@ -145,44 +145,54 @@ biology.
 Computational biologists write software that answers questions about 
 sequences of nucleic acids (genomic data) or sequences of amino 
 acids (proteomic data). 
-For some software, considerations of performance are paramount; this
+When performance is paramount,
 software is usually written in C~or~C++. 
-For other software, considerations of convenience, readability, and
-productivity are more important;
-this software is usually written in a high-level
+When convenience, readability, and
+productivity are more important,
+software is usually written in a dynamically typed
 or domain-specific language like
 Perl, Python, Ruby, SPSS, or~R.
-In~this paper, we report on an attempt to replace both these families
-of languages with Haskell: 
+In~this paper, we report on experience using a third kind of language,
+Haskell: 
 \begin{itemize}
 \item
-Although we had to write a new implementation of a standard
-algorithm, the cost was low, and the connection between code and
-algorithm is unusually strong (\secref{viterbi}).
+We had to reimplement an
+algorithm already implemented in~C++, 
+but the implementation required little effort,
+and the connection between code and
+algorithm is unusually clear (\secref{viterbi}).
 Our new Haskell code performs competitively with~C++,
-and parallel performance was easy to achieve
+and it was easy to parallelize
 (\secref{perf}). 
+\remark{Can we summarize the performance results?  Speedup?}
 \item
 Higher-order functions made it unusually easy to
-implement and experiment with a family of related algorithms
+create and experiment with new stochastic-search algorithms
 (\secref{hofs}).
 \item
-The only significant impediment that Haskell presented to our
-research was the difficulty of understanding and improving the
-performance of Haskell programs (\secref{awkward-profiling}).
+Haskell slowed us down in only one way: it's hard to understand and
+improve the
+performance of a Haskell program (\secref{awkward-profiling}).
+%%  \item
+%%  The only significant impediment that Haskell presented to our
+%%  research was the difficulty of understanding and improving the
+%%  performance of Haskell programs (\secref{awkward-profiling}).
 \item
-We~used Haskell successfully even though we are computational
-biologists with little background in functional programming.
-Modifying our group's C++ code to try new research ideas has been
-difficult;
-trying new ideas in Haskell has been easy
+Although authors Daniels and Gallant are computational
+biologists with little background in functional programming,
+we~used Haskell successfully.
+And Haskell has made it easy to explore new research ideas;
+by~contrast,
+our group's C++ code has not been a good vehicle for exploring new ideas
 (\secref{comparo}).
 \item
-The Haskell language is surrounded by a penumbra of libraries and tools that
+The Haskell community offers libraries and tools that
 promise powerful abstractions.
-Some deliver very high leverage, but others are not ready for prime
-time.
-We~found the two families difficult to distinguish in advance (\secref{penumbra}).
+Some worked as advertised, saved us lots of time, and were a pleasure
+to~use.
+Others, not so much.
+And~we could not tell ahead of time which experience we were likely to have
+ (\secref{penumbra}).
 \end{itemize}
 
 
