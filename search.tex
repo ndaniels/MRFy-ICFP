@@ -1,3 +1,4 @@
-search :: SearchStrategy pt r -> Rand r (History pt)
+search :: RandomGen r
+       => SearchStrategy pt r -> Rand r (History pt)
 search (SS strat test) =
   fmap test . everyPt strat 0 =<< pt0 strat

@@ -4,7 +4,7 @@
 
 \newif\ifnotcutting \notcuttingtrue % set if not cutting down to size
 
-\newif\iffinaldraft \finaldraftfalse % true if it's the final version
+\newif\iffinaldraft \finaldrafttrue % true if it's the final version
 
 
  \newif\ifpdfmadness
@@ -113,16 +113,21 @@
 %
 %
 \begin{abstract}
-An Experience Report provides {evidence} that functional
-programming really works, or it describes obstacles that prevent
-functional programming from working.   
-Here, we show that for computational biologists,
-Haskell combines the flexibility and rapid prototyping of a scripting
-language with performance comparable to~C++.
-The~Haskell language and libraries provide powerful abstractions, 
-but we couldn't always get them to work.
-Despite some speed bumps around profiling, debugging, and the
-uncertain status of any given package, we~found that Haskell's ecosystem
+%An Experience Report provides {evidence} that functional
+%programming really works, or it describes obstacles that prevent
+%functional programming from working.   
+Haskell gives computational biologists
+the flexibility and rapid prototyping of a scripting
+language along with performance comparable to~C++.
+In~our experience, higher-order functions, lazy evaluation, and
+monads really worked, but
+profiling and debugging presented obstacles.
+Haskell libraries varied greatly:
+libraries providing memoization combinators and parallel-evaluation
+strategies gave us tremendous leverage,
+but other, nameless libraries mostly got in our way.
+Despite the obstacles and the uncertain quality of some libraries,
+Haskell's ecosystem
 made it easy for us to develop new algorithms in computational
 biology.
 \end{abstract}
