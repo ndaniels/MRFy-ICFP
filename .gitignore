@@ -19,3 +19,4 @@ sigplanconf-guide.pdf
 *.dvi
 *.fdb_latexmk
 /Smurf2
+/mrfy
