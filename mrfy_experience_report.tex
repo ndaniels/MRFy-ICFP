@@ -195,7 +195,7 @@ The amino-acid sequence is ultimately determined by a sequence of
 nucleic acids in DNA, which we call a gene.
 Given a genetic sequence, biologists wish to know the cellular
 function of the protein that gene codes for.
-The best known method of discovering such function is
+One of the best known methods of discovering such function is
 to find other proteins of 
 similar structure, which likely share similar function.
 Proteins that share structure and function are expected to be
@@ -328,7 +328,7 @@ probability that a homologous protein has gained amino acid~$x$ by
 insertion at column~$j$.
 \end{itemize}
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
-We~represent a state using an algebraic data type:
+We~represent the state chosen for each node using an algebraic data type:
 \remark{we promised a better name for HMMState. Thoughts?}
 \begin{smallverbatim}
 data HMMState = Mat | Ins | Del | Beg | End
@@ -499,12 +499,18 @@ amino acids.
 %type QuerySeq = Vector AA
 %\end{smallverbatim}
 
-The log of a probability is just a number.
-To distinguish a transition probability from other numbers, we wrap it in
+The log of a probability is just a number, which we call a \texttt{Score}.
+A transition probability connects two \texttt{HMMState}s, and so we wrap it in
 a value constructor:
 \begin{smallverbatim}
-type LogProb = Double
-data TProb   = TProb { logProbability :: LogProb }
+newtype Score = Score Double
+
+data TProb =
+     TProb { logProbability :: Score
+           , fromState :: HMMState
+           , toState :: HMMState
+           }
+
 \end{smallverbatim}
 We group transition probabilities into 7-tuples.
 Each tuple corresponds to a ``node'' in the hidden Markov model
@@ -618,9 +624,10 @@ we~choose the best solution
 from among the three predecessor states;
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
-encountered up to this point:\remark{we promised to characterize the missing cases}
+encountered up to this point:
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \smallverbatiminput{vfix}
+The other cases (\texttt{Ins} and \texttt{Del}) look similar.
 Functions \texttt{tProb} and \texttt{edge} combine to select the
 appropriate transition score (one of the $a'$~values).
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+,
@@ -667,7 +674,10 @@ Our implementations of hidden Markov models and Viterbi's algorithm
 duplicate existing functionality; these same algorithms were
 implemented in C++ for HMMER and SMURF.
 This reimplementation is a cost of using Haskell, and one that
-other researchers may have to pay as well.
+other researchers may have to pay as well, as fewer computational biology
+libraries exist for Haskell. For example, the National Center for
+Biotechnology Information publishes its own library of algorithms
+for computational biology.
 However, the authors of SMURF and HMMER implemented these algorithms
 anew, even though existing implementations existed in C++.
 In~MRFy, we use these algorithms as building blocks to implement
@@ -825,17 +835,16 @@ of a single function with type \mbox{\texttt{Rand r [Scored pt]}},
 which could produce an infinite list?
 Because after the first move
 the starting point for the next move depends on whether the first move
-was useful.\remark{I hate this ``explanation.'' ---NR}
+was useful, whereas the first move is always useful.
 That decision is made by the \texttt{utility} function,
 which scrutinizes a move represented as follows:
 \smallverbatiminput{move}
 The decision about utility uses not only a source of randomness but
-also the \emph{age} of the \texttt{younger} point which is
-moved~to.\remark{This word ``age'' is \emph{entirely} bogus!}
+also the \emph{age} of the search, which corresponds to the
+computational cost to reach a point in the search.
 For example, in~simulated annealing, as the search progresses,
 the \texttt{utility} function becomes less likely to express a move
-that results in a worse score.\remark{And I hate this explanation
-too.} 
+that results in a worse score.
 
 \noindent
 \vbox{
@@ -849,8 +858,7 @@ the computation is very sequential, but it does use a little bit of
 laziness:
 from its starting point, \texttt{everyPt} provides an infinite list of
 randomly chosen successor points, then calls \texttt{agedUtility} to
-tag each one with its age and utility.\remark{There's that bogus age
-again.}
+tag each one with the search's age and the point's utility.
 The Prelude function \texttt{span} finds the first useful successor,
 but in case there \emph{is} no successor, the code must also produce
 all the useless successors.
@@ -871,23 +879,17 @@ This mix can be passed to a test function of type \texttt{SearchStop~pt}:\\
 \smallverbatiminputx{search}
 }
 \noindent
-We have implemented two kinds of stop functions...
 
 
-
-N.B. WE HAVE TWO KINDS OF NON-MODULARITY.  FIRST, TERMINATION HAS TO
-LOOK AT \emph{ALL} STATES, EVEN THOUGH WE WOULD PREFER THAT IT LOOK
-ONLY AT USEFUL STATES.  SECOND, AGE IS EVERYWHERE.  IN PARTICULAR, WE
-CANNOT SEPARATE THE AGE OF THE CURRENT STATE FROM THE UTILITY
-DECISION.
-
-
-
-\remark{We need to explain why we don't just generate an infinite lazy
-list of thingies.  And perhaps we can consider an infinite tree!}
-
-
-
+We have two kinds of non-modularity.
+First, termination has to
+look at \emph{all} states, even though we would prefer that it look
+only at useful states.
+This is because otherwise we risk non-termination:
+we are not guaranteed a useful move after any finite number of steps.
+Second, age of the search shows up in multiple places.
+In particular, we cannot separate the age of the search at the
+current state from the utility decision.
 
 The \texttt{SearchStrategy} interface provides ample scope for
 experiments.\remark{\P\ needs rewriting}
@@ -897,7 +899,7 @@ Simulated annealing reuses hill climbing's
  \texttt{nextPt}, \texttt{pt0}, and \texttt{quit} functions.
 Simulated annealing's  new \texttt{accept} function took ten
 lines of code and half an hour to implement.
-(Hill climbing accepts a point only if it scores better than its
+(Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
 Our genetic algorithm reuses the same
@@ -913,50 +915,7 @@ such as stopping once $k$~generations have passed without more than $E$
 improvement in score. 
 \fi
 
-
-\subsection*{The old search algorithm}
-
-We~pass the
-search function a \texttt{Scorer}, which runs Viterbi's algorithm.
-\smallverbatiminput{orig-scoredecl}
-A~search heuristic is characterized by four functions, which are
-bundled into a record called \texttt{SearchStrategy}.
-\smallfuzzverbatiminput{2.3pt}{orig-strategy}
-In this record,
-\begin{itemize}
-\item
-Function \texttt{pt0} produces the first generation of placements.
-\item
-Function \texttt{nextGen} produces a new generation of placements from
-an existing generation.
-Because scoring a placement is expensive, 
-and some placements may persist from the old generation to the new
-generation, \texttt{nextGen} works with \emph{scored} placements, not
-bare placements.
-\item
-A~new generation produced by \texttt{nextGen} may be no better
-than the generation it replaces.
-When it is first produced, the new generation is ``on trial.''
-The \texttt{accept} function decides whether to keep a new generation
-or to try \texttt{nextGen} again with a different seed.
-The \texttt{accept} function considers a list of type
-\texttt{[Scored~Age]}.
-At~the head of this list is the score of the best
-placement of the trial generation, together with the \texttt{Age} of the trial
-generation, which is the total number of generations tried.
-The remaining elements of the list hold the history of scores and ages for
-previously \emph{accepted} generations.
-(The list omits generations that didn't survive the \texttt{accept} trial.)
-For convenience, the \texttt{accept} function also receives
-the \texttt{Age} of the trial generation.
-\item
-Finally, the \texttt{quit} function decides when to stop the search.
-\ifnotcutting
-It~too considers the list of accepted generations and the age of the current
-generation. 
-\fi
-\end{itemize}
-This \texttt{SearchStrategy} interface somewhat resembles an object-oriented
+Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
 style of programming.
 However, it is \textit{easier} to create a SearchStrategy
 in Haskell than using conventional object-oriented techniques, because
@@ -966,13 +925,6 @@ If we were using conventional object-oriented
 techniques, we would have to declare subclasses with instance
 variables and would have to write code to initialize objects of those
 subclasses. 
-
-\seclabel{search}%
-We hope you find the search simple and straightforward:
-
-\smallfuzzverbatiminput{11pt}{orig-search}
-
-
 
 
 \subsection{Performance}
@@ -994,10 +946,12 @@ MRFy can keep six cores busy.
 Given multiple placements per generation,
 it~can use forty-eight cores.
 However, we have found that MRFy performs best, at least on our
-hardware, with between 12 and 16 cores. We have access to only
+hardware, with between 12 and 16 cores.
+We have access to only
 one 48-core system, and while MRFy will keep all 48 cores busy, it
-performs better when given no more than 16 cores.\remark{give specific
-numbers here}
+performs only slightly better, at an average of 35 seconds to find an alignment
+on a large protein structure, than when given 16 cores, which takes an average
+of 37 seconds. 
 
 MRFy's predecessor, SMURF, does not perform stochastic search,
 and thus its overall run-time performance cannot be compared directly to MRFy.
@@ -1025,7 +979,7 @@ with further profiling and tuning.
 
 In~\secref{viterbi} above, the example case for the \verb+vee'+
 function computes not just a score but also an optimal path.
-MRFy's \texttt{search} function, in \secref{search}, uses only the
+MRFy's \texttt{search} function, in \secref{mrfy}, uses only the
 score.
 Even though Haskell evaluation is lazy, the \verb+vee'+ 
 still allocates thunks that could compute paths.
@@ -1122,11 +1076,13 @@ specifications for several properties of the Viterbi algorithm:
 The total number of \verb+Mat+ and \verb+Ins+ states returned equals
 the number of amino acids in the query sequence.
 \item
-The total number of matches, insertions, and deletions returned equals the
+The total number of matches, and deletions returned equals the
 number of nodes in the hidden Markov model,
-\emph{provided} that a maximal, nonempty, contiguous subsequence
+\emph{except} that an initial sequence of
 of~\verb+Ins+ states counts as a single node,
-and \verb+Mat+ and \verb+Del+ states count as one node each.
+due to an odd property of the HMMER file format (namely, the zeroth
+node has no delete state and a non-emitting match state which
+is always occupied, but a normal insert state).
 \item
 The sequence returned satisfies the Plan7 invariant, that is, states
 \verb+Ins+ and \verb+Del+ are never adjacent.
@@ -1135,6 +1091,9 @@ The sequence returned satisfies the Plan7 invariant, that is, states
 properties},
 such as proving that nearby sequences are less likely than the
 sequence returned by \verb+vee'+.
+One practice we recommend for those following in our footsteps is to
+write instances of \texttt{Arbitrary} for data types as those data types
+are written, when relevant invariants are fresh in memory.
 
 
 
@@ -1186,7 +1145,7 @@ external sequence aligners that we did not write.
 We~thought the modification would take three months, 
 but it took most of a~year.
 Matt uses such
-data structures such as mutable oct-trees, vectors, and arrays.
+data structures as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was \emph{too} clever: 
@@ -1236,7 +1195,7 @@ It~can parse some more complex structures in 2--3~minutes.
 But when asked to parse the most complex structures, it runs out of
 memory and has to be killed, even on a system with 128GB of~RAM.
 By~contrast, MRFy can parse any of these structures, approximately,
-in 30~seconds.\remark{reconcile this vague paragraph with performance section above}
+in 30~seconds.
 This performance
 meets our goals, and it means that MRFy can be used to scan whole genomes.
 
@@ -1249,7 +1208,7 @@ Little of it is written in functional languages,
 but much of the software shared by the community is excellent.
 MRFy's training component was derived from that of~HMMER,
 and
-working with HMMER 
+working with the HMMER 
 codebase was pleasant;
 data structures and their
 mutators are well documented. 
@@ -1379,7 +1338,7 @@ succeed.
 \ifnotcutting
 \acks
 
-An~anonymous referee\remark{Just one referee?} spurred us to think
+An~anonymous referee spurred us to think
 more deeply about laziness.
 Josef Svenningsson suggested a correspondence between \mrfy's search
 and stream fusion, which led us eventually to the \texttt{Utility} type.
