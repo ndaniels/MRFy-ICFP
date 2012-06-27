@@ -200,7 +200,8 @@ And~we could not tell ahead of time which experience we were likely to have
 
 \section{The biology}
 
-Proteins are cellular machinery. They interact with one another and with other 
+Proteins %%% are cellular machinery. They
+interact with one another and with other 
 molecules to carry out the functions of living cells: metabolism, regulation, 
 signaling, and so on.
 A~protein's function is determined by its structure, 
@@ -223,7 +224,7 @@ the problem of identifying proteins similar to a \textit{query sequence} is call
 
 
 Computational biologists detect homologies by building 
-algorithms which, given a {query sequence} of amino acids,
+algorithms which, given a {query sequence}, %% of amino acids,
 find known proteins of similar structure.
 When similar proteins are formed from amino-acid sequences that
 are not too different from the query sequence, the homology can be
@@ -233,8 +234,8 @@ a family of algorithms called
 But in real biological systems,
 proteins with similar structure and function may be formed from significantly 
 different amino-acid sequences, which are not close in edit distance.
-Our~research contribution---a software tool called MRFy (pronounced
-``Murphy'')---can detect homologies 
+Our~research software, MRFy (pronounced
+``Murphy''), can detect homologies 
 in amino-acid sequences that are only distantly related.
 %
 %We will explain an 
@@ -267,7 +268,7 @@ Either way,
 the software is \emph{trained}
 on a group of proteins that share function and structure.
 These proteins are identified by a biologist, who puts
-their amino-acid sequences into a correspondence, also called an
+their amino-acid sequences into an
 \emph{alignment}. 
 This alignment relates individual amino acids in a set of homologous proteins.
 An~alignment may be represented as a matrix
@@ -322,6 +323,7 @@ which we write~\alignwidth.
 A~hidden Markov model carries probabilities on some states and on all
 state transitions.
 Both the probabilities and the states are determined by the alignment:
+\remark{These bullets need proper parallel structure}
 \begin{itemize}
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
@@ -343,37 +345,35 @@ probability that a homologous protein has gained amino acid~$x$ by
 insertion at column~$j$.
 \end{itemize}
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
-We~represent the state chosen for each node using an algebraic data type:
-\remark{we promised a better name for HMMState. Thoughts?}
-\begin{smallverbatim}
-data HMMState = Mat | Ins | Del | Beg | End
-\end{smallverbatim}
+In~our representation, each state contains a probability or a table of
+probabilities, and it is also labelled with one of these labels:
+\smallverbatiminput{statelabel}
 
 
-The particular hidden Markov model we use requires that every nonempty
-sequence of insertions be followed by a match, and similarly for
-deletions.
-In~other words, insertions and deletions cannot be mixed without an
-intervening match.
-This restriction means that there are only seven possible transitions
-into the states of any one column \cite{Eddy:1998ut}. 
+We~use the ``Plan7'' hidden Markov model, which forbids direct
+transitions between insertion 
+states and deletion states \cite{Eddy:1998ut}. 
+The model gets its name because there are exactly
+seven possible transitions
+into the states of any column~$j$.
+Each transition has its own probability:
 \begin{itemize} 
 \item
-A~transition into a match state in
-column~$j$ is more likely when column~$j$ is a consensus column.
+A~transition into a match state 
+is more likely when column~$j$ is a consensus column.
 Depending on the predecessor state, 
 the probability of such a transition is 
-$\txprobj M M$, $\txprobj I M$, or $\txprobj D M$.
+$\txprobj M M$, $\txprobj I M$, or~$\txprobj D M$.
 \item
-A~transition into a deletion state in
- column~$j$ is more likely when column~$j$ is a non-consensus column.
+A~transition into a deletion state 
+is more likely when column~$j$ is a non-consensus column.
 The probability of such a transition is 
-$\txprobj M D$ or $\txprobj D D$.
+$\txprobj M D$~or~$\txprobj D D$.
 \item
-A~transition into an insertion state in
- column~$j$ is more likely when column~$j$ is a non-consensus column.
+A~transition into an insertion state 
+is more likely when column~$j$ is a non-consensus column.
 The probability of such a transition is 
-$\txprobjj M I$ or $\txprobjj I I$.
+$\txprobjj M I$~or~$\txprobjj I I$.
 \end{itemize}
 
 
@@ -515,15 +515,15 @@ amino acids.
 %\end{smallverbatim}
 
 The log of a probability is just a number, which we call a \texttt{Score}.
-A transition probability connects two \texttt{HMMState}s, and so we wrap it in
+A transition probability connects two \texttt{StateLabel}s, and so we wrap it in
 a value constructor:
 \begin{smallverbatim}
 newtype Score = Score Double
 
 data TProb =
      TProb { logProbability :: Score
-           , fromState :: HMMState
-           , toState :: HMMState
+           , fromState :: StateLabel
+           , toState :: StateLabel
            }
 
 \end{smallverbatim}
