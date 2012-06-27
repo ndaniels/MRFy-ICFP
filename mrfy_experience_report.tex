@@ -553,13 +553,8 @@ time, and we expect \texttt{edge} to be inlined.
 The representation of a node includes the probabilities of transitions
 into the states of that node, plus the tables
 of emission probabilities for the match and insertion states.
-\begin{smallverbatim}
-type EProbs  = Vector LogProb
-data HmmNode = HmmNode { transitions  :: TProbs
-                       , matEmissions :: EProbs
-                       , insEmissions :: EProbs
-                       }
-\end{smallverbatim}
+\remark{Why strictness annotations?}
+\smallverbatiminput{hmmnode}
 
 In~Viterbi's equations,
 the probability in each state is a function of the probabilities
