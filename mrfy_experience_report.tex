@@ -19,7 +19,7 @@
    \fi
 \fi
 
-\documentclass[nonatbib,blockstyle,times]{sigplanconf}
+\documentclass[nonatbib,preprint,blockstyle,times]{sigplanconf}
   % at 9pt anything but block style is unreadable
 
 \newcommand\mrfy{MRFy} % damn you Noah
@@ -53,8 +53,27 @@
 
 \usepackage{verbatim}
 
-\newenvironment{smallverbatim}{\par\small\verbatim}{\endverbatim}
-\newcommand\smallverbatiminput[1]{{\par\unskip\small\verbatiminput{#1}}}
+\newif\ifverbatimsmall
+\verbatimsmallfalse
+\makeatletter
+\def\verbatim@font{%
+   \normalfont\ttfamily
+   \ifverbatimsmall\small\fi
+   \hyphenchar\font\m@ne
+   \@noligs}
+\makeatother
+
+\newenvironment{smallverbatim}{\par\small\verbatimsmalltrue\verbatim}{\endverbatim}
+\newcommand\smallverbatiminput[1]{%
+  \everypar=\expandafter{\the\everypar
+       \verbatimsmallfalse
+       \belowdisplayskip=\abovedisplayskip
+       \belowdisplayshortskip=\abovedisplayshortskip
+       \topsep=\standardvspace}%
+  \topsep=0.78\topsep
+  \belowdisplayskip=0.78\belowdisplayskip
+  \belowdisplayshortskip=0.78\belowdisplayshortskip
+  \verbatimsmalltrue\verbatiminput{#1}}
 \newcommand\smallverbatiminputx[1]{\vspace*{-8pt}{\small\verbatiminput{#1}}} % WTF?? {\LaTeX} hell
 \newcommand\smallfuzzverbatiminput[2]{{\par\unskip\small\hfuzz=#1 \verbatiminput{#2}}}
 
@@ -119,12 +138,12 @@
 %functional programming from working.   
 Haskell gives computational biologists
 the flexibility and rapid prototyping of a scripting
-language along with performance comparable to~C++.
+language but performance comparable to~C++.
 In~our experience, higher-order functions, lazy evaluation, and
 monads really worked, but
 profiling and debugging presented obstacles.
-Haskell libraries varied greatly:
-libraries providing memoization combinators and parallel-evaluation
+Haskell libraries vary greatly:
+memoization combinators and parallel-evaluation
 strategies helped us a lot,
 but other, nameless libraries mostly got in our way.
 Despite the obstacles and the uncertain quality of some libraries,
@@ -159,31 +178,31 @@ Haskell:
 \item
 We had to reimplement an
 algorithm already implemented in~C++, 
-but the implementation required little effort,
-and the connection between code and
-algorithm is unusually clear (\secref{viterbi}).
-Our new Haskell code performs slower than the~C++
-implementation of the same algorithm,
-but still meets our performance goals,
-and it was easy to parallelize
+and the Haskell code is slower.
+But the implementation required little effort;
+the connection between code and
+algorithm is unusually clear (\secref{viterbi});
+the code was easy to parallelize; 
+and it meets our performance needs
 (\secref{perf}).
-However, this algorithm is only one part of a larger
-algorithm, which on the whole performs significantly
-better than the~C++ software that precedes it.
+Moreover, measured as a whole, the software that incorporates this new
+code 
+performs significantly
+better than the~C++ software that preceded~it.
 \item
 Higher-order functions made it unusually easy to
 create and experiment with new stochastic-search algorithms
 (\secref{hofs}).
 \item
-Haskell slowed us down in only one way: it's hard to understand and
-improve the
-performance of a Haskell program (\secref{awkward-profiling}).
+Haskell slowed us down in only one area:  understanding and
+improving
+performance (\secref{awkward-profiling}).
 %%  \item
 %%  The only significant impediment that Haskell presented to our
 %%  research was the difficulty of understanding and improving the
 %%  performance of Haskell programs (\secref{awkward-profiling}).
 \item
-Although authors Daniels and Gallant are computational
+Although the first two authors are computational
 biologists with little background in functional programming,
 we~used Haskell successfully.
 And Haskell has made it easy to explore new research ideas;

@@ -1,3 +1,76 @@
+> "Age" is still an issue.  I don't remember seeing a reponse to my earlier
+> email on that one.  Please let me know what you think of CCost (cumulative
+> cost).   We can't use 'age'; that's backwards.
+> 
+
+I like CCost. At times i've referred to the total age of the search (or
+simulation), which I think is NOT backwards. There is a duality between age of
+the simulation and cost to reach a particular point. I think it is worth
+mentioning this.
+
+> Also, the idea of "score" is introduced twice.   Perhaps these introductions
+> can be merged, and the negated log probability can be motivated more briefly,
+> where Score is defined?
+> 
+
+Sounds good.
+
+> Finally, in a 9pt font the paper must be formatted in block style.
+> The other style borders on unreadable.  At preset this will cost us
+> anotehr two column inches.
+> 
+
+*sigh*
+
+> A diligent person would find a way to reduce the space around 
+> \smallverbatiminput{...} and \begin{smallverbatim}.  There's more
+> space there than we need...
+
+You have the most LaTeX expertise; any suggestions?
+ --------------
+
+
+"Age" is still an issue.  I don't remember seeing a reponse to my earlier
+email on that one.  Please let me know what you think of CCost (cumulative
+cost).   We can't use 'age'; that's backwards.
+
+Also, the idea of "score" is introduced twice.   Perhaps these introductions
+can be merged, and the negated log probability can be motivated more briefly,
+where Score is defined?
+
+Finally, in a 9pt font the paper must be formatted in block style.
+The other style borders on unreadable.  At preset this will cost us
+anotehr two column inches.
+
+A diligent person would find a way to reduce the space around 
+\smallverbatiminput{...} and \begin{smallverbatim}.  There's more
+space there than we need...
+-------------------
+>  1. It wasn't obvious how to use quickcheck, especially writing
+>  generators and shrinkers, so we put it off to deal with later.
+
+Exactly. A lot of the tutorials I stumbled across personally focused
+heavily on using QuickCheck and defining properties for types that
+already implemented Arbitrary. There was usually only a smattering
+about implementing Arbitrary for custom types. And at that point in
+time (for me), working in the Gen monad was baffling.
+
+>  - If you can't think of quickcheck properties for your functions,
+>    keep trying---you will.
+
+This actually wasn't so bad. There were countless times when Noah and
+I would stumble across an invariant in the initial design phase and
+say, "Oh, that's definitely a QuickCheck property." We just blithely
+skipped over the generator/shrinking part.
+
+I do agree that it is an important piece of information to add to the
+paper, though.
+
+----------------------------------------------------------------
+
+
+
+
 want to look at Age outside of mrfy in order to do SCIENCE!!!
 
   - not just implementing search; doing research on search algorithsm
