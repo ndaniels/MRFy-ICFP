@@ -546,24 +546,13 @@ score, not a probability.
 And we include the labels of the states that are
 connected:\remark{\emph{Why} are the labels there?
 And since they are apparently never used, why do they have strictness annotations???}
-\begin{smallverbatim}
-data TProb =
-     TProb { logProbability :: Score
-           , fromState :: StateLabel
-           , toState :: StateLabel
-           }
-\end{smallverbatim}
+\smallverbatiminput{tprob}
 In~a Plan7 hidden Markov model, as discussed above, 
 there are seven transitions into each node:
-\begin{smallverbatim}
-data TProbs =
-     TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
-            , i_m :: TProb, i_i :: TProb
-            , d_m :: TProb, d_d :: TProb }
-\end{smallverbatim}
+\smallverbatiminput{tprobs}
 In~our code, we select from this 7-tuple using the \texttt{ascore}
 function:\remark{Norman: please put ascore into a file}
-\smallverbatiminput{ascore}
+%\smallverbatiminput{ascore}
 In MRFy, the first two arguments to \texttt{ascore} are known at compile
 time, and we expect \texttt{ascore} to be inlined.
 
@@ -733,6 +722,12 @@ $V_{j}^{\prime M}(i)$ becomes
 $$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith j}).$$
 Columns~$j$ and $\pairedwith j$ can be as close together as a few
 columns or as far apart as a few hundreds of columns.
+Because $W_j^M(i)$~depends not only on $x_i$ and its local neighbors but
+also on the nonlocal $x_{\pairedwith j}$, 
+dynamic programming cannot compute the maximum likelihood quickly
+\cite{Menke:2010ti,Daniels:2012}.
+MRFy explores new methods of \emph{approximating}
+maximum likelihood.
 
 The presence of beta strands also changes the model.
 Within a beta strand, amino acids are not inserted or deleted;
@@ -741,12 +736,6 @@ a~bonded pair of beta strands is modeled by
 Between the beta strands, the model is structured as before.
 The~combined model, an~example of which is shown in \figref{mrf}, is called a
 \textit{Markov random field}. 
-Becayuse $W_j^M(i)$~depends not only on $x_i$ and its local neighbors but
-also on the nonlocal $x_{\pairedwith j}$, 
-dynamic programming cannot compute the maximum likelihood quickly
-\cite{Menke:2010ti,Daniels:2012}.
-MRFy explores new methods of \emph{approximating}
-maximum likelihood.
 
 
 

@@ -15,7 +15,7 @@ $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 #	convert $prereq $target  # hideous, but workable
 
 CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
-      strat stop history statelabel hmmnode aa score
+      strat stop history statelabel hmmnode aa score tprobs tprob
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex
@@ -49,7 +49,7 @@ vscore.tex score.tex:D: ./xsource Smurf2/Score.hs
 memo.tex edge.tex viterbi.tex:D: ./xsource Smurf2/Viterbi.hs
 	lua $prereq
 
-statelabel.tex hmmnode.tex:D: ./xsource Smurf2/MRFTypes.hs
+statelabel.tex hmmnode.tex tprob.tex tprobs.tex:D: ./xsource Smurf2/MRFTypes.hs
 	lua $prereq
 
 aa.tex:D: ./xsource Smurf2/Constants.hs
