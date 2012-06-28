@@ -275,6 +275,7 @@ different amino-acid sequences, which are not close in edit distance.
 Our~research software, MRFy (pronounced
 ``Murphy''), can detect homologies 
 in amino-acid sequences that are only distantly related.
+MRFy is available at \url{mrfy.cs.tufts.edu}.
 %
 %We will explain an 
 %algorithm for detecting reasonably similar sequences, and then move on to 
@@ -859,24 +860,29 @@ an existing point.
 Because scoring can be expensive, both \texttt{pt0}
 and \texttt{nextPt} use \emph{scored} points, and they can
 reuse scores from previous points.
+\remark{Question ``why not an infinite list'' has gone missing.}
 
-Why have \texttt{pt0} and \texttt{nextPt}
-instead 
-of a single function with type \mbox{\texttt{Rand r [Scored pt]}},
-which could produce an infinite list of points?
-Because if the infinite list contains a useless point,
-
-
-the starting point for the next move depends on whether the first move
-was useful, whereas the first move is always useful.
-That decision is made by the \texttt{utility} function,
+%%Why have \texttt{pt0} and \texttt{nextPt}
+%%instead 
+%%of a single function with type \mbox{\texttt{Rand r [Scored pt]}},
+%%which could produce an infinite list of points?
+%%Because if the infinite list contains a useless point,
+%%
+%%
+%%the starting point for the next move depends on whether the first move
+%%was useful, whereas the first move is always useful.
+To tell if a point returned by \texttt{nextPt} is useful, we call
+ the \texttt{utility} function,
 which scrutinizes a move represented as follows:
 \smallverbatiminput{move}
 The decision about utility uses not only a source of randomness but
-also the \emph{age} of the search, which corresponds to the
-computational cost to reach a point in the search.
-For example, in~simulated annealing, as the search progresses,
-the \texttt{utility} function becomes less likely to express a move
+also the \emph{cumulative cost} of the point, which we define to be
+the number of points explored previously.
+The~cumulative cost of the current point is also the age of the
+search,
+and
+in~simulated annealing, for example, as the search ages,
+the \texttt{utility} function becomes less likely to accept a move
 that results in a worse score.
 
 \noindent
@@ -890,21 +896,37 @@ Because both \texttt{nextPt} and \texttt{utility} consume randomness,
 the computation is very sequential, but it does use a little bit of
 laziness:
 from its starting point, \texttt{everyPt} provides an infinite list of
-randomly chosen successor points, then calls \texttt{agedUtility} to
+randomly chosen successor points, then calls \texttt{costedUtility} to
 tag each one with the search's age and the point's utility.
-The Prelude function \texttt{span} finds the first useful successor,
-but in case there \emph{is} no successor, the code must also produce
+And the computation of \texttt{successors} should explain why we
+separate \texttt{pt0}~from~\texttt{nextPt} instead of using a single
+function that produces an infinite list:
+We~don't \emph{want} the infinite list that would result from
+applying \texttt{nextPt} many times in succession;
+we~want the infinite lists that results from applying \texttt{nextPt}
+to \texttt{startPt} many times in succession, each time with a
+different source of randomness.
+
+Once the successors have been computed and tagged,
+\texttt{span} finds the first useful successor.
+In~case there \emph{is} no successor, \texttt{everyPt} also returns
 all the useless successors.
+\remark{Story about the killer strict Rand monad? Where?}
 If~we do find a useful successor, we start searching anew from that
 point, with a recursive call to \texttt{everyPt}.
-
-The most telling line of code in \texttt{everyPt} is the last line of
-the body, which shows that the result begins with a useful point,
+Because \texttt{everyPt} is monadic, the points accumulated so far are
+appended to its result using the \verb+<$>+~operator.
+%
+The most informative part of \texttt{everyPt} is last expression of
+the \texttt{do} block,
+which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
 points, and then continues recursively with another useful point.
+
 When the computation returned by \texttt{everyPt} is evaluated against
 a random-number generator, it returns an infinite list containing a
 mix of useful and useless points.
+\remark{This part is gross and still needs work!}
 This mix can be passed to a test function of type \texttt{SearchStop~pt}:\\
 \vbox{
 \smallverbatiminput{strat}
@@ -915,6 +937,7 @@ This mix can be passed to a test function of type \texttt{SearchStop~pt}:\\
 
 
 We have two kinds of non-modularity.
+\remark{Still gross}
 First, termination has to
 look at \emph{all} states, even though we would prefer that it look
 only at useful states.
@@ -941,32 +964,29 @@ function took only a few lines of code.
 But~the recombination of parent
 placements in its \texttt{nextPt} function took forty lines of code
 and a full day to implement.
-\ifnotcutting
-Our~current \texttt{quit} function simply runs for a fixed number of
-generations, but its interface will enable us to try other criteria,
-such as stopping once $k$~generations have passed without more than $E$
-improvement in score. 
-\fi
 
-Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
-style of programming.
-However, it is \textit{easier} to create a SearchStrategy
-in Haskell than using conventional object-oriented techniques, because
-all the functions in a SearchStrategy are partial applications of
-other functions.
-If we were using conventional object-oriented
-techniques, we would have to declare subclasses with instance
-variables and would have to write code to initialize objects of those
-subclasses. 
+\remark{Stop functions not as composable as we would like.
+Wanted: combinator library.}
+
+%%  Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
+%%  style of programming.
+%%  However, it is \textit{easier} to create a SearchStrategy
+%%  in Haskell than using conventional object-oriented techniques, because
+%%  all the functions in a SearchStrategy are partial applications of
+%%  other functions.
+%%  If we were using conventional object-oriented
+%%  techniques, we would have to declare subclasses with instance
+%%  variables and would have to write code to initialize objects of those
+%%  subclasses. 
 
 
 \subsection{Performance}
 
 \seclabel{perf}
 
+At each point in its search,
 MRFy calls \verb+vee'+ several
- times
-for each placement in each search generation.
+ times.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
 We~found them easy to parallelize
@@ -974,20 +994,21 @@ using
 \texttt{Control.Parallel}:
 we substituted
 \texttt{parmap rseq} for \texttt{map}.
-Even when there is just one placement per generation,
+Even when there is just one placement per point,
 MRFy can keep six cores busy.
-Given multiple placements per generation,
+Given multiple placements per point,
 it~can use forty-eight cores.
 However, we have found that MRFy performs best, at least on our
 hardware, with between 12 and 16 cores.
 We have access to only
 one 48-core system, and while MRFy will keep all 48 cores busy, it
 performs only slightly better, at an average of 35 seconds to find an alignment
-on a large protein structure, than when given 16 cores, which takes an average
+on a large\remark{QUANTIFY!!} protein structure, than when given 16 cores, which takes an average
 of 37 seconds. 
 
 MRFy's predecessor, SMURF, does not perform stochastic search,
 and thus its overall run-time performance cannot be compared directly to MRFy.
+\remark{This \P\ is stultifying}
 However, both programs implement the Viterbi algorithm.
 On an exceedingly large, contrived example, comprising 56,000 amino acids
 (larger than any known protein) and 343 nodes, and ignoring all beta-strand
@@ -1241,13 +1262,16 @@ our hastily written Ruby and~C++.
 
 We~can also make a preliminary comparison of performance.
 SMURF can parse a simple protein structure, optimally, in under 10~seconds.
+\remark{At this stage ``parse'' is kind of a new word.}
 It~can parse some more complex structures in 2--3~minutes.
 But when asked to parse the most complex structures, it runs out of
 memory and has to be killed, even on a system with 128GB of~RAM.
 By~contrast, MRFy can parse any of these structures, approximately,
 in 30~seconds.
-This performance
-meets our goals, and it means that MRFy can be used to scan whole genomes.
+That's fast enough
+%This performance
+%meets our goals, and it means that MRFy can be used
+to scan whole genomes.
 
 
 
@@ -1281,7 +1305,8 @@ Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
 Ramsey is a professor who has used Haskell 
 for medium-sized projects,
-but his contribution to MRFy was limited to minor ranting and refactoring.
+but his primary contributions to MRFy have been limited to \emph{post hoc}
+refactoring and testing.
 
 
 \subsection{Barriers to be overcome}
@@ -1295,6 +1320,7 @@ We~were not able to achieve such recompilations consistently.
 
 
 We~faced another barrier in testing.
+\remark{Where is Andrew's shitty paragraph?  It shoudl replace this one?}
 One of us (Ramsey) kept ranting that we should test our code using 
 QuickCheck \cite{claessen:quickcheck},
 but we could never figure out~how.
@@ -1367,8 +1393,6 @@ faraway experts on Stack Overflow and on Haskell mailing lists.
 Although a local expert makes things easier, one is not
  absolutely necessary.
 
-MRFy is available at \url{mrfy.cs.tufts.edu}
-
 \section{Conclusion}
 
 A~little knowledge of and a lot of love for functional programming
@@ -1386,16 +1410,15 @@ succeed.
 
  
 
-\ifnotcutting
 \acks
 
 An~anonymous referee spurred us to think
 more deeply about laziness.
 Josef Svenningsson suggested a correspondence between \mrfy's search
 and stream fusion, which led us eventually to the \texttt{Utility} type.
+Koen Claessen instantly diagnosed an inappropriately strict monad.
 We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci. 
-\fi
 
 
 \bibliographystyle{plainnat}
