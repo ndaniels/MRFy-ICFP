@@ -15,7 +15,7 @@ $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 #	convert $prereq $target  # hideous, but workable
 
 CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
-      strat stop history statelabel hmmnode
+      strat stop history statelabel hmmnode aa score
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex
@@ -43,13 +43,16 @@ $TGT.pdf: ${CODES:%=%.tex}
 strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
  	lua $prereq
 
-vscore.tex:D: ./xsource Smurf2/Score.hs
+vscore.tex score.tex:D: ./xsource Smurf2/Score.hs
  	lua $prereq
 
 memo.tex edge.tex viterbi.tex:D: ./xsource Smurf2/Viterbi.hs
 	lua $prereq
 
 statelabel.tex hmmnode.tex:D: ./xsource Smurf2/MRFTypes.hs
+	lua $prereq
+
+aa.tex:D: ./xsource Smurf2/Constants.hs
 	lua $prereq
 
 vfix.tex:D: viterbi.tex mkfile

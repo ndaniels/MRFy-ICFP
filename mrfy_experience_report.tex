@@ -2,7 +2,7 @@
 
 \pagetuningtrue % trying to get page breaks in the best spots
 
-\newif\ifnotcutting \notcuttingtrue % set if not cutting down to size
+\newif\ifnotcutting \notcuttingfalse % set if not cutting down to size
 
 \newif\iffinaldraft \finaldrafttrue % true if it's the final version
 
@@ -107,6 +107,7 @@
 
 
 \begin{document}
+\parskip=0.9\parskip % cheating
 
 
 \conferenceinfo{ICFP'12,} {September 9--15, 2012, Copenhagen, Denmark.}
@@ -381,6 +382,9 @@ The model gets its name because there are exactly
 seven possible transitions
 into the states of any column~$j$.
 Each transition has its own probability:
+\remark{Problem: the subscripts are not so easy to read, and notation
+is not quite consistent with \figref{viterbi}, definition of $a'$ at
+bottom right.}
 \begin{itemize} 
 \item
 A~transition into a match state 
@@ -491,14 +495,15 @@ V_j^{\prime M}(i) = - V_j^{M}(i)
 Given a hidden Markov model, 
 an~established software package called HMMER (pronounced ``hammer'') 
 can compute the probability
-that a new protein shares structure and
-evolutionary history with the proteins used to train the model.
+that a new protein shares structure 
+\ifnotcutting and evolutionary history \fi
+with the proteins used to train the model.
 The computation finds the most likely path through the hidden Markov model.
 To~make best use of floating-point arithmetic, the software computes
 the \emph{logarithm} of the probability of each path, by summing
 the logs of the 
 probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
-The logarithm function is monotonic, so the path that maximizes the
+The~path that maximizes the
 log of the probability is the most likely path.
 
 The computation is specified on the left-hand side of \figref{viterbi}.
@@ -517,67 +522,60 @@ Haskell made it possible for us to write code that looks like the
 math,
 which made the code easy to write and gives us confidence that it is
 correct.
-To~present some code,
-we~begin with representations.
 
+Our code represents a query sequence as an immutable vector of amino
+acids.
 In~idiomatic Haskell, 
-we might represent an individual amino acid~$x$
+we might represent an individual amino acid~$x_i$
 using a value of algebraic data type:
 \begin{smallverbatim}
 data Amino = Ala | Cys | Asp | Glu | Gly | ...
 \end{smallverbatim}
-But our primary goal was to get something working quickly,
-and our hidden Markov models are stored using a
+But our models use a
 legacy file format that represents each amino acid as a small integer.
 Our representation is therefore
-\begin{smallverbatim}
-newtype AA = AA Int -- amino acid using HMMER coding
-\end{smallverbatim}
-Either way, a query sequence is (and should be) an immutable vector of
-amino acids.
-%type QuerySeq = Vector AA
-%\end{smallverbatim}
+\smallverbatiminput{aa}
+The log of a probability is a negative number.
+To~make these numbers more pleasant to read, we negate them,
+which eliminates hordes of minus signs from our file formats.
+The negated logarithm of a probability is called a \emph{score}.
+\smallverbatiminput{score}
+Type \texttt{Score} has a limited \texttt{Num} instance which permits
+scores to be added and subtracted but not multiplied.
 
-The log of a probability is just a number, which we call a \texttt{Score}.
-A transition probability connects two \texttt{StateLabel}s, and so we wrap it in
-a value constructor:
+In a hidden Markov model, each transition is actually labeled with a
+score, not a probability.
+And we include the labels of the states that are
+connected:\remark{\emph{Why} are the labels there?
+And since they are apparently never used, why do they have strictness annotations???}
 \begin{smallverbatim}
-newtype Score = Score Double
-
-data TProb =
+data TProb =   --- THIS DEFN IS A DAMN LIE
      TProb { logProbability :: Score
            , fromState :: StateLabel
            , toState :: StateLabel
            }
-
 \end{smallverbatim}
-We group transition probabilities into 7-tuples.
-Each tuple corresponds to a ``node'' in the hidden Markov model
-(a~dashed oval in \figref{plan7}) and to a column of the original
-alignment.
-As~noted above, 
-a match state may transition to any state in the successor node;
-an insertion state may transition to itself or to its successor match
-state;
-and
-a~deletion may transition to its successor match
-state or deletion state.
+In~a Plan7 hidden Markov model, as discussed above, 
+there are seven transitions into each node:
 \begin{smallverbatim}
-data TProbs = 
+data TProbs =  -- MORE DAMN LIES
      TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
             , i_m :: TProb, i_i :: TProb
             , d_m :: TProb, d_d :: TProb }
 \end{smallverbatim}
 In~our code, we select from this 7-tuple using the \texttt{edge}
-function:
+function:\remark{Broken!  This function no longer appears in our examples}
 \smallverbatiminput{edge}
 In MRFy, the first two arguments to \texttt{edge} are known at compile
 time, and we expect \texttt{edge} to be inlined.
 
-The representation of a node includes the probabilities of transitions
-into the states of that node, plus the tables
-of emission probabilities for the match and insertion states.
-\remark{Why strictness annotations?}
+Nodes are numbered, and the representation of a node includes 
+the tables
+of emission probabilities for the match and insertion states,
+plus
+the
+probabilities of transitions 
+into the states of that node.
 \smallverbatiminput{hmmnode}
 
 In~Viterbi's equations,
@@ -612,24 +610,17 @@ when implemented \naive ly,
 perform extraordinarily badly.
 But just like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
-To~show our code, we have to confess to a 
-transformation of Viterbi's equations.
-The~logarithms on the left of \figref{viterbi} are computed when the
-hidden Markov model is constructed, and the resulting numbers are
-stored in a file.
-And~to~make this file more pleasant to read, the logarithms are
-negated.
-(The logarithm of a probability is typically negative, and negating
-the logarithm eliminates hordes of minus signs.)
-We~therefore implement a transformed version of Viterbi's equations,
+Our code implements a transformed version of Viterbi's equations, 
+which operates on scores instead of on probabilities.
+This version is
 shown on the right-hand side of \figref{viterbi}.
+THIS PART IS BROKEN.  THE A ARRAY NEEDS TWO SUBSCRIPTS, AND THE E
+NOTATION IS INCONSISTENT (HAS MAGICALLY CHANGED FROM BRACKETS TO SUBSCRIPTS).
 The transformed equations minimize the
-negated log probability for each combination of node~$j$, amino
+score (i.e., the negated log probability) for each combination of
+node~$j$, amino 
 acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
-A~negated log probability is called a~\emph{score}.
 
-MRFy computes not only the minimum score but
-also the path of states which produces that score.
 Scores can be usefully paired with many types of values,
 so we have defined a small abstraction:
 \smallverbatiminput{vscore}
@@ -638,36 +629,37 @@ Think of a value of type \texttt{Scored~a} as a container holding
 The \texttt{/+/} function adds to the score without touching the
  container.
 
-\tuningbox{
 We~also made \texttt{Scored} an instance of~\texttt{Ord} and of
 \texttt{Functor}, so
 \begin{smallverbatim}
 fmap :: (a -> b) -> (Scored a -> Scored b)
 \end{smallverbatim}
 applies a function to the thing inside the container, without touching
-the score.
+the score.\remark{Changes in the code appear to have
+made \texttt{fmap} irrelevant}
 And containers are ordered by score alone, so applying
 \texttt{minimum} to a list of scored things chooses the thing with the
 smallest (and therefore best) score.
-}
 
-Given the \texttt{Scored} abstraction, we can easily implement
-Viterbi's equations for a match state.
-To~implement the equation at the top right of \figref{viterbi},
-we~choose the best solution
-from among the three predecessor states;
+
+
+The \texttt{Scored} abstraction makes it easy to implement
+Viterbi's equations.
+For example, to compute $V_j^{\prime M}(i)$ using the equation at the top
+right of \figref{viterbi}, we call 
+\mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}, 
+which chooses the best (\texttt{minimum}) solution
+from among the three predecessor states:
+\smallverbatiminput{vfix}
+In this code, EXPLAIN EXTEND, EXPLAIN ESCORE, EXPLAIN
+ASCORE. 
 we~use~\texttt{/+/} to add transition and emission scores,
 and we use \texttt{fmap} to add \texttt{Mat} to the list of states
-encountered up to this point:
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\smallverbatiminput{vfix}
-The other cases (\texttt{Ins} and \texttt{Del}) look similar.
-Functions \texttt{tProb} and \texttt{edge} combine to select the
-appropriate transition score (one of the $a'$~values).
-Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+,
-so
-the call to~\verb+vee''+ produces the same result as a recursive call
-to~\verb+vee'+, but faster:
+encountered up to this point:\remark{BROKEN! \texttt{fmap} is gone}
+
+Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
+Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,
+but faster: 
 \smallverbatiminput{memo}
 Functions \texttt{Memo.memo3} and \texttt{Memo.arrayRange} come from
 Luke Palmer's
@@ -679,7 +671,7 @@ and \texttt{seqlen} represents~$N$.
 Memoization makes \verb+vee'+ perform just as well as the classic
 dynamic-programming code.
 And~the call to \texttt{Memo.memo3} is the \emph{only} part of the code
-devoted to improving performance.
+devoted to dynamic programming.
 By~contrast, standard implementations of the Viterbi algorithm, such as in HMMER,
 spend much of their code 
 managing dynamic-programming tables.
@@ -1010,6 +1002,9 @@ However, for the algorithm underlying MRFy, we are satisfied with the runtime
 performance of Haskell and GHC.
 Nonetheless, we expect that we can still improve MRFy's run-time performance
 with further profiling and tuning.
+
+
+
 
 In~\secref{viterbi} above, the example case for the \verb+vee'+
 function computes not just a score but also an optimal path.
