@@ -550,20 +550,27 @@ And since they are apparently never used, why do they have strictness annotation
 In~a Plan7 hidden Markov model, as discussed above, 
 there are seven transitions into each node:
 \smallverbatiminput{tprobs}
-In~our code, we select from this 7-tuple using the \texttt{ascore}
-function:\remark{Norman: please put ascore into a file}
-%\smallverbatiminput{ascore}
-In MRFy, the first two arguments to \texttt{ascore} are known at compile
-time, and we expect \texttt{ascore} to be inlined.
+In~our code, we select from this 7-tuple using the \texttt{aScore}
+function;
+\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {{\hat s}}$},
+where $s$~and~$\hat s$ form one of the 7~pairs above.
 
-Nodes are numbered, and the representation of a node includes 
-the tables
-of emission probabilities for the match and insertion states,
-plus
-the
-probabilities of transitions 
-into the states of that node.
-\smallverbatiminput{hmmnode}
+A~7-tuple of scores is included in the representation of each node in
+the model.
+This representation also includes tables of emission probabilities
+$e_{M_j}$ and $e_{I_j}$.
+These tables are read using function
+\mbox{$\mathtt{eScore}\;s\;j\;i = e_{s_j}(x_i)$}.
+
+%%  DROP THIS PARA??
+%%  Nodes are numbered, and the representation of a node includes 
+%%  the tables
+%%  of emission probabilities for the match and insertion states,
+%%  plus
+%%  the
+%%  probabilities of transitions 
+%%  into the states of that node.
+%%  \smallverbatiminput{hmmnode}
 
 In~Viterbi's equations,
 the probability in each state is a function of the probabilities
@@ -625,16 +632,18 @@ The \texttt{Scored} abstraction makes it easy to implement
 Viterbi's equations.
 For example, to compute $V_j^{\prime M}(i)$ using the equation at the top
 right of \figref{viterbi}, we call 
-\mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}, 
-which chooses the best (\texttt{minimum}) solution
-from among the three predecessor states:
+\mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}.
+The equation adds $e^{\prime}_{M_{j}}(x_{i})$, computed
+with \texttt{eScore}, to a minimum.
+The sum of an~$a'$~term and a $V'_{j-1}(i-1)$ term 
+is computed by function \texttt{avSum},
+the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively.
 \smallverbatiminput{vfix}
-
-In this code, we look up emission scores for a given node and amino
-acid using \texttt{eScore},
-we~use~\texttt{/+/} to add transition and emission scores,
-and we use \texttt{extend} to add \texttt{Mat} to the list of states
-encountered up to this point.
+The entire right-hand side is wrapped in \texttt{extend~Mat}.
+This call performs a computation \emph{not} shown in \figref{viterbi}:
+in~addition to computing the most likely BUZZWORD,
+\mrfy\ also computes most likely path (sequence of states).
+Function \texttt{extend} adds~$M$ to the head of that path.
 
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
 Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,

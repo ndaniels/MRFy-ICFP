@@ -1,3 +1,4 @@
-vee' Mat j i = extend Mat
-              (eScore Mat j i /+/ minimum (map from [Mat, Ins, Del]))
- where from prev = aScore prev Mat (j-1) /+/ vee'' prev (j-1) (i-1)
+vee' Mat j i = extend Mat $
+   eScore Mat j i /+/ minimum (map avSum [Mat, Ins, Del])
+ where avSum prev =
+         aScore prev Mat (j-1) /+/ vee'' prev (j-1) (i-1)
