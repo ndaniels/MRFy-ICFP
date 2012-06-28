@@ -67,12 +67,12 @@
 \newcommand\smallverbatiminput[1]{%
   \everypar=\expandafter{\the\everypar
        \verbatimsmallfalse
-       \belowdisplayskip=\abovedisplayskip
-       \belowdisplayshortskip=\abovedisplayshortskip
+%       \belowdisplayskip=\abovedisplayskip
+%       \belowdisplayshortskip=\abovedisplayshortskip
        \topsep=\standardvspace}%
   \topsep=0.78\topsep
-  \belowdisplayskip=0.78\belowdisplayskip
-  \belowdisplayshortskip=0.78\belowdisplayshortskip
+%  \belowdisplayskip=0.78\belowdisplayskip
+%  \belowdisplayshortskip=0.78\belowdisplayshortskip
   \verbatimsmalltrue\verbatiminput{#1}}
 \newcommand\smallverbatiminputx[1]{\vspace*{-8pt}{\small\verbatiminput{#1}}} % WTF?? {\LaTeX} hell
 \newcommand\smallfuzzverbatiminput[2]{{\par\unskip\small\hfuzz=#1 \verbatiminput{#2}}}
@@ -696,58 +696,65 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{hofs}
 \seclabel{mrfy}
 
-Our implementations of hidden Markov models and Viterbi's algorithm
-duplicate existing functionality; these same algorithms were
-implemented in C++ for HMMER and SMURF.
-This reimplementation is a cost of using Haskell, and one that
-other researchers may have to pay as well, as fewer computational biology
-libraries exist for Haskell. For example, the National Center for
-Biotechnology Information publishes its own library of algorithms
-for computational biology.
-However, the authors of SMURF and HMMER implemented these algorithms
-anew, even though existing implementations existed in C++.
-In~MRFy, we use these algorithms as building blocks to implement
-new functionality.
+Our Haskell code for hidden Markov models and Viterbi's algorithm
+solves the same problems as existing C++~code.
+Other researchers using Haskell may also have to reimplement code,
+but researchers may also reimplement code out of choice, not
+necessity.
+For~example, both SMURF and HMMER contain new implementations of these
+same algorithms.
+In~MRFy, we are using the Haskell implementations to help solve new
+problems. 
 
-A hidden Markov model uses local information about
-amino-acid sequences.
-But when a real protein folds in three dimensions, 
-groups of amino acids 
+When a real protein folds in three dimensions, 
+amino acids 
 that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
-We~are studying adjacent groups called \emph{beta strands}, which
+We~are studying groups of such acids called \emph{beta
+strands}.\remark{Fix this; we're not really studying beta strands}
+Beta strands
 can become hydrogen-bonded to each other,
-and are effectively ``stuck together.''
+making them ``stuck together.''
+MRFy detects homologous proteins that include hydrogen-bonded beta
+strands; using prior methods, many instances of this problem are
+intractable. 
 
-A~mutation in a paired beta strand may break the pairing, in which
- case the mutated protein will not fold properly and is unlikely to
- survive natural selection.
-But a mutation in a paired beta strand \emph{can} survive if it is
- accompanied by a \emph{compensatory} mutation in the strand with which it is
- paired. 
-The probability of finding amino acid~$x_i$ in column~$j$ of an alignment may
- therefore depend on the amino acid in the paired column
- $\pairedwith j$.
-This nonlocal interaction changes
-Viterbi's equations:
-each term $V_{j}^{\prime M}(i)$ becomes
+To~account for beta strands, computational biologists must use both a
+richer model of protein structure and a revised version of Viterbi's
+equations.
+The~richer model recognizes that only certain pairs of amino acids are
+able to bond to each other.
+%%  The presence of beta strands changes both the natu
+%%   the probability that a given
+%%  query sequence fit
+%%  A~mutation in a paired beta strand may break the pairing, in which
+%%   case the mutated protein will not fold properly and is unlikely to
+%%   survive natural selection.
+%%  But a mutation in a paired beta strand \emph{can} survive if it is
+%%   accompanied by a \emph{compensatory} mutation in the strand with which it is
+%%   paired. 
+When column~$j$ of an alignment is part of a beta strand and is paired
+with another column  $\pairedwith j$,
+the probability of finding amino acid~$x_i$ in column~$j$ 
+depends on~$x_{\pairedwith j}$.
+The~relevant term in
+Viterbi's equations 
+$V_{j}^{\prime M}(i)$ becomes
 $$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith j}).$$
-The distance between columns~$j$ and $\pairedwith j$ can be as small
- as a few columns or as large as a few hundreds of columns.
+Columns~$j$ and $\pairedwith j$ can be as close together as a few
+columns or as far apart as a few hundreds of columns.
 
-
-The approach currently taken in computational biology
-is~to model each pair of beta strands not with two hidden Markov
-models, 
-but with a pair of sequences of match states.
-Each of the subsequences \emph{between} paired beta strands is then
-modeled with an ordinary hidden Markov model.
+The presence of beta strands also changes the model.
+Within a beta strand, amino acids are not inserted or deleted;
+a~bonded pair of beta strands is modeled by
+ a pair of sequences of match states.
+Between the beta strands, the model is structured as before.
 The~combined model, an~example of which is shown in \figref{mrf}, is called a
 \textit{Markov random field}. 
-Because of nonlocal interactions between paired beta strands, 
-the likelihood-maximization problem for a Markov random field does not
- exhibit optimal substructure, and dynamic
- programming cannot solve it quickly \cite{Menke:2010ti,Daniels:2012}.
+Becayuse $W_j^M(i)$~depends not only on $x_i$ and its local neighbors but
+also on the nonlocal $x_{\pairedwith j}$, 
+dynamic programming cannot compute the maximum likelihood quickly
+\cite{Menke:2010ti,Daniels:2012}.
 MRFy explores new methods of \emph{approximating}
 maximum likelihood.
 
@@ -755,18 +762,19 @@ maximum likelihood.
 
 
 MRFy treats the beta 
-strands, which are built into the model,
+strands in the model
  as ``beads'' which can be slid along the query sequence.
-A~set of positions of beta strands is called
+A~positioning of the beta strands is called
  a \emph{placement}.
 A~placement's probability is computed
 based on observed frequencies of paired amino acids in 
 hydrogen-bonded beta strands~\cite{Cowen:2002p588}.
-Given a placement, the maximum likelihood of any subsequence that appears
-\emph{between} two beta strands can be computed exactly and
-efficiently using Viterbi's algorithm.
-(The result of the exact computation is a probability that is
-\emph{conditioned} on the placement.)
+Given a placement, the maximum likelihood of the remaining parts of
+the query sequence, which appear between and around beta strands,
+can be computed quickly and exactly 
+using Viterbi's algorithm.
+The exact result is a probability that is
+\emph{conditioned} on the placement.
 
 MRFy searches for placements stochastically,
 trying to minimize scores.
