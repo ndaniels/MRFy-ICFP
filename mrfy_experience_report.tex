@@ -357,17 +357,17 @@ The match state contains a table $e_{M_j}(x)$ which gives the
  probability that a homologous protein has amino acid~$x$ in
  column~$j$.
 This probability is called an \emph{emission} probability.
-\item
-For each column~$j$ of the alignment, the hidden Markov model has a
-\emph{deletion state}~$D_j$.
-The deletion state determines the probability that the query sequence
-has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
 \item 
 For each column~$j$ of the alignment, the hidden Markov model has an
 \emph{insertion state}~$I_j$.
 The insertion state contains a table $e_{I_j}(x)$ which gives the
 probability that a homologous protein has gained amino acid~$x$ by
 insertion at column~$j$.
+\item
+For each column~$j$ of the alignment, the hidden Markov model has a
+\emph{deletion state}~$D_j$.
+The deletion state determines the probability that the query sequence
+has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
 \end{itemize}
 The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
 In~our representation, each state contains a probability or a table of
@@ -382,9 +382,7 @@ The model gets its name because there are exactly
 seven possible transitions
 into the states of any column~$j$.
 Each transition has its own probability:
-\remark{Problem: the subscripts are not so easy to read, and notation
-is not quite consistent with \figref{viterbi}, definition of $a'$ at
-bottom right.}
+\remark{Norman: how do you propose to make the subscripts more readable?}
 \begin{itemize} 
 \item
 A~transition into a match state 
@@ -471,9 +469,9 @@ V_{j}^{\prime D}(i) &=& \min \left\{
 \vsum{V_{j-1}^{\prime D}(i)} {a^{\prime}_{D_{j-1}D_{j}}}\\
 \end{array} \right.\\[\gum]
 \multicolumn3{l}{%
-a'_{s} = - \log a_{s} 
+a'_{s_{j}s_{k}} = - \log a_{s_{j}s_{k}} 
 \qquad
-e^{\prime}_{s,x} = - \log\frac{e_{s,x}}{q_{x}}
+e^{\prime}_{s}(x) = - \log\frac{e_{s}(x)}{q_{x}}
 \qquad
 V_j^{\prime M}(i) = - V_j^{M}(i)
 }
@@ -549,7 +547,7 @@ And we include the labels of the states that are
 connected:\remark{\emph{Why} are the labels there?
 And since they are apparently never used, why do they have strictness annotations???}
 \begin{smallverbatim}
-data TProb =   --- THIS DEFN IS A DAMN LIE
+data TProb =
      TProb { logProbability :: Score
            , fromState :: StateLabel
            , toState :: StateLabel
@@ -558,16 +556,16 @@ data TProb =   --- THIS DEFN IS A DAMN LIE
 In~a Plan7 hidden Markov model, as discussed above, 
 there are seven transitions into each node:
 \begin{smallverbatim}
-data TProbs =  -- MORE DAMN LIES
+data TProbs =
      TProbs { m_m :: TProb, m_i :: TProb, m_d :: TProb
             , i_m :: TProb, i_i :: TProb
             , d_m :: TProb, d_d :: TProb }
 \end{smallverbatim}
-In~our code, we select from this 7-tuple using the \texttt{edge}
-function:\remark{Broken!  This function no longer appears in our examples}
-\smallverbatiminput{edge}
-In MRFy, the first two arguments to \texttt{edge} are known at compile
-time, and we expect \texttt{edge} to be inlined.
+In~our code, we select from this 7-tuple using the \texttt{ascore}
+function:\remark{Norman: please put ascore into a file}
+\smallverbatiminput{ascore}
+In MRFy, the first two arguments to \texttt{ascore} are known at compile
+time, and we expect \texttt{ascore} to be inlined.
 
 Nodes are numbered, and the representation of a node includes 
 the tables
@@ -614,8 +612,6 @@ Our code implements a transformed version of Viterbi's equations,
 which operates on scores instead of on probabilities.
 This version is
 shown on the right-hand side of \figref{viterbi}.
-THIS PART IS BROKEN.  THE A ARRAY NEEDS TWO SUBSCRIPTS, AND THE E
-NOTATION IS INCONSISTENT (HAS MAGICALLY CHANGED FROM BRACKETS TO SUBSCRIPTS).
 The transformed equations minimize the
 score (i.e., the negated log probability) for each combination of
 node~$j$, amino 
@@ -629,15 +625,8 @@ Think of a value of type \texttt{Scored~a} as a container holding
 The \texttt{/+/} function adds to the score without touching the
  container.
 
-We~also made \texttt{Scored} an instance of~\texttt{Ord} and of
-\texttt{Functor}, so
-\begin{smallverbatim}
-fmap :: (a -> b) -> (Scored a -> Scored b)
-\end{smallverbatim}
-applies a function to the thing inside the container, without touching
-the score.\remark{Changes in the code appear to have
-made \texttt{fmap} irrelevant}
-And containers are ordered by score alone, so applying
+We~also made \texttt{Scored} an instance of~\texttt{Ord}.
+Containers are ordered by score alone, so applying
 \texttt{minimum} to a list of scored things chooses the thing with the
 smallest (and therefore best) score.
 
@@ -651,11 +640,12 @@ right of \figref{viterbi}, we call
 which chooses the best (\texttt{minimum}) solution
 from among the three predecessor states:
 \smallverbatiminput{vfix}
-In this code, EXPLAIN EXTEND, EXPLAIN ESCORE, EXPLAIN
-ASCORE. 
+
+In this code, we look up emission scores for a given node and amino
+acid using \texttt{eScore},
 we~use~\texttt{/+/} to add transition and emission scores,
-and we use \texttt{fmap} to add \texttt{Mat} to the list of states
-encountered up to this point:\remark{BROKEN! \texttt{fmap} is gone}
+and we use \texttt{extend} to add \texttt{Mat} to the list of states
+encountered up to this point.
 
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
 Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,
