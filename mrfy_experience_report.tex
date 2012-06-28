@@ -154,7 +154,7 @@ biology.
 \end{abstract}
 
 \category{J.3}{Biology and genetics}{}
-\category{D.3.2}{Language Classifications}{Applicative (functional) languages}
+\category{D.1.1}{Applicative (Functional) Programming}{}
 % \category{CR-number}{subcategory}{third-level}
 % 
 % \terms
@@ -350,7 +350,6 @@ which we write~\alignwidth.
 A~hidden Markov model carries probabilities on some states and on all
 state transitions.
 Both the probabilities and the states are determined by the alignment:
-\remark{These bullets need proper parallel structure}
 \begin{itemize}
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
@@ -358,7 +357,6 @@ For each column~$j$ of the alignment, the hidden Markov model has a
 The match state contains a table $e_{M_j}(x)$ which gives the
  probability that a homologous protein has amino acid~$x$ in
  column~$j$.
-This probability is called an \emph{emission} probability.
 \item 
 For each column~$j$ of the alignment, the hidden Markov model has an
 \emph{insertion state}~$I_j$.
@@ -368,10 +366,11 @@ insertion at column~$j$.
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}~$D_j$.
-The deletion state determines the probability that the query sequence
-has \emph{no} amino acid  in column~$j$, i.e., that it has a gap.
+The deletion state determines the probability that a homologous protein
+has lost an amino acid  in column~$j$, i.e., that it has a gap.
 \end{itemize}
-The hidden Markov model also has distinguished \emph{begin} and \emph{end} states.
+The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are called emission probabilities.
+The hidden Markov model also has distinguished \emph{Begin} and \emph{End} states.
 In~our representation, each state contains a probability or a table of
 probabilities, and it is also labelled with one of these labels:
 \smallverbatiminput{statelabel}
@@ -384,7 +383,6 @@ The model gets its name because there are exactly
 seven possible transitions
 into the states of any column~$j$.
 Each transition has its own probability:
-\remark{Norman: how do you propose to make the subscripts more readable?}
 \begin{itemize} 
 \item
 A~transition into a match state 
@@ -546,8 +544,7 @@ scores to be added and subtracted but not multiplied.
 In a hidden Markov model, each transition is actually labeled with a
 score, not a probability.
 And we include the labels of the states that are
-connected:\remark{\emph{Why} are the labels there?
-And since they are apparently never used, why do they have strictness annotations???}
+connected:
 \smallverbatiminput{tprob}
 In~a Plan7 hidden Markov model, as discussed above, 
 there are seven transitions into each node:
@@ -643,8 +640,8 @@ the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively.
 \smallverbatiminput{vfix}
 The entire right-hand side is wrapped in \texttt{extend~Mat}.
 This call performs a computation \emph{not} shown in \figref{viterbi}:
-in~addition to computing the most likely BUZZWORD,
-\mrfy\ also computes most likely path (sequence of states).
+in~addition to computing the probability of the most likely path,
+\mrfy\ also computes the most likely path (sequence of states).
 Function \texttt{extend} adds~$M$ to the head of that path.
 
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
@@ -700,11 +697,13 @@ When a real protein folds in three dimensions,
 amino acids 
 that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
-We~are studying groups of such acids called \emph{beta
-strands}.\remark{Fix this; we're not really studying beta strands}
+Some proteins contain groups of such acids called \emph{beta
+strands}.
 Beta strands
 can become hydrogen-bonded to each other,
-making them ``stuck together.''
+making them ``stuck together,''
+and these beta strands help distinguish groups of homologous
+proteins from one another.
 MRFy detects homologous proteins that include hydrogen-bonded beta
 strands; using prior methods, many instances of this problem are
 intractable. 
