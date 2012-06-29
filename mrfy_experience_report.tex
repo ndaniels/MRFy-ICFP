@@ -114,6 +114,8 @@
 \parskip=0.9\parskip % cheating
 \advance \parskip by 0pt plus 0.1pt
 
+\overfullrule=10pt
+
 
 \conferenceinfo{ICFP'12,} {September 9--15, 2012, Copenhagen, Denmark.}
 \CopyrightYear{2012}
@@ -451,51 +453,57 @@ deletion state~$D$.
 \def\goo{18pt}
 \def\gum{14pt}
 \[
-\begin{array}{l@{}c@{}l}
+\def\maxiquad{\hskip 1.2em\relax}
+%\mskip -5mu
+\begin{array}{@{}l@{}c@{}l}
 V_{j}^{M}(i) &{}={}& \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j-1}^{M}(i - 1)} {\log a_{M_{j-1}M_{j}}}\\
-\vsum{V_{j-1}^{I}(i - 1)} {\log a_{I_{j-1}M_{j}}}\\
-\vsum{V_{j-1}^{D}(i - 1)} {\log a_{D_{j-1}M_{j}}}\\
-\end{array} \right.\\[\goo]
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j-1}^{M}(i - 1)} {\log a_{M_{j-1}M_{j}}}\\
+  \vsum{V_{j-1}^{I}(i - 1)} {\log a_{I_{j-1}M_{j}}}\\
+  \vsum{V_{j-1}^{D}(i - 1)} {\log a_{D_{j-1}M_{j}}}\\
+  \end{array} \right.\\[\goo]
 V_{j}^{I}(i) &=& \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j}^{M}(i - 1)} {\log a_{M_{j}I_{j}}}\\
-\vsum{V_{j}^{I}(i - 1)} {\log a_{I_{j}I_{j}}}\\
-\end{array} \right.\\[\gum]
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j}^{M}(i - 1)} {\log a_{M_{j}I_{j}}}\\
+  \vsum{V_{j}^{I}(i - 1)} {\log a_{I_{j}I_{j}}}\\
+  \end{array} \right.\\[\gum]
 V_{j}^{D}(i) &=& \max \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j-1}^{M}(i)} {\log a_{M_{j-1}D_{j}}}\\
-\vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
-\end{array} \right.\\
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j-1}^{M}(i)} {\log a_{M_{j-1}D_{j}}}\\
+  \vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
+  \end{array} \right.\\
 \end{array}
-\qquad
-\begin{array}{l@{}c@{}l}
+%
+\hskip 1.5em\relax % \qquad too big
+%
+\begin{array}{l@{}c@{}l@{}}
 V_{j}^{\prime M}(i) &{}={}& e^{\prime}_{M_{j}}(x_{i}) + \min \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j-1}^{\prime M}(i - 1)} {a^{\prime}_{M_{j-1}M_{j}}}\\
-\vsum{V_{j-1}^{\prime I}(i - 1)} {a^{\prime}_{I_{j-1}M_{j}}}\\
-\vsum{V_{j-1}^{\prime D}(i - 1)} {a^{\prime}_{D_{j-1}M_{j}}}\\
-\end{array} \right.\\[\goo]
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j-1}^{\prime M}(i - 1)} {a^{\prime}_{M_{j-1}M_{j}}}\\
+  \vsum{V_{j-1}^{\prime I}(i - 1)} {a^{\prime}_{I_{j-1}M_{j}}}\\
+  \vsum{V_{j-1}^{\prime D}(i - 1)} {a^{\prime}_{D_{j-1}M_{j}}}\\
+  \end{array} \right.\\[\goo]
 V_{j}^{\prime I}(i) &=& e^{\prime}_{I_{j}}(x_{i}) + \min \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j}^{\prime M}(i - 1)} {a^{\prime}_{M_{j}I_{j}}}\\
-\vsum{V_{j}^{\prime I}(i - 1)} {a^{\prime}_{I_{j}I_{j}}}\\
-\end{array} \right.\\[\gum]
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j}^{\prime M}(i - 1)} {a^{\prime}_{M_{j}I_{j}}}\\
+  \vsum{V_{j}^{\prime I}(i - 1)} {a^{\prime}_{I_{j}I_{j}}}\\
+  \end{array} \right.\\[\gum]
 V_{j}^{\prime D}(i) &=& \min \left\{
-\begin{array}{l@{}c@{}l}
-\vsum{V_{j-1}^{\prime M}(i)} {a^{\prime}_{M_{j-1}D_{j}}}\\
-\vsum{V_{j-1}^{\prime D}(i)} {a^{\prime}_{D_{j-1}D_{j}}}\\
-\end{array} \right.\\[\gum]
-\multicolumn3{l}{%
-a'_{s \hat{s}} = - \log a_{s \hat{s}} 
+  \begin{array}{l@{}c@{}l}
+  \vsum{V_{j-1}^{\prime M}(i)} {a^{\prime}_{M_{j-1}D_{j}}}\\
+  \vsum{V_{j-1}^{\prime D}(i)} {a^{\prime}_{D_{j-1}D_{j}}}\\
+  \end{array} \right.\\[\gum]
+%
+\multicolumn3{l@{}}{%
+  a'_{s \hat{s}} = - \log a_{s \hat{s}} 
 \qquad
-e^{\prime}_{s}(x) = - \log\frac{e_{s}(x)}{q_{x}}
+  e^{\prime}_{s}(x) = - \log\frac{e_{s}(x)}{q_{x}}
 \qquad
-V_j^{\prime M}(i) = - V_j^{M}(i)
+  V_j^{\prime M}(i) = - V_j^{M}(i)
 }
 \\
 \end{array}
+%\mskip -5mu
 \]
 
 \caption{Viterbi's equations, in original and negated forms}
@@ -660,7 +668,7 @@ is computed by function \texttt{avSum},
 the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively.
 \smallverbatiminput{vfix}
 The right-hand side is wrapped in a call to
-\texttt{\mbox{fmap (Mat `cons`)}}.
+\mono{\mbox{fmap (Mat `cons`)}}.
 This call performs a computation \emph{not} shown in \figref{viterbi}:
 \mrfy\ not only computes the probability of the most likely path but 
 also computes the path itself.
@@ -859,11 +867,11 @@ Nodes connected by dashed edges are hydrogen-bonded.
 
 
 We~address this problem by combining ``generate and filter'' into a
-single abstraction, which has type \texttt{SearchGen pt r}.
+single abstraction, which has type \mono{SearchGen pt r}.
 Type variable~\texttt{pt} is a point in the search
 space, and \texttt{r} is a
 random-number generator.
-\texttt{Rand~r} is a monad of stochastic computations:
+\mono{Rand~r} is a monad of stochastic computations:
 \smallverbatiminput{gen.tex}
 The monadic computation \texttt{pt0} randomly selects a starting point
 for search;
@@ -1157,6 +1165,8 @@ The senior member of the team kept saying that any proper approach to
 debugging Haskell code should involve QuickCheck.
 This advice was not helpful.
 
+\seclabel{awkward-quickcheck}
+
 Our experience was that only the senior member of our team was able to use
 QuickCheck easily.
 In~retrospect, we~have identified some obstacles to using
@@ -1350,8 +1360,7 @@ Haskell continue to mature.
 \section{What can you learn from our experience?}
 
 If~you are a computational biologist, 
-you can be productive in Haskell, and you don't need extensive
-experience.
+you can be productive in Haskell without extensive preparation.
 Two~of us (Daniels and Gallant) are graduate students.
 Daniels has taken a graduate seminar in functional programming, which
 included some Haskell;
@@ -1359,11 +1368,11 @@ Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
 Ramsey is a professor who has used Haskell 
 for medium-sized projects,
-but his primary contributions to MRFy have been limited to \emph{post hoc}
+but his contributions to MRFy have been limited, mostly to \emph{post hoc}
 refactoring and testing.
 
 
-\subsection{Barriers to be overcome}
+\subsection{Obstacles to be overcome}
 
 In~\secref{awkward-profiling} above, we~mention the awkwardness of the
 cost-center annotations required for profiling.
@@ -1374,30 +1383,6 @@ Using Haskell's Cabal tool, which manages installed libraries,
 we~were not able to achieve such recompilations consistently.
 
 
-REWRITE THE ADVICE ON USING QUICKCHECK
-
-One practice we recommend for those following in our footsteps is to
-write instances of \texttt{Arbitrary} for data types as those data types
-are written, when relevant invariants are fresh in memory.
-
-This was a practice that the junior members of our team did not follow, and
-they sorely regret it.
-
-
-
-We~faced another barrier in testing.
-\remark{Where is Andrew's shitty paragraph?  It shoudl replace this one?}
-One of us (Ramsey) kept ranting that we should test our code using 
-QuickCheck \cite{claessen:quickcheck},
-but we could never figure out~how.
-We~were stumped by two problems:
-how to break down MRFy into parts that could be
-unit-tested,
-and how to implement QuickCheck generators for representations of complex
-data like beta-strand placements.
-We~know that QuickCheck is a powerful and proven tool,
-but we could not figure out how to exploit~it.
-
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
 But~MRFy computes with arrays and array indices,
@@ -1406,12 +1391,28 @@ Bounds violations lead to run-time errors, which we have not been able
 to identify any systematic way to~debug.
 GHC's profiler can provide stack traces, but we~found this information
 difficult to discover, and as noted above,
-there are barriers to profiling.
+there are obstacles to profiling.
 We're~aware that debugging lazy functional programs has been a topic
-of some research,\finalremark{Do we cite Hood, Hat, or Freya?}
-but one of the biggest barriers we encountered to using Haskell is
-that we have had to abandon our old approaches to debugging,
-and we~see no clear path to follow.
+of some research,
+but one of the biggest obstacles we encountered to using Haskell is
+that we have had to abandon our old approaches to debugging.
+
+Ideally we would use QuickCheck to find bugs, but as we mention in
+\secref{awkward-quickcheck}, we found obstacles.
+We~have now overcome these obstacles, but
+we~sorely regret not doing so earlier.
+In~light of our experience, we have instituted a new programming practice:
+whenever we introduce a new data type,
+we~write the instance of
+\texttt{Arbitrary} right away, while
+relevant invariants are still fresh in memory.
+When invariants are not enforced by Haskell's static type system,
+we write them as Haskell predicates.
+We can then immediately run QuickCheck on each predicate, to verify
+that our Arbitrary instance agrees with the predicate.
+For each predicate~\texttt{p} we also check
+\mono{fmap (all p . shrink) arbitrary}.
+
 
 
 
@@ -1481,11 +1482,12 @@ succeed.
 
 \acks
 
-An~anonymous referee spurred us to think
-more deeply about laziness.
+Anonymous referees spurred us to think
+more deeply about laziness and to write more carefully about performance.
 Josef Svenningsson suggested a correspondence between \mrfy's search
 and stream fusion, which led us eventually to the \texttt{Utility} type.
-Koen Claessen instantly diagnosed an inappropriately strict monad.
+Koen Claessen instantly diagnosed an inappropriately strict
+implementation of the \texttt{Rand} monad.
 We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci. 
 
