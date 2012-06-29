@@ -957,6 +957,7 @@ recent point or on the difference between costs of successive points.
 Despite these non-modular aspects, the search
 interface provides ample scope for
 experiments.
+\remark{This \P\ needs revising in light of the ``monad madness'' refactoring.}
 Random hill climbing took fifty lines of code and one~day to
 implement.
 Simulated annealing reuses hill climbing's
@@ -1408,7 +1409,7 @@ When invariants are not enforced by Haskell's static type system,
 we write them as Haskell predicates.
 We can then immediately run QuickCheck on each predicate, to verify
 that our Arbitrary instance agrees with the predicate.
-For each predicate~\texttt{p} we also check
+For each predicate~\texttt{p} we can also check
 \mono{fmap (all p . shrink) arbitrary}.
 
 
