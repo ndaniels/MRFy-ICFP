@@ -6,6 +6,12 @@
 
 \newif\iffinaldraft \finaldrafttrue % true if it's the final version
 
+\newif\iftimestamp\timestamptrue  % show MD5 stamp of paper
+
+% \timestampfalse % it's post-submission time
+
+
+\IfFileExists{timestamp.tex}{}{\timestampfalse}
 
  \newif\ifpdfmadness
 
@@ -110,6 +116,13 @@
 \let\citeyear=\citeyearpar
 
 
+
+\IfFileExists{timestamp.tex}{\input{timestamp}}{}
+\renewcommand{\floatpagefraction}{0.9} % must be less than \topfraction
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+
+
 \begin{document}
 \parskip=0.9\parskip % cheating
 \advance \parskip by 0pt plus 0.1pt
@@ -123,6 +136,9 @@
 
 %\titlebanner{banner above paper title}        % These are ignored unless
 \preprintfooter{Haskell in Computational Biology}   % 'preprint' option specified.
+\iftimestamp
+\preprintfooter{\mdfivestamp} 
+\fi
 
 \title{Experience Report: Haskell in Computational Biology}
 % \subtitle{Subtitle Text, if any}

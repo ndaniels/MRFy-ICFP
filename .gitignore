@@ -20,3 +20,4 @@ sigplanconf-guide.pdf
 *.fdb_latexmk
 /Smurf2
 /mrfy
+/timestamp.tex

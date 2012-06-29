@@ -37,8 +37,20 @@ latex:V: ${CODES:%=%.tex}
 	latex $TGT
 
 
-$TGT.dvi: ${CODES:%=%.tex}
+$TGT.dvi: ${CODES:%=%.tex} timestamp.tex
 $TGT.pdf: ${CODES:%=%.tex}
+
+timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
+	date=`stat -c "%y" $TGT.tex`
+	signature=""
+	if [ -x $HOME/bin/md5words ]; then
+	  words="`cat $prereq | md5words -trim`"
+      signature=" [MD5: \\mbox{$words}]"
+    else
+      words="(could not compute signature words)"
+	fi
+	date -u -d "$date" "+\def\mdfivestamp{\\rlap{\\textbf{%a %e %b %Y, %l:%M %p UCT$signature}}}\def\mdfivewords{$words}" > $target
+	echo "Wrote $target"
 
 strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
  	lua $prereq
