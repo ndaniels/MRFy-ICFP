@@ -182,18 +182,18 @@ Haskell:
 We had to reimplement an
 algorithm already implemented in~C++, 
 and the Haskell code is slower.
-But the implementation required little effort;
-the connection between code and
-algorithm is unusually clear (\secref{viterbi});
-the code was easy to parallelize; 
-and it meets our performance needs
+But the Haskell code was easy to write,     % coherent subject!
+it is clearly connected to the underlying
+algorithm (\secref{viterbi}),
+it was easy to parallelize,
+and it performs well enough
 (\secref{perf}).
 \ifpagetuning
 And overall,
 \else
 Moreover, measured as a whole, 
 \fi
-the software that incorporates this new
+the software that incorporates our new
 code 
 performs significantly
 better than the~C++ software that preceded~it.
@@ -212,10 +212,12 @@ performance (\secref{awkward-profiling}).
 \item
 Although the first two authors are computational
 biologists with little background in functional programming,
-we~used Haskell successfully.
-And Haskell has made it easy to explore new research ideas;
-by~contrast,
-our group's C++ code has not been a good vehicle for exploring new ideas
+Haskell has made it easy for us to explore new research ideas.
+By~contrast,
+our group's C++ code has not
+made it easy to explore
+% been a good vehicle for exploring 
+new ideas
 (\secref{comparo}).
 \item
 The Haskell community offers libraries and tools that
