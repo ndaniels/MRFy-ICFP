@@ -29,6 +29,8 @@
 \newcommand\alignwidth{\ensuremath C} % number of columns in an alignment
 \newcommand\pairedwith[1]{{\pi(#1)}}
 
+\newcommand\primcons{\texttt{\small(:)}}
+
 \ifpagetuning
   \newcommand\tuningbox{\vbox}
 \else
@@ -75,7 +77,9 @@
 %  \belowdisplayshortskip=0.78\belowdisplayshortskip
   \verbatimsmalltrue\verbatiminput{#1}}
 \newcommand\smallverbatiminputx[1]{\vspace*{-8pt}{\small\verbatiminput{#1}}} % WTF?? {\LaTeX} hell
-\newcommand\smallfuzzverbatiminput[2]{{\par\unskip\small\hfuzz=#1 \verbatiminput{#2}}}
+\newcommand\smallfuzzverbatiminput[2]{%
+  \everypar\expandafter{\the\everypar\hfuzz=0pt\relax}%
+  \hfuzz=#1 \smallverbatiminput{#2}}
 
 \renewcommand\ttdefault{aett}
 
@@ -108,6 +112,7 @@
 
 \begin{document}
 \parskip=0.9\parskip % cheating
+\advance \parskip by 0pt plus 0.1pt
 
 
 \conferenceinfo{ICFP'12,} {September 9--15, 2012, Copenhagen, Denmark.}
@@ -628,7 +633,7 @@ acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
 
 Scores can be usefully paired with many types of values,
 so we have defined a small abstraction:
-\smallverbatiminput{vscore}
+\smallfuzzverbatiminput{10.8pt}{vscore}
 Think of a value of type \texttt{Scored~a} as a container holding
  an~``\texttt a'' with a score written on the side.
 The \texttt{/+/} function adds to the score without touching the
@@ -640,6 +645,8 @@ Containers are ordered by score alone, so applying
 smallest (and therefore best) score.
 
 
+\seclabel{cons}
+\seclabel{vee-prime}
 
 The \texttt{Scored} abstraction makes it easy to implement
 Viterbi's equations.
@@ -652,11 +659,14 @@ The sum of an~$a'$~term and a $V'_{j-1}(i-1)$ term
 is computed by function \texttt{avSum},
 the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively.
 \smallverbatiminput{vfix}
-The entire right-hand side is wrapped in \texttt{extend~Mat}.
+The right-hand side is wrapped in a call to
+\texttt{\mbox{fmap (Mat `cons`)}}.
 This call performs a computation \emph{not} shown in \figref{viterbi}:
-in~addition to computing the probability of the most likely path,
-\mrfy\ also computes the most likely path (sequence of states).
-Function \texttt{extend} adds~$M$ to the head of that path.
+\mrfy\ not only computes the probability of the most likely path but 
+also computes the path itself.
+Function \texttt{cons} adds~$M$ to a path;
+we~avoid primitive~\primcons\ for reasons explained
+in \secref{performance} below. 
 
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
 Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,
@@ -881,7 +891,7 @@ that results in a worse score.
 \vbox{
 Using these pieces, function \texttt{everyGen} produces an infinite
 sequence containing a mix of useful and useless moves:
-\smallverbatiminput{everygen}
+\smallfuzzverbatiminput{10.8pt}{everygen}
 }
 \noindent
 Because both \texttt{nextPt} and \texttt{utility} consume randomness,
@@ -975,116 +985,145 @@ Wanted: combinator library.}
 \subsection{Performance}
 
 \seclabel{perf}
+\seclabel{performance}
 
 At each point in its search,
 MRFy calls \verb+vee'+ several
  times.
+Our~\verb+vee'+
+function computes a \mbox{\small \texttt{Scored [StateLabel]}}, that~is, 
+an~optimal path and its score.
+But at intermediate points in \mrfy's search,
+\mrfy\ uses only the
+score.
+Even though Haskell evaluation is lazy, \verb+vee'+ 
+still allocates thunks that could compute paths.
+To~measure the relevant overhead,
+we~cloned \verb+vee'+ and modified it to compute
+only a score, with no path.
+This change improved 
+run time by nearly~50\%.
+%%But when \texttt{search} finally decides on a placement, we need a
+%%version of \verb+vee'+ that \emph{does} compute a path, so we can
+%%extract the optimal parse for that placement.
+
+How could we keep the improvement without 
+maintaining two versions of \verb+vee'+?
+In~Lisp or Ruby we would have used macros or metaprogramming,
+but we were not confident of our ability to metaprogram a solution
+using Template Haskell.
+Instead, we use higher-order functions.
+As~shown in \secref{vee-prime},
+\verb+vee'+ does not use primitive~\primcons\ but instead
+uses an unknown function \texttt{cons}, which is
+passed~in.
+To~get a path, we pass in primitive~\primcons;
+to~get just a score, we pass in
+\verb+\_ _ -> []+.
+This trick is simple and easy to implement, and it provides the same
+speedup as the cloned and modified~code.
+But~we have an uneasy feeling that it may work only because of
+undocumented properties of GHC's inliner, which may 
+change without warning. 
+
+
+
+We~found another opportunity to improve performance through parallelism.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
 We~found them easy to parallelize
 using
 \texttt{Control.Parallel}:
 we substituted
-\texttt{parmap rseq} for \texttt{map}.
+\texttt{parmap rseq} for \texttt{map}.\remark{Did NR break this?}
 Even when there is just one placement per point,
-MRFy can keep six cores busy.
+MRFy can keep 6~cores busy.
+\remark{This paragraph needs to talk about \textbf{speedups}.}
 Given multiple placements per point,
-it~can use forty-eight cores.
+it~can use 48~cores.
 However, we have found that MRFy performs best, at least on our
 hardware, with between 12 and 16 cores.
 We have access to only
 one 48-core system, and while MRFy will keep all 48 cores busy, it
 performs only slightly better, at an average of 35 seconds to find an alignment
-on a large\remark{QUANTIFY!!} protein structure, than when given 16 cores, which takes an average
+on a large\remark{QUANTIFY!!} protein structure, than when given 16
+cores, which takes an average 
 of 37 seconds. 
 
-MRFy's predecessor, SMURF, does not perform stochastic search,
-and thus its overall run-time performance cannot be compared directly to MRFy.
-\remark{This \P\ is stultifying}
-However, both programs implement the Viterbi algorithm.
-On an exceedingly large, contrived example, comprising 56,000 amino acids
-(larger than any known protein) and 343 nodes, and ignoring all beta-strand
-information, SMURF's Viterbi implementation completed in 0.497 seconds on a
-2.6GHz Core i7.
-On the same benchmark, MRFy's Viterbi implementation required 1 minute 57
-seconds.
-Despite the inferior runtime performance, MRFy still meets our performance
-goals.
-This is because the stochastic search algorithm relies on the Viterbi algorithm
-applied to many, significantly smaller hidden Markov models than SMURF's
-multidimensional programming must tackle.
-MRFy computes an alignment for a 12-stranded ``beta sandwich'' structure in
-generally less than one minute, while SMURF consumes over 16GB of memory
+MRFy's implementation of Viterbi's algorithm appears dramatically
+slower than the C++ version implemented in \mrfy's predecessor,
+SMURF.
+On a 2.6GHz Intel Core i7,
+given a contrived query sequence of 56,000 amino acids,
+which is larger than any known protein,
+with a hidden Markov model of 343 nodes and no beta strands,
+\mrfy\ takes almost two minutes to compute an optimal parse.
+SMURF parses the same sequence in half a second.
+\remark{This result looks really bad. What is this contrived benchmark supposed to
+mean, anyway??  Can we get a more realistic benchmark?
+What fraction of time is spent in Viterbi?}
+But unlike SMURF, \mrfy\ doesn't have to run on large models.
+{\large{\textbf{QUANTIFY!}}}
+\mrfy\ repeatedly runs Viterbi's algorithm on 
+a~great many smaller models.
+{\large{\textbf{QUANTIFY!}}}
+Here, performance is good enough that \mrfy\ can do its job.
+Given a Markov random field with a 12-stranded ``beta sandwich''
+structure,
+\mrfy\ typically computes an alignment within a minute;\remark{with or
+without parallelism?}
+SMURF allocates over 16GB of memory
 and does not terminate even after eight hours.
-Had we implemented the SMURF algorithm in Haskell, we believe that performance
-would be unacceptable.
-However, for the algorithm underlying MRFy, we are satisfied with the runtime
-performance of Haskell and GHC.
-Nonetheless, we expect that we can still improve MRFy's run-time performance
-with further profiling and tuning.
+%%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
+%%% would be unacceptable.
+%%% However, for the algorithm underlying MRFy, we are satisfied with the runtime
+%%% performance of Haskell and GHC.
+%
+% Nonetheless, we expect that we can still improve MRFy's run-time performance
+% with further profiling and tuning.  
+% And we expect that if we cross the street, we will get to the other side.
 
 
 
 
-In~\secref{viterbi} above, the example case for the \verb+vee'+
-function computes not just a score but also an optimal path.
-MRFy's \texttt{search} function, in \secref{mrfy}, uses only the
-score.
-Even though Haskell evaluation is lazy, the \verb+vee'+ 
-still allocates thunks that could compute paths.
-We~cloned \verb+vee'+ and modified it to compute
-only a score, with no path, and this change improved 
-run-time performance by nearly~50\%.
-But when \texttt{search} finally decides on a placement, we need a
-version of \verb+vee'+ that \emph{does} compute a path, so we can
-extract the optimal parse for that placement.
 
-How could we keep the performance improvement without having to
-maintain two versions of \verb+vee'+?
-In~Lisp or Ruby we would have used macros or metaprogramming,
-but we were not confident of our ability to metaprogram a solution
-using Template Haskell.
-Instead, we replaced the primitive cons in \verb+vee'+ with a
-call to a function of the same type, which we passed~in.
-Passing the primitive~``\texttt{:}'' gives us a path,
-and passing \verb+\_ _ -> []+ gives us the same
-speedup as the cloned and modified~code.
-But~although
-this trick is simple and easy to implement, 
-we~have an uneasy feeling that it may work only because of undocumented
-properties of GHC's inliner, which may be subject to change without
-notice. 
-
-\subsection{Awkward Haskell}
+\subsection{Awkward profiling and debugging}
 
 \seclabel{awkward-profiling}
 
-We~think \verb+vee'+ is beautiful, but we wrote some ugly code, too,
-because we lack skills and knowledge in two areas.
-The first is profiling.
-GHC's profiling is based on cost centers \cite{sansom-pj},
-and for most of MRFy's development, we used GHC 7.0, which
-will happily add cost centers to top-level 
-functions only, while much of our code is in nested functions.
-We~know of no better technique than to add cost-center annotations to
-each guard clause and nested function,
-but these annotations made our code so ugly that we felt compelled to
-remove them as soon as possible.
-And without the annotations, GHC's call-site and allocation
-profiles did not give us enough information to be useful.
-We~miss valgrind, whose callgrind profiler gives useful information
-without \emph{any} annotations in the source.
-Late in MRFy's development, we began using GHC 7.4, which provides much
-better profiling tools.
-We are thrilled by these tool developments.
+We've shown you some of the code we like, but we've also written 
+code we dislike.
+The~code we like least is what we've written to work around
+obstacles we 
+encountered in profiling and debugging.
 
-Our other ugly code came from  attempts to debug
+GHC's profiler assigns costs not to functions but to ``cost
+centers'' \cite{sansom-pj}.
+In GHC~7.0, which we used 
+for most of MRFy's development, 
+cost-center annotations can be added automatically only
+to top-level 
+functions.
+But most of our code is in nested functions.
+We~annotated such functions manually,
+but the annotations
+made our code so ugly that we felt compelled to
+remove them as soon as possible.
+Without the annotations, however, GHC's call-site and allocation
+profiles did not give us enough information to be useful.
+We~miss valgrind, whose profiler gives useful information
+without \emph{any} annotations.
+(GHC~7.4 provides much
+better profiling tools.
+We~look forward to using them.)
+
+We hate the code we've written to help debug
 run-time errors.
 Our~group's legacy file
 format is poorly documented: when beta
 strands overlap and are doubly paired, the invariants of the
-representation are not clear.
-These files are hard to deal with no matter what
+format are not clear.
+This format is hard to deal with no matter what
 programming language is used, and faults are to be expected.
 But using Haskell, we had a hard time diagnosing run-time errors.
 Calls to
@@ -1092,12 +1131,12 @@ Calls to
 littered our code,
 even when relegated to wrapper functions.
 We~weren't aware of the backtrace feature of GHC's profiler,
-and even after we discovered that feature, the results weren't good enough:
+and even after we discovered that feature, it didn't help:
 the profiler can be used only on very small test cases that didn't always trigger
 run-time errors.
-This same limitation affected the GHCi debugger; our \texttt{vee'} function
-shown in \secref{viterbi}, when it is not compiled with
-optimizations, requires too much run time to be practical on non-trivial
+This same limitation affected the GHCi debugger; 
+in~GHCi, our \texttt{vee'} function
+is too slow to be runnable on nontrivial
 inputs.
 Moreover, the GHCi debugger can only set breakpoints at top-level functions
 or at specific column/line positions, which made debugging the memoized
@@ -1109,53 +1148,75 @@ and Simon Marlow said that he may have figured out how to track call
 stacks properly in a lazy functional language.
 We~can't wait.
 
-\remark{The following \P\ will need to be connected up to the last \S\
-on ``our old approach to debugging.''}
-
-Debugging led also not to awkward code, but to awkward interactions on
+Our difficulties with debugging led to significant disagreements on
 our team.
-The two junior members of the team wanted to apply the debugging
+The two junior members wanted to apply the debugging
 skills they had honed through years of imperative programming.
-The senior partner kept nattering on about QuickCheck properties.
-No~progress was made until the first draft of this paper was prepared.
-At~that point, we were quickly about to write QuickCheck
-specifications for several properties of the Viterbi algorithm:
+These skills did not transfer well to Haskell.
+The senior member of the team kept saying that any proper approach to
+debugging Haskell code should involve QuickCheck.
+This advice was not helpful.
+
+Our experience was that only the senior member of our team was able to use
+QuickCheck easily.
+In~retrospect, we~have identified some obstacles to using
+QuickCheck.
 \begin{itemize}
 \item
-The total number of \verb+Mat+ and \verb+Ins+ states returned equals
-the number of amino acids in the query sequence.
+The examples and tutorials we found focused 
+predominantly on writing and testing properties using data types that
+already implemented class \texttt{Arbitrary}.
+We~didn't understand the \texttt{Arbitrary} class very well, 
+perhaps because the overloaded \texttt{arbitrary} value is not a
+function.
+For programmers who have seen lot of object-oriented dispatch
+on \emph{arguments}, it is hard to grasp how the appropriate version
+of \texttt{arbitrary} is chosen by Haskell's type-class system.
 \item
-The total number of matches, and deletions returned equals the
-number of nodes in the hidden Markov model,
-\emph{except} that an initial sequence of
-of~\verb+Ins+ states counts as a single node,
-due to an odd property of the HMMER file format (namely, the zeroth
-node has no delete state and a non-emitting match state which
-is always occupied, but a normal insert state).
+Our difficulties were compounded by a weak understanding of monads.
+We~were too baffled by QuickCheck's \texttt{Gen} monad to grasp its
+true importance.
 \item
-The sequence returned satisfies the Plan7 invariant, that is, states
-\verb+Ins+ and \verb+Del+ are never adjacent.
+We~continually overlooked the critical role of \emph{shrinking}.
+As~a result, on the one or two occasions we did uncover a problem
+using QuickCheck, we got witnesses that were much too large to be
+informative. 
 \end{itemize}
-\textbf{These properties need to be followed by more ambitious
-properties},
-such as proving that nearby sequences are less likely than the
-sequence returned by \verb+vee'+.
-One practice we recommend for those following in our footsteps is to
-write instances of \texttt{Arbitrary} for data types as those data types
-are written, when relevant invariants are fresh in memory.
+Because of these obstacles, 
+we wrote thousands of lines of code without ever defining an instance
+of \texttt{Arbitrary} and therefore
+without looking hard at QuickCheck.
+After the fact, we were overwhelmed by the work
+involved in writing and testing instances
+of
+\texttt{Arbitrary}.
+The work got done only because the whole team got involved in order to
+meet the deadlines for this paper.
 
-This was a practice that the junior members of our team did not follow, and
-they sorely regret it.
-We speculate that one reason why we didn't follow this practice was a poor 
-understanding of the \texttt{Arbitrary} type class.
-Namely, a lot of the examples we had seen using QuickCheck focused 
-predominantly on writing and testing properties with data types that already 
-implemented \texttt{Arbitrary}.
-We recall a smattering about \texttt{Arbitrary}, but we were still too baffled 
-by the \texttt{Gen} monad to truly grasp its importance in using QuickCheck.
-When it finally came time to use QuickCheck, we were overwhelmed by the amount 
-of work that had to be done to write and test implementations of 
-\texttt{Arbitrary} for each of our data types.
+SUMMARY OF WHAT LITTLE WE HAVE LEARNED FROM QUICKCHECK
+Have we tested that \verb+vee'+ returns a most likely sequence?
+And didn't we find an inconsistency?
+
+%%  At~that point, we were quickly about to write QuickCheck
+%%  specifications for several properties of the Viterbi algorithm:
+%%  \begin{itemize}
+%%  \item
+%%  The total number of \verb+Mat+ and \verb+Ins+ states returned equals
+%%  the number of amino acids in the query sequence.
+%%  \item
+%%  The total number of matches, and deletions returned equals the
+%%  number of nodes in the hidden Markov model,
+%%  \emph{except} that an initial sequence of
+%%  of~\verb+Ins+ states counts as a single node,
+%%  due to an odd property of the HMMER file format (namely, the zeroth
+%%  node has no delete state and a non-emitting match state which
+%%  is always occupied, but a normal insert state).
+%%  \item
+%%  The sequence returned satisfies the Plan7 invariant, that is, states
+%%  \verb+Ins+ and \verb+Del+ are never adjacent.
+%%  \end{itemize}
+%%  \textbf{These properties need to be followed by more ambitious
+%%  properties},
 
 
  
@@ -1165,7 +1226,8 @@ of work that had to be done to write and test implementations of
 
 When performance has mattered, members of our group, like other
 computational biologists, have used~C++.
-We~compare our experience with three tools:
+To~compare our Haskell experience with our C++ experience,
+we discuss three tools:
 \begin{itemize}
 \item
 Matt~\cite{Menke:2008wu} is used to create alignments like that shown
@@ -1308,7 +1370,19 @@ cost-center annotations required for profiling.
 But~we also found it difficult just to get the profiler working.
 In~particular, profiling requires that all installed libraries be recompiled
 with profiling support.
-We~were not able to achieve such recompilations consistently.
+Using Haskell's Cabal tool, which manages installed libraries,
+we~were not able to achieve such recompilations consistently.
+
+
+REWRITE THE ADVICE ON USING QUICKCHECK
+
+One practice we recommend for those following in our footsteps is to
+write instances of \texttt{Arbitrary} for data types as those data types
+are written, when relevant invariants are fresh in memory.
+
+This was a practice that the junior members of our team did not follow, and
+they sorely regret it.
+
 
 
 We~faced another barrier in testing.
@@ -1338,6 +1412,9 @@ of some research,\finalremark{Do we cite Hood, Hat, or Freya?}
 but one of the biggest barriers we encountered to using Haskell is
 that we have had to abandon our old approaches to debugging,
 and we~see no clear path to follow.
+
+
+
 
 
 \subsection{Information that will help you succeed}
