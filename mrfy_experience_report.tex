@@ -924,42 +924,40 @@ all the useless successors.
 \remark{Story about the killer strict Rand monad? Where?}
 If~we do find a useful successor, we start searching anew from that
 point, with a recursive call to \texttt{everyPt}.
-Because \texttt{everyPt} is monadic, the points accumulated so far are
-appended to its result using the \verb+<$>+~operator.
+(Because \texttt{everyPt} is monadic, the points accumulated so far are
+appended to its result using the \verb+<$>+~operator.)
 %
 The most informative part of \texttt{everyPt} is last expression of
 the \texttt{do} block,
 which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
-points, and then continues recursively with another useful point.
+points, and then continues recursively with the results of \texttt{everyPt}.
 
-When the computation returned by \texttt{everyPt} is evaluated against
-a random-number generator, it returns an infinite list containing a
-mix of useful and useless points.
-\remark{This part is gross and still needs work!}
-This mix can be passed to a test function of type \texttt{SearchStop~pt}:\\
-\vbox{
-\smallverbatiminput{strat}
+The rest of the search uses Hughes's
+classic composition of generator  and test function.
+Because our code is monadic, we~use the monadic composition
+operator~\texttt{=<<}, which is the bind operator with its arguments
+swapped: 
+\smallverbatiminput{search}
+The \texttt{test} function has type \mono{SearchStop~pt}:\\
 \smallverbatiminputx{stop}
-\smallverbatiminputx{search}
-}
-\noindent
+Type \mono{History~pt} retains only the useful points.
+(Internally, \mrfy\ needs only the \emph{final} useful point,
+but because we want to study how different search algorithms behave,
+we~keep all the useful points.)
 
+The definition of \texttt{SearchStop} reveals the forms of
+non-modularity which are inherent in \mrfy's search algorithm.
+First, we need \texttt{Utility} because if we omit the useless states,
+search might not terminate.
+Second, we need \texttt{CCosted} because some of our test functions
+decide to terminate based either on the cumulative cost of the most
+recent point or on the difference between costs of successive points.
 
-We have two kinds of non-modularity.
-\remark{Still gross}
-First, termination has to
-look at \emph{all} states, even though we would prefer that it look
-only at useful states.
-This is because otherwise we risk non-termination:
-we are not guaranteed a useful move after any finite number of steps.
-Second, age of the search shows up in multiple places.
-In particular, we cannot separate the age of the search at the
-current state from the utility decision.
-
-The \texttt{SearchStrategy} interface provides ample scope for
-experiments.\remark{\P\ needs rewriting}
-Random-mutation hill climbing took fifty lines of code and one~day to
+Despite these non-modular aspects, the search
+interface provides ample scope for
+experiments.
+Random hill climbing took fifty lines of code and one~day to
 implement.
 Simulated annealing reuses hill climbing's
  \texttt{nextPt}, \texttt{pt0}, and \texttt{quit} functions.
