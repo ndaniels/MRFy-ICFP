@@ -860,17 +860,7 @@ an existing point.
 Because scoring can be expensive, both \texttt{pt0}
 and \texttt{nextPt} use \emph{scored} points, and they can
 reuse scores from previous points.
-\remark{Question ``why not an infinite list'' has gone missing.}
 
-%%Why have \texttt{pt0} and \texttt{nextPt}
-%%instead 
-%%of a single function with type \mbox{\texttt{Rand r [Scored pt]}},
-%%which could produce an infinite list of points?
-%%Because if the infinite list contains a useless point,
-%%
-%%
-%%the starting point for the next move depends on whether the first move
-%%was useful, whereas the first move is always useful.
 To tell if a point returned by \texttt{nextPt} is useful, we call
  the \texttt{utility} function,
 which scrutinizes a move represented as follows:
