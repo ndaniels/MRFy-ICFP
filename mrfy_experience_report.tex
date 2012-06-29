@@ -30,8 +30,8 @@
 
 \newcommand\mrfy{MRFy} % damn you Noah
 
-\newcommand\txprobj[3][]{a#1_{#2_{j-1}#3_j}}
-\newcommand\txprobjj[3][]{a#1_{#2_{j-1}#3_j}}
+\newcommand\txprobj[3][]{a#1_{{#2}_{j-1}{#3}_j}}
+\newcommand\txprobjj[3][]{a#1_{{#2}_{j-1}{#3}_j}}
 \newcommand\alignwidth{\ensuremath C} % number of columns in an alignment
 \newcommand\pairedwith[1]{{\pi(#1)}}
 
@@ -166,7 +166,7 @@ language but performance comparable to~C++.
 In~our experience, higher-order functions, lazy evaluation, and
 monads really worked, but
 profiling and debugging presented obstacles.
-Haskell libraries vary greatly:
+Also, Haskell libraries vary greatly:
 memoization combinators and parallel-evaluation
 strategies helped us a lot,
 but other, nameless libraries mostly got in our way.
@@ -404,12 +404,13 @@ insertion at column~$j$.
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}~$D_j$.
 The deletion state determines the probability that a homologous protein
-has lost an amino acid  in column~$j$, i.e., that it has a gap.
+has lost an amino acid by deletion from column~$j$.
 \end{itemize}
-The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are called emission probabilities.
-The hidden Markov model also has distinguished \emph{Begin} and \emph{End} states.
+The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are \emph{emission probabilities}.
+
+A hidden Markov model also has distinguished \emph{Begin} and \emph{End} states.
 In~our representation, each state contains a probability or a table of
-probabilities, and it is also labelled with one of these labels:
+probabilities, and it is also labeled with one of these labels:
 \smallverbatiminput{statelabel}
 
 
@@ -586,21 +587,18 @@ scores to be added and subtracted but not multiplied.
 
 In a hidden Markov model, each transition is actually labeled with a
 score, not a probability.
-And we include the labels of the states that are
-connected:
-\smallverbatiminput{tprob}
-In~a Plan7 hidden Markov model, as discussed above, 
+And in~a Plan7 model, as discussed above, 
 there are seven transitions into each node:
-\smallverbatiminput{tprobs}
-In~our code, we select from this 7-tuple using the \texttt{aScore}
-function;
-\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {{\hat s}}$},
+\smallverbatiminput{tprob-tprobs}
+%\smallverbatiminput{tprobs}
+In~our code, we select from this 7-tuple using \texttt{aScore}, a
+function which satisfies
+\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$},
 where $s$~and~$\hat s$ form one of the 7~pairs above.
-
-A~7-tuple of scores is included in the representation of each node in
+Such a 7-tuple of scores is stored in each node in
 the model.
-This representation also includes tables of emission probabilities
-$e_{M_j}$ and $e_{I_j}$.
+A~node also contains tables of emission probabilities
+$e_{M_j}$~and~$e_{I_j}$.
 These tables are read using function
 \mbox{$\mathtt{eScore}\;s\;j\;i = e_{s_j}(x_i)$}.
 
@@ -641,24 +639,24 @@ thousand.
 
 Another of us was curious to try coding Viterbi's equations
 directly as recursive functions.
-Like the classic recursive Fibonacci function, Viterbi's functions,
+Like a recursive Fibonacci function, Viterbi's functions,
 when implemented \naive ly,
-perform extraordinarily badly.
-But just like the Fibonacci function, Viterbi's functions can be
+take exponential time.
+But like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
 Our code implements a transformed version of Viterbi's equations, 
-which operates on scores instead of on probabilities.
+which operates on scores, not on probabilities.
 This version is
 shown on the right-hand side of \figref{viterbi}.
 The transformed equations minimize the
-score (i.e., the negated log probability) for each combination of
+score (the negated log probability) for each combination of
 node~$j$, amino 
 acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
 
 Scores can be usefully paired with many types of values,
 so we have defined a small abstraction:
 \smallfuzzverbatiminput{10.8pt}{vscore}
-Think of a value of type \texttt{Scored~a} as a container holding
+Think of a value of type \mono{Scored~a} as a container holding
  an~``\texttt a'' with a score written on the side.
 The \texttt{/+/} function adds to the score without touching the
  container.
@@ -678,18 +676,20 @@ For example, to compute $V_j^{\prime M}(i)$ using the equation at the top
 right of \figref{viterbi}, we call 
 \mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}.
 The equation adds~$e^{\prime}_{M_{j}}(x_{i})$, computed
-with \texttt{eScore}, to a minimum.
-The sum of an~$a'$~term and a $V'_{j-1}(i-1)$ term 
-is computed by function \texttt{avSum},
-the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively.
+with \texttt{eScore}, to a minimum of sums.
+The sum of an~$a'_{s\hat s}$~term and a $V^{\prime s}_{j-1}(i-1)$ term 
+is computed by function \texttt{avSum}, in which
+the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively:
 \smallverbatiminput{vfix}
-The right-hand side is wrapped in a call to
-\mono{\mbox{fmap (Mat `cons`)}}.
+%%%%%%%%%% horrible line break
+% The right-hand side of \verb+vee'+ is wrapped in a call to
+What about the call to
+\mono{\mbox{fmap (Mat `cons`)}}?
 This call performs a computation \emph{not} shown in \figref{viterbi}:
-\mrfy\ not only computes the probability of the most likely path but 
-also computes the path itself.
-Function \texttt{cons} adds~$M$ to a path;
-we~avoid primitive~\primcons\ for reasons explained
+\mrfy\ computes not only the {probability} of the most likely path but 
+also the actual path itself.
+Function \mono{(Mat `cons`)} adds~$M$ to a path;
+we~avoid \mbox{\mono{(Mat :)}} for reasons explained
 in \secref{performance} below. 
 
 Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
@@ -703,17 +703,17 @@ The value
 \texttt{numNodes} represents~$\alignwidth$,
 and \texttt{seqlen} represents~$N$.
 
-Memoization makes \verb+vee'+ perform just as well as the classic
+Memoization makes \verb+vee'+ perform as well as our classic
 dynamic-programming code.
 And~the call to \texttt{Memo.memo3} is the \emph{only} part of the code
 devoted to dynamic programming.
-By~contrast, standard implementations of the Viterbi algorithm, such as in HMMER,
+By~contrast, standard implementations of Viterbi's algorithm, such as in HMMER,
 spend much of their code 
 managing dynamic-programming tables.
 Haskell enabled us write simple, performant code with little effort.
 %
 Because the memoized version so faithfully resembles the equations in
-\figref{viterbi}, we~retired the classic dynamic-programming version.
+\figref{viterbi}, we~retired the classic version.
 
 
 
@@ -733,9 +733,11 @@ Because the memoized version so faithfully resembles the equations in
 
 Our Haskell code for hidden Markov models and Viterbi's algorithm
 solves the same problems as existing C++~code.
+\remark{Drop this \P\ or move it}
 Other researchers using Haskell may also have to reimplement code,
 but researchers may also reimplement code out of choice, not
 necessity.
+IN COMPUTATIONAL BIOLOGY, REIMPLEMENTING EXISTING ALGORITHMS IS UNREMARKABLE.
 For~example, both SMURF and HMMER contain new implementations of these
 same algorithms.
 In~MRFy, we are using the Haskell implementations to help solve new
@@ -789,14 +791,14 @@ The new terms in Viterbi's equations are accompanied by a new model.
 Within a beta strand, amino acids are not inserted or deleted, so
 a bonded pair of beta strands is modeled by
  a pair of sequences of match states.
-Between the beta strands, the model is structured as before.
+Between beta strands, the model is structured as before.
 The~combined model, an~example of which is shown in \figref{mrf}, is called a
 \textit{Markov random field}. 
 
 
 MRFy treats the beta 
 strands in the model
- as ``beads'' which can be slid along the query sequence.
+ as ``beads'' which can slide along the query sequence.
 A~positioning of the beta strands is called
  a \emph{placement}.
 A~placement's probability is computed
@@ -814,7 +816,8 @@ MRFy searches for good placements stochastically.
 random hill
 climbing, simulated  
 annealing, multistart simulated annealing, and a genetic algorithm.
-These algorithms share much code, and they use higher-order functions,
+These algorithms share much code, and \mrfy\ implements them using
+higher-order functions, 
 existentially 
 quantified types, and lazy evaluation.
 
@@ -823,12 +826,12 @@ quantified types, and lazy evaluation.
 
 We~describe \mrfy's search abstractly: \mrfy\ computes a sequence
 of \emph{points} in a search space.
-A~point is typically a single placement or perhaps a collection of
-placements. 
+The type of point is existentially quantified, but it is typically
+a single placement or perhaps a population of placements. 
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
 
-Ideally, MRFy would use now-classic lazy, modular
+Ideally, MRFy would use now-classic, lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
 computes an infinite sequence of points, and another function
 uses a finite prefix to decide on an approximation.
@@ -842,8 +845,8 @@ random hill climbing.
 From any given point in the search space, this search moves a random
 distance in a random 
 direction.
-If~the move leads to a better point, it
-is \emph{useful};
+If~the move leads to a better point, 
+we call it \emph{useful};
 otherwise it is \emph{useless}.
 \smallverbatiminput{utility}
 (We~also use \texttt{Useful} and \texttt{Useless} to tag \emph{points}.)
@@ -887,7 +890,7 @@ single abstraction, which has type \mono{SearchGen pt r}.
 Type variable~\texttt{pt} is a point in the search
 space, and \texttt{r} is a
 random-number generator.
-\mono{Rand~r} is a monad of stochastic computations:
+\mono{Rand~r} is a lazy monad of stochastic computations:
 \smallverbatiminput{gen.tex}
 The monadic computation \texttt{pt0} randomly selects a starting point
 for search;
@@ -909,27 +912,28 @@ search,
 and
 in~simulated annealing, for example, as the search ages,
 the \texttt{utility} function becomes less likely to accept a move
-that results in a worse score.
+that worsens the score.
 
 \noindent
 \vbox{
-Using these pieces, function \texttt{everyGen} produces an infinite
+Using these pieces, function \texttt{everyPt} produces an infinite
 sequence containing a mix of useful and useless moves:
 \smallfuzzverbatiminput{10.8pt}{everygen}
 }
 \noindent
-Because both \texttt{nextPt} and \texttt{utility} consume randomness,
-the computation is very sequential, but it does use a little bit of
+Both \texttt{nextPt} and \texttt{utility} are monadic, but 
+we can still use a little bit of
 laziness:
-from its starting point, \texttt{everyPt} provides an infinite list of
+from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
-tag each one with the search's age and the point's utility.
-And the computation of \texttt{successors} should explain why we
+tag each one with a cumulative cost and a utility.
+If~you look carefully at how \texttt{successors} is computed,
+we~hope you will understand why we
 separate \texttt{pt0}~from~\texttt{nextPt} instead of using a single
 function that produces an infinite list:
 We~don't \emph{want} the infinite list that would result from
-applying \texttt{nextPt} many times in succession;
-we~want the infinite lists that results from applying \texttt{nextPt}
+applying \texttt{nextPt} to many points in succession;
+we~want the infinite list that results from applying \texttt{nextPt}
 to \texttt{startPt} many times in succession, each time with a
 different source of randomness.
 
@@ -937,7 +941,6 @@ Once the successors have been computed and tagged,
 \texttt{span} finds the first useful successor.
 In~case there \emph{is} no successor, \texttt{everyPt} also returns
 all the useless successors.
-\remark{Story about the killer strict Rand monad? Where?}
 If~we do find a useful successor, we start searching anew from that
 point, with a recursive call to \texttt{everyPt}.
 (Because \texttt{everyPt} is monadic, the points accumulated so far are
@@ -962,7 +965,7 @@ Type \mono{History~pt} retains only the useful points.
 but because we want to study how different search algorithms behave,
 we~keep all the useful points.)
 
-The definition of \texttt{SearchStop} reveals the forms of
+The definition of \texttt{SearchStop} reveals two forms of
 non-modularity which are inherent in \mrfy's search algorithm.
 First, we need \texttt{Utility} because if we omit the useless states,
 search might not terminate.
@@ -1014,7 +1017,7 @@ At each point in its search,
 MRFy calls \verb+vee'+ several
  times.
 Our~\verb+vee'+
-function computes a \mbox{\small \texttt{Scored [StateLabel]}}, that~is, 
+function computes a \mbox{\mono{Scored [StateLabel]}}, that~is, 
 an~optimal path and its score.
 But at intermediate points in \mrfy's search,
 \mrfy\ uses only the
@@ -1051,14 +1054,14 @@ change without warning.
 
 
 
-We~found another opportunity to improve performance through parallelism.
+We~also found an opportunity to improve performance through parallelism.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
 We~found them easy to parallelize
 using
 \texttt{Control.Parallel}:
 we substituted
-\texttt{parmap rseq} for \texttt{map}.\remark{Did NR break this?}
+\texttt{parmap rseq} for \texttt{map}.
 Even when there is just one placement per point,
 MRFy can keep 6~cores busy.
 \remark{This paragraph needs to talk about \textbf{speedups}.}
@@ -1161,7 +1164,7 @@ This same limitation affected the GHCi debugger;
 in~GHCi, our \texttt{vee'} function
 is too slow to be runnable on nontrivial
 inputs.
-Moreover, the GHCi debugger can only set breakpoints at top-level functions
+Moreover, the GHCi debugger can set breakpoints only at top-level functions
 or at specific column/line positions, which made debugging the memoized
 \texttt{vee''} function impractical.
 In~August 2011, 
@@ -1171,20 +1174,20 @@ and Simon Marlow said that he may have figured out how to track call
 stacks properly in a lazy functional language.
 We~can't wait.
 
-Our difficulties with debugging led to significant disagreements on
-our team.
-The two junior members wanted to apply the debugging
+Our difficulties with debugging led to internal disagreements.
+The~junior members of our team wanted to apply the debugging
 skills they had honed through years of imperative programming.
 These skills did not transfer well to Haskell.
 The senior member of the team kept saying that any proper approach to
 debugging Haskell code should involve QuickCheck.
-This advice was not helpful.
+This exhortation was unhelpful.
 
 \seclabel{awkward-quickcheck}
 
-Our experience was that only the senior member of our team was able to use
+Only the senior member of our team was able to use
 QuickCheck easily.
-In~retrospect, we~have identified some obstacles to using
+In~retrospect, we~have identified some obstacles that prevented the
+junior people from using
 QuickCheck.
 \begin{itemize}
 \item
@@ -1194,17 +1197,18 @@ already implemented class \texttt{Arbitrary}.
 We~didn't understand the \texttt{Arbitrary} class very well, 
 perhaps because the overloaded \texttt{arbitrary} value is not a
 function.
-For programmers who have seen lot of object-oriented dispatch
-on \emph{arguments}, it is hard to grasp how the appropriate version
-of \texttt{arbitrary} is chosen by Haskell's type-class system.
+For programmers accustomed to object-oriented dispatch
+on \emph{arguments}, it is hard to grasp how Haskell's type-class
+system can find the proper version
+of \texttt{arbitrary}.
 \item
 Our difficulties were compounded by a weak understanding of monads.
 We~were too baffled by QuickCheck's \texttt{Gen} monad to grasp its
-true importance.
+importance.
 \item
 We~continually overlooked the critical role of \emph{shrinking}.
-As~a result, on the one or two occasions we did uncover a problem
-using QuickCheck, we got witnesses that were much too large to be
+As~a result, on the one or two occasions we did 
+use QuickCheck, the counterexamples were too large to be
 informative. 
 \end{itemize}
 Because of these obstacles, 
@@ -1276,6 +1280,8 @@ computationally intractable.
 MRFy is used to detect homologous proteins in the presence of paired
 beta strands; it effectively supplants SMURF.
 It~comprises about 1,200 lines of~Haskell.
+\remark{HA HA HA.  It's over 3,500 lines now. Maybe around 800 lines
+are tests or quickcheck properties?}
 It~uses several external tools and libraries, of which the most
 notable are Parsec, the BioHaskell bioinformatics library, and
 the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
@@ -1416,13 +1422,13 @@ Ideally we would use QuickCheck to find bugs, but as we mention in
 \secref{awkward-quickcheck}, we found obstacles.
 We~have now overcome these obstacles, but
 we~sorely regret not doing so earlier.
-In~light of our experience, we have instituted a new programming practice:
+In~light of our experience, we will institute a new programming practice:
 whenever we introduce a new data type,
-we~write the instance of
+we~will write the instance of
 \texttt{Arbitrary} right away, while
 relevant invariants are still fresh in memory.
 When invariants are not enforced by Haskell's static type system,
-we write them as Haskell predicates.
+we~will write them as Haskell predicates.
 We can then immediately run QuickCheck on each predicate, to verify
 that our Arbitrary instance agrees with the predicate.
 For each predicate~\texttt{p} we can also check
@@ -1446,8 +1452,9 @@ using mutable state the way the C++ code does, was difficult.
 
 \seclabel{penumbra}
 
-You~also need to know that while the Haskell community offers many
+While the Haskell community offers many
 enticing tools, libraries, and packages,
+be aware that
 not all of them are worth using.
 Some are not ready for prime time, and some were once great but are
 no~longer maintained.
@@ -1470,7 +1477,7 @@ more examples.
 %%  think or do differently? ---NR}
 
 
-As~in any endeavor, it's helpful to have access to experts.
+As~in any endeavor, access to experts helps.
 We~would have been better off if our in-house expert had been an
 enthusiastic student and not a busy professor.
 But we have been surprised and pleased by the help available from

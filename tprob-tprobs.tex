@@ -1,0 +1,5 @@
+newtype TProb = TProb { logProbability :: Score }
+data TProbs = TProbs
+  { m_m :: TProb, m_i :: TProb, m_d :: TProb
+  , i_m :: TProb, i_i :: TProb
+  , d_m :: TProb, d_d :: TProb }
