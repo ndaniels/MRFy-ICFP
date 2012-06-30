@@ -1279,10 +1279,10 @@ computationally intractable.
 \item
 MRFy is used to detect homologous proteins in the presence of paired
 beta strands; it effectively supplants SMURF.
-It~comprises about 1,200 lines of~Haskell.
-\remark{HA HA HA.  It's over 3,500 lines now. Maybe around 800 lines
-are tests or quickcheck properties?}
-It~uses several external tools and libraries, of which the most
+It~comprises about 2300 lines of~Haskell, 300 of which are devoted
+to tests and QuickCheck properties and generators.
+Neither C++ codebase includes any testing facilities.
+MRFy~uses several external tools and libraries, of which the most
 notable are Parsec, the BioHaskell bioinformatics library, and
 the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
