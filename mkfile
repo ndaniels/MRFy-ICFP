@@ -41,7 +41,7 @@ $TGT.dvi: ${CODES:%=%.tex} timestamp.tex
 $TGT.pdf: ${CODES:%=%.tex}
 
 timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
-	date=`stat -c "%y" $TGT.tex`
+	date=today
 	signature=""
 	if [ -x $HOME/bin/md5words ]; then
 	  words="`cat $prereq | md5words -trim`"

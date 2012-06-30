@@ -1,0 +1,24 @@
+1 core:   288s
+2:        108s
+4:        37s
+8:        26s
+12:       17s
+16:       17s
+24:       24s
+48:       47s
+
+343 nodes, 40 beta strands. Query sequence of 592 residues.
+
+
+newgraph
+title : Accuracy versus vocabulary size
+xaxis log label : Vocabulary size (log scale)
+yaxis min 0 max 100  label : Accuracy (percent)
+newline pts 1000 67 2000 80 4000 66 8000 99 16000 44
+
+
+to convert to postscript
+
+jgraph -P mumble.j > foo.ps
+
+or possibly without -p for eps

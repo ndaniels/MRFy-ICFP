@@ -1,0 +1,5 @@
+newgraph
+  title : MRFy multicore performance
+  xaxis log hash 1 label : Processing cores
+  yaxis min 0 max 300 label : Time (s)
+    newline pts 1 288 2 108 4 37 8 26 12 17 16 17 24 24 48 47
