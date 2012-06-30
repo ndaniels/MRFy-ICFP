@@ -731,18 +731,6 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{hofs}
 \seclabel{mrfy}
 
-Our Haskell code for hidden Markov models and Viterbi's algorithm
-solves the same problems as existing C++~code.
-\remark{Drop this \P\ or move it}
-Other researchers using Haskell may also have to reimplement code,
-but researchers may also reimplement code out of choice, not
-necessity.
-IN COMPUTATIONAL BIOLOGY, REIMPLEMENTING EXISTING ALGORITHMS IS UNREMARKABLE.
-For~example, both SMURF and HMMER contain new implementations of these
-same algorithms.
-In~MRFy, we are using the Haskell implementations to help solve new
-problems. 
-
 When a real protein folds in three dimensions, 
 amino acids 
 that are far away in the one-dimensional sequence can be
@@ -976,25 +964,24 @@ recent point or on the difference between costs of successive points.
 Despite these non-modular aspects, the search
 interface provides ample scope for
 experiments.
-\remark{This \P\ needs revising in light of the ``monad madness'' refactoring.}
 Random hill climbing took fifty lines of code and one~day to
 implement.
 Simulated annealing reuses hill climbing's
- \texttt{nextPt}, \texttt{pt0}, and \texttt{quit} functions.
-Simulated annealing's  new \texttt{accept} function took ten
+ \texttt{nextPt} function.
+Simulated annealing's  new \texttt{utility} function took ten
 lines of code and half an hour to implement.
 (Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
 Our genetic algorithm reuses the same
-\texttt{pt0} and \texttt{quit} functions, and its \texttt{accept}
+\texttt{pt0} and \texttt{SearchStop} functions, and its \texttt{utility}
 function took only a few lines of code.
 But~the recombination of parent
 placements in its \texttt{nextPt} function took forty lines of code
 and a full day to implement.
 
-\remark{Stop functions not as composable as we would like.
-Wanted: combinator library.}
+We note that the \texttt{SearchStop} functions are not as composable as we
+would like, and we would like to have a combinator library for searches.
 
 %%  Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
 %%  style of programming.
@@ -1062,44 +1049,56 @@ using
 \texttt{Control.Parallel}:
 we substituted
 \texttt{parmap rseq} for \texttt{map}.
-Even when there is just one placement per point,
-MRFy can keep 6~cores busy.
-\remark{This paragraph needs to talk about \textbf{speedups}.}
-Given multiple placements per point,
-it~can use 48~cores.
-However, we have found that MRFy performs best, at least on our
-hardware, with between 12 and 16 cores.
-We have access to only
-one 48-core system, and while MRFy will keep all 48 cores busy, it
-performs only slightly better, at an average of 35 seconds to find an alignment
-on a large\remark{QUANTIFY!!} protein structure, than when given 16
-cores, which takes an average 
-of 37 seconds. 
+We have access to a
+one 48-core, 2.3GHz AMD Opteron 6176 system, on which we benchmarked \mrfy\ performing
+a search on a large protein structure (an ``8-bladed beta-propeller'')
+comprising 343 hidden Markov model nodes and 40 beta strands, and a query sequence
+592 amino acids long.
+Figure~\ref{multicore} illustrates the mean speedup \mrfy\ achieves as the number of
+processing cores increases.
+Optimal speedup appears to occur between 12 and 16 processors.
+
+\begin{figure}[h!]
+\centerline{\includegraphics[width=6cm]{mrfy_multicore_log}}
+\caption{MRFy run-time performance with varying
+numbers of processing cores on a large protein}\label{multicore}
+\end{figure}
+
 
 MRFy's implementation of Viterbi's algorithm appears dramatically
-slower than the C++ version implemented in \mrfy's predecessor,
+slower than the C++ version implemented in \mrfy\'s predecessor,
 SMURF.
+Both \mrfy\ and SMURF, when provided with a Markov random field containing no beta strands,
+simply compute the optimal solution using Viterbi's algorithm.
+For both \mrfy\ and SMURF, this task admits no parallelism.
 On a 2.6GHz Intel Core i7,
-given a contrived query sequence of 56,000 amino acids,
-which is larger than any known protein,
-with a hidden Markov model of 343 nodes and no beta strands,
-\mrfy\ takes almost two minutes to compute an optimal parse.
-SMURF parses the same sequence in half a second.
-\remark{This result looks really bad. What is this contrived benchmark supposed to
-mean, anyway??  Can we get a more realistic benchmark?
-What fraction of time is spent in Viterbi?}
+given a micro-benchmark consisting of a contrived query sequence
+of 2000 amino acids (which represents a large protein),
+and a hidden Markov model of 343 nodes and no beta strands,
+\mrfy\ takes 2.32 seconds to compute a Viterbi solution.
+SMURF performs the same computation in 0.29 seconds.
+
 But unlike SMURF, \mrfy\ doesn't have to run on large models.
-{\large{\textbf{QUANTIFY!}}}
-\mrfy\ repeatedly runs Viterbi's algorithm on 
-a~great many smaller models.
-{\large{\textbf{QUANTIFY!}}}
+For example, on the ``8-bladed propeller'' benchmark, the beta strands
+break the Markov random field into 41 pieces, each of which is much smaller
+than the original (typically 10 or fewer nodes rather than 343).
+And, each \texttt{placement} breaks the query sequence into 41 pieces, each of
+which is much smaller than the original (typically 20 or fewer amino acids
+rather than 592).
+Thus, \mrfy\ repeatedly runs Viterbi's algorithm on 
+a~great many smaller models, and the independence of these models
+means that \mrfy\ can execute them in parallel.
 Here, performance is good enough that \mrfy\ can do its job.
 Given a Markov random field with a 12-stranded ``beta sandwich''
 structure,
-\mrfy\ typically computes an alignment within a minute;\remark{with or
-without parallelism?}
+\mrfy\ typically computes an alignment within a minute;
 SMURF allocates over 16GB of memory
 and does not terminate even after eight hours.
+
+Clearly, micro-benchmarks do not tell the whole story.
+Our goal is to solve a biological problem, and though our implementation of
+Viterbi's algorithm is comparatively slow, we can still solve a biological problem
+quickly.
 %%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
 %%% would be unacceptable.
 %%% However, for the algorithm underlying MRFy, we are satisfied with the runtime
@@ -1113,7 +1112,7 @@ and does not terminate even after eight hours.
 
 
 
-\subsection{Awkward profiling and debugging}
+\subsection{Awkward debugging and testing}
 
 \seclabel{awkward-profiling}
 
@@ -1121,27 +1120,7 @@ We've shown you some of the code we like, but we've also written
 code we dislike.
 The~code we like least is what we've written to work around
 obstacles we 
-encountered in profiling and debugging.
-
-GHC's profiler assigns costs not to functions but to ``cost
-centers'' \cite{sansom-pj}.
-In GHC~7.0, which we used 
-for most of MRFy's development, 
-cost-center annotations can be added automatically only
-to top-level 
-functions.
-But most of our code is in nested functions.
-We~annotated such functions manually,
-but the annotations
-made our code so ugly that we felt compelled to
-remove them as soon as possible.
-Without the annotations, however, GHC's call-site and allocation
-profiles did not give us enough information to be useful.
-We~miss valgrind, whose profiler gives useful information
-without \emph{any} annotations.
-(GHC~7.4 provides much
-better profiling tools.
-We~look forward to using them.)
+encountered in debugging.
 
 We hate the code we've written to help debug
 run-time errors.
@@ -1222,9 +1201,12 @@ of
 The work got done only because the whole team got involved in order to
 meet the deadlines for this paper.
 
-SUMMARY OF WHAT LITTLE WE HAVE LEARNED FROM QUICKCHECK
-Have we tested that \verb+vee'+ returns a most likely sequence?
-And didn't we find an inconsistency?
+Based on the QuickCheck properties we did write, we have identified and
+easily fixed a bug in our implementation of Viterbi's algorithm; we had not
+been including the score for the transition from the final node of the hidden
+Markov model to the special ``end'' state.
+Without QuickCheck, it is unlikely that we would have found this bug,
+and if we had, determining the cause would have required much time.
 
 %%  At~that point, we were quickly about to write QuickCheck
 %%  specifications for several properties of the Viterbi algorithm:
@@ -1252,6 +1234,17 @@ And didn't we find an inconsistency?
  
 \section{Our previous experience compared}
 \seclabel{comparo}
+
+Our Haskell code for hidden Markov models and Viterbi's algorithm
+solves the same problems as existing C++~code.
+Other researchers using Haskell may also have to reimplement code,
+but researchers may also reimplement code out of choice, not
+necessity.
+In computational biology, reimplementing existing algorithms is unremarkable.
+For~example, both SMURF and HMMER contain new implementations of these
+same algorithms.
+In~MRFy, we are using the Haskell implementations to help solve new
+problems. 
 
 When performance has mattered, members of our group, like other
 computational biologists, have used~C++.
@@ -1395,14 +1388,25 @@ refactoring and testing.
 
 \subsection{Obstacles to be overcome}
 
-In~\secref{awkward-profiling} above, we~mention the awkwardness of the
-cost-center annotations required for profiling.
-But~we also found it difficult just to get the profiler working.
-In~particular, profiling requires that all installed libraries be recompiled
-with profiling support.
-Using Haskell's Cabal tool, which manages installed libraries,
-we~were not able to achieve such recompilations consistently.
-
+GHC's profiler assigns costs not to functions but to ``cost
+centers'' \cite{sansom-pj}.
+In GHC~7.0, which we used 
+for most of MRFy's development, 
+cost-center annotations can be added automatically only
+to top-level 
+functions.
+But most of our code is in nested functions.
+We~annotated such functions manually,
+but the annotations
+made our code so ugly that we felt compelled to
+remove them as soon as possible.
+Without the annotations, however, GHC's call-site and allocation
+profiles did not give us enough information to be useful.
+We~miss valgrind, whose profiler gives useful information
+without \emph{any} annotations.
+GHC~7.4 provides much
+better profiling tools, which eliminate most of these obstacles,
+rendering this experience no longer as relevant.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
