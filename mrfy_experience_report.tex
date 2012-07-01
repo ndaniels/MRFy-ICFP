@@ -765,15 +765,17 @@ richer models of protein structure.
 When column~$j$ of an alignment is part of a beta strand and is paired
 with another column  $\pairedwith j$,
 the probability of finding amino acid~$x_i$ in column~$j$ 
-depends on~$x_{\pairedwith i}$.
-The~relevant term in
-Viterbi's equations 
-$V_{j}^{\prime M}(i)$ becomes
-$$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith i}).$$
-Columns~$j$ and $\pairedwith j$ can be as close together as a few
-columns or as far apart as a few hundreds of columns.
-Because $W_j^M(i)$~depends not only on $x_i$ and its local neighbors but
-also on the nonlocal $x_{\pairedwith j}$, 
+depends on whatever amino acid~$x'$  is in column~${\pairedwith i}$.
+If~$x'$ is located in position~$i'$ in the query sequence, Viterbi's
+equations must be altered so that, for example
+$V_{j}^{\prime M}(i)$ depends not only on
+$V_{j-1}^{\prime M}(i-1)$ but also on
+$V_{\pairedwith j}^{\prime M}(i')$.\remark{I can't get an equation I
+believe in. ---NR}
+The distance between $j$~and~$\pairedwith j$ can be as small as a few
+columns or as large as a few hundreds of columns.
+Because $V_j^{\prime M}(i)$~depends not only on nearby values but also on
+$V_{\pairedwith j}^{\prime M}(i')$,
 dynamic programming cannot compute the maximum likelihood quickly
 \cite{Menke:2010ti,Daniels:2012}.
 
