@@ -6,7 +6,7 @@ everyPt sg cost startPt = do
   tagged <- zipWithM costedUtility successors [succ cost..]
   let (useless, CCosted (Useful newPt) newCost : _) =
                       span (isUseless . unCCosted) tagged
-  ((CCosted (Useful startPt) cost : useless) ++) <$>
+  (++) (CCosted (Useful startPt) cost : useless) <$>
                                   everyPt sg newCost newPt
  where costedUtility pt cost =
          utility sg move >>= \u -> return $ CCosted u cost

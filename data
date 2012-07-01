@@ -38,7 +38,7 @@ local function labels()
 end
 
 local function speedup()
-  local fields = { ylabel = "Speedup", ymax = 20, xmax = 50,
+  local fields = { ylabel = "Speedup", ymax = '7 hash 1 mhash 1', xmax = 50,
                    labels = 'xaxis auto_hash_labels', log = '' }
   local points = ""
   for _, pt in ipairs(multicore_times) do
@@ -51,7 +51,7 @@ end
 
   
 local function efficiency()
-  local fields = { ylabel = "Parallel efficiency", ymax = 2.0, xmax = 48,
+  local fields = { ylabel = "Parallel efficiency", ymax = 1.0, xmax = 48,
                    log = 'log', labels = labels(),
                  }
   local points = ""
