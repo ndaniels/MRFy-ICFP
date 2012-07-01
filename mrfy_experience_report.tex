@@ -777,7 +777,9 @@ equations must be altered so that, for example
 $V_{j}^{\prime M}(i)$ depends not only on
 $V_{j-1}^{\prime M}(i-1)$ but also on
 $V_{\pairedwith j}^{\prime M}(i')$.\remark{I can't get an equation I
-believe in. ---NR}
+believe in. ---NR I think it's fine, unless we want to introduce
+notation to distinguish paired amino acids from paired
+model nodes --ND}
 The distance between $j$~and~$\pairedwith j$ can be as small as a few
 columns or as large as a few hundreds of columns.
 Because $V_j^{\prime M}(i)$~depends not only on nearby values but also on
@@ -829,11 +831,7 @@ a single placement or perhaps a population of placements.
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
 
-\remark{The opening sentence here sounds awkward, but I'm not sure if it's
-  because I'm reading it wrong. It seems like ``technique'' should be
-  pluralized, or perhaps ``would use now-classic: a lazy and modular
-  techniqe''.}
-Ideally, MRFy would use now-classic, lazy, modular
+Ideally, MRFy would use the now-classic, lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
 computes an infinite sequence of points, and another function
 uses a finite prefix to decide on an approximation.
