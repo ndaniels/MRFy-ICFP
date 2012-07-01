@@ -42,6 +42,9 @@ GRAPHPDFS=${GRAPHS:%=%.pdf}
 $TGT.dvi: ${CODES:%=%.tex} timestamp.tex
 $TGT.pdf: ${CODES:%=%.tex} 
 <| case $USER in noah) ;; *) echo "$TGT.pdf: $GRAPHPDFS" ;; esac
+<| case $USER in noah) ;; *) echo "source:V: $GRAPHPDFS" ;; esac
+
+source:V: timestamp.tex ${CODES:%=%.tex}
 
 timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
 	date=""
