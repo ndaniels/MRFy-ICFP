@@ -37,10 +37,11 @@ latex:V: ${CODES:%=%.tex}
 	latex $TGT
 
 GRAPHS=speedup efficiency
-
+GRAPHPDFS=${GRAPHS:%=%.pdf}
 
 $TGT.dvi: ${CODES:%=%.tex} timestamp.tex
-$TGT.pdf: ${CODES:%=%.tex} ${GRAPHS:%=%.pdf}
+$TGT.pdf: ${CODES:%=%.tex} 
+<| case $USER in noah) ;; *) echo "$TGT.pdf: $GRAPHPDFS" ;; esac
 
 timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
 	date=""
