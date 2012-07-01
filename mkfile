@@ -12,7 +12,7 @@ DIAGRAMS=Plan7 alignment mrf_interleave_diagram
 $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 
 &.pdf: &.eps
-  convert $prereq $target  # hideous, but workable
+  epstopdf $prereq
 
 CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
