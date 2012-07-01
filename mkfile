@@ -11,8 +11,8 @@ DIAGRAMS=Plan7 alignment mrf_interleave_diagram
 # $TGT.dvi: ${DIAGRAMS:%=%.eps}
 $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 
-# &.eps: &.pdf
-#	convert $prereq $target  # hideous, but workable
+&.pdf: &.eps
+  convert $prereq $target  # hideous, but workable
 
 CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
@@ -36,9 +36,11 @@ $TGT.pdf: $TGT.tex
 latex:V: ${CODES:%=%.tex}
 	latex $TGT
 
+GRAPHS=speedup efficiency
+
 
 $TGT.dvi: ${CODES:%=%.tex} timestamp.tex
-$TGT.pdf: ${CODES:%=%.tex}
+$TGT.pdf: ${CODES:%=%.tex} ${GRAPHS:%=%.pdf}
 
 timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
 	date=""
@@ -54,6 +56,14 @@ timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
 
 strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
  	lua $prereq
+
+%.eps:D: %.j
+	jgraph $prereq > $target
+
+$TGT.dvi: speedup.eps efficiency.eps
+
+speedup.j efficiency.j:D: ./data
+	lua ./data
 
 vscore.tex score.tex:D: ./xsource Smurf2/Score.hs
  	lua $prereq

@@ -1,0 +1,71 @@
+#!/usr/bin/env lua
+
+local multicore_times = {
+  { cores =  1, time = 288 },
+  { cores =  2, time = 108 },
+  { cores =  4, time = 37 },
+  { cores =  8, time = 26 },
+  { cores = 12, time = 17 },
+  { cores = 16, time = 17 },
+  { cores = 24, time = 24 },
+  { cores = 48, time = 47 },
+}
+
+local sequential_time = 288 -- ???
+
+local template = [[
+newgraph
+  xaxis label fontsize 9
+  yaxis label fontsize 9
+  xaxis no_auto_hash_labels size 2.5 $log min 1 max 48 label : Processing cores
+  yaxis size 1.3 min 0 max $ymax label : $ylabel
+  newcurve pts $pts
+  $labels
+]]
+
+local function fill(s, fields)
+  return (s:gsub('%$(%w+)', fields))
+end
+
+local function labels()
+  local l = { }
+  for _, pt in ipairs(multicore_times) do
+    table.insert(l, string.format('  xaxis hash_label at %d : %d',
+                                  pt.cores, pt.cores))
+  end
+  return table.concat(l, '\n')
+end
+
+local function speedup()
+  local fields = { ylabel = "Speedup", ymax = 20, labels = 'xaxis auto_hash_labels', log = '' }
+  local points = ""
+  for _, pt in ipairs(multicore_times) do
+    points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
+  end
+  fields.pts = points
+  return fill(template, fields)
+end
+
+
+  
+local function efficiency()
+  local fields = { ylabel = "Parallel efficiency", ymax = 2.0, labels = labels(),
+                   log = 'log',
+                 }
+  local points = ""
+  for _, pt in ipairs(multicore_times) do
+    points = string.format("%s %d %.2f", points, pt.cores,
+                           sequential_time / (pt.time * pt.cores))
+  end
+  fields.pts = points
+  return fill(template, fields)
+end
+
+local function set(filename, s)
+  local f = io.open(filename, 'w')
+  f:write(s, '\n')
+  f:close()
+end
+
+set('speedup.j', speedup())
+set('efficiency.j', efficiency())
