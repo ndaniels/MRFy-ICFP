@@ -52,7 +52,10 @@ timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
     else
       words="(could not compute signature words)"
 	fi
-	date -u -d "$date" "+\def\mdfivestamp{\\rlap{\\textbf{%a %e %b %Y, %l:%M %p UCT$signature}}}\def\mdfivewords{$words}" > $target
+	case $USER in
+      noah) echo "+\def\mdfivestamp{\\rlap{\\textbf{`date -u` signature}}}\def\mdfivewords{$words}" > $target ;;
+      *) date -u -d "$date" "+\def\mdfivestamp{\\rlap{\\textbf{%a %e %b %Y, %l:%M %p UCT$signature}}}\def\mdfivewords{$words}" > $target ;;
+    esac
 	echo "Wrote $target"
 
 strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
