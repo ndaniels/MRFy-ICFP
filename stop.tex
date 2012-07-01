@@ -1,2 +1,1 @@
-type SearchStop pt =
-       [CCosted (Utility (Scored pt))] -> History pt
+type SearchStop a = [CCosted (Utility (Scored a))] -> History a
