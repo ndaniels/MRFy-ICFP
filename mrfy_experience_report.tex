@@ -577,6 +577,12 @@ But our models use a
 legacy file format that represents each amino acid as a small integer.
 Our representation is therefore
 \smallverbatiminput{aa}
+
+\remark{I'm not sure if this is the whole story, since the reader might simply
+  ask, ``Why not map 0 to Ala, 1 to Cys, etc.?''. The real reason we keep the
+  ``Int'' here I think, is that it provides easy indexing into the match and
+  insertion emission vectors.}
+
 The log of a probability is a negative number.
 To~make these numbers more pleasant to read, we negate them,
 which eliminates hordes of minus signs from our file formats.
@@ -821,6 +827,10 @@ a single placement or perhaps a population of placements.
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
 
+\remark{The opening sentence here sounds awkward, but I'm not sure if it's
+  because I'm reading it wrong. It seems like ``technique'' should be
+  pluralized, or perhaps ``would use now-classic: a lazy and modular
+  techniqe''.}
 Ideally, MRFy would use now-classic, lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
 computes an infinite sequence of points, and another function
