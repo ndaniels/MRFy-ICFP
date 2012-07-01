@@ -765,13 +765,11 @@ richer models of protein structure.
 When column~$j$ of an alignment is part of a beta strand and is paired
 with another column  $\pairedwith j$,
 the probability of finding amino acid~$x_i$ in column~$j$ 
-depends on~$x_{\pairedwith j}$.
-\remark{This looks wrong.  $x$ should be subscripted with a
-query-sequence index, but $\pairedwith j$ is a model index.}
+depends on~$x_{\pairedwith i}$.
 The~relevant term in
 Viterbi's equations 
 $V_{j}^{\prime M}(i)$ becomes
-$$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith j}).$$
+$$W_{j}^{M}(i) = V_{j}^{\prime M}(i) - \log P(x_{i} \mid x_{\pairedwith i}).$$
 Columns~$j$ and $\pairedwith j$ can be as close together as a few
 columns or as far apart as a few hundreds of columns.
 Because $W_j^M(i)$~depends not only on $x_i$ and its local neighbors but
@@ -1062,7 +1060,7 @@ But \mrfy's job is not to run Viterbi's algorithm on large models;
 algorithm is intractable.
 We~benchmarked \mrfy\ 
 using a model of an ``8-bladed beta propeller,''
-which has 343 nodes, of which NNN appear in 40~beta strands.
+which has 343 nodes, of which 178 appear in 40~beta strands.
 The models between beta strands typically have at most 10~nodes.
 We~used a query sequence of 592 amino acids, but each placement breaks
 the sequence into 41~pieces, each of which typically has at most 20 amino
@@ -1095,8 +1093,8 @@ On a 48-core, 2.3GHz AMD Opteron 6176 system,
 parallel performance is good up to about 12~cores.
 \figref{fig:efficiency} shows parallel efficiency when
 using a model of an ``8-bladed beta propeller;''
-the model has 343 ordinary nodes and 40~beta strands TOTALLING HOW
-MANY NODES?
+the model has 165 ordinary nodes and 40~beta strands totalling
+178 nodes.
 We~benchmarked \mrfy\ using a query sequence of
 592 amino acids.
 Figure~\ref{fig:speedup} SHOWS NOTHING OF VALUE BECAUSE RANDOMNESS
@@ -1360,21 +1358,6 @@ that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
 
-We~can also make a preliminary comparison of performance.
-SMURF can parse a simple protein structure, optimally, in under 10~seconds.
-\remark{At this stage ``parse'' is kind of a new word.}
-It~can parse some more complex structures in 2--3~minutes.
-But when asked to parse the most complex structures, it runs out of
-memory and has to be killed, even on a system with 128GB of~RAM.
-By~contrast, MRFy can parse any of these structures, approximately,
-in 30~seconds.
-That's fast enough
-%This performance
-%meets our goals, and it means that MRFy can be used
-to scan whole genomes.
-
-
-
 
 Looking beyond our research group to computational biology more
 broadly, our experience with other software is better.
@@ -1540,7 +1523,7 @@ We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci. 
 
 
-\bibliographystyle{plainnat}
+\bibliographystyle{abbrvnat}
 
 % The bibliography should be embedded for final submission.
 
