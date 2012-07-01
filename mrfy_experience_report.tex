@@ -124,8 +124,8 @@
 
 
 \begin{document}
-%\parskip=0.9\parskip % cheating
-%\advance \parskip by 0pt plus 0.1pt
+\parskip=0.9\parskip % cheating
+\advance \parskip by 0pt plus 0.1pt
 
 \overfullrule=10pt
 
@@ -1048,15 +1048,48 @@ But~we have an uneasy feeling that it may work only because of
 undocumented properties of GHC's inliner, which may 
 change without warning. 
 
+Even with this trick,
+MRFy's implementation of Viterbi's algorithm is much
+slower than the C++ version implemented in \mrfy\'s predecessor,
+SMURF.
+For example, on a micro-benchmark that searches for a
+structural motif of 343 nodes in a protein of 2000 amino acids,
+\mrfy\ takes 2.32~seconds and
+SMURF takes 0.29~seconds.
 
+But \mrfy's job is not to run Viterbi's algorithm on large models;
+\mrfy's job is to detect homologies to structures on which Viterbi's
+algorithm is intractable.
+We~benchmarked \mrfy\ 
+using a model of an ``8-bladed beta propeller,''
+which has 343 nodes, of which NNN appear in 40~beta strands.
+The models between beta strands typically have at most 10~nodes.
+We~used a query sequence of 592 amino acids, but each placement breaks
+the sequence into 41~pieces, each of which typically has at most 20 amino
+acids.
+CAN WE PLEASE REPLACE THE TEXT ABOVE WITH A DESCRIPTION OF WHAT'S
+GOING ON IN THE CODE WE ACTUALLY RAN???
+On~these smaller problems, 
+performance is good enough that \mrfy\ can do its job.
+%%
+%%
+%%
+SUDDEN CHANGE OF BENCHMARK CONSIDERED HARMFUL.
+%%
+%%
+Given a Markov random field with a 12-stranded ``beta sandwich''
+structure,
+\mrfy\ typically computes an alignment within a minute;
+SMURF allocates over 16GB of memory
+and does not terminate even after eight hours.
 
-We~also found an opportunity to improve performance through parallelism.
+Because \mrfy\ works on many subproblems independently, we~found it easy
+to improve performance through parallelism.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
-We~found them easy to parallelize
-using
-\texttt{Control.Parallel}:
-we substituted
+Using
+\texttt{Control.Parallel}, parallelizing this computation was as easy
+as  substituting
 \texttt{parmap rseq} for \texttt{map}.
 On a 48-core, 2.3GHz AMD Opteron 6176 system, 
 parallel performance is good up to about 12~cores.
@@ -1088,40 +1121,6 @@ Lower speedups mean lower efficiency.)
 \label{fig:efficiency}
 \end{figure}
 
-MRFy's implementation of Viterbi's algorithm appears dramatically
-slower than the C++ version implemented in \mrfy\'s predecessor,
-SMURF.
-Both \mrfy\ and SMURF, when provided with a Markov random field containing no beta strands,
-simply compute the optimal solution using Viterbi's algorithm.
-For both \mrfy\ and SMURF, this task admits no parallelism.
-On a 2.6GHz Intel Core i7,
-given a micro-benchmark consisting of a contrived query sequence
-of 2000 amino acids (which represents a large protein),
-and a hidden Markov model of 343 nodes and no beta strands,
-\mrfy\ takes 2.32 seconds to compute a Viterbi solution.
-SMURF performs the same computation in 0.29 seconds.
-
-But unlike SMURF, \mrfy\ doesn't have to run on large models.
-For example, on the ``8-bladed propeller'' benchmark, the beta strands
-break the Markov random field into 41 pieces, each of which is much smaller
-than the original (typically 10 or fewer nodes rather than 343).
-And, each \texttt{placement} breaks the query sequence into 41 pieces, each of
-which is much smaller than the original (typically 20 or fewer amino acids
-rather than 592).
-Thus, \mrfy\ repeatedly runs Viterbi's algorithm on 
-a~great many smaller models, and the independence of these models
-means that \mrfy\ can execute them in parallel.
-Here, performance is good enough that \mrfy\ can do its job.
-Given a Markov random field with a 12-stranded ``beta sandwich''
-structure,
-\mrfy\ typically computes an alignment within a minute;
-SMURF allocates over 16GB of memory
-and does not terminate even after eight hours.
-
-Clearly, micro-benchmarks do not tell the whole story.
-Our goal is to solve a biological problem, and though our implementation of
-Viterbi's algorithm is comparatively slow, we can still solve a biological problem
-quickly.
 %%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
 %%% would be unacceptable.
 %%% However, for the algorithm underlying MRFy, we are satisfied with the runtime
