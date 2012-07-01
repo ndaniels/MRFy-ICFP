@@ -968,24 +968,29 @@ recent point or on the difference between costs of successive useful points.
 Despite these non-modular aspects, the search
 interface provides ample scope for
 experiments.
-Random hill climbing took fifty lines of code and one~day to
-implement.
-Simulated annealing reuses hill climbing's
- \texttt{nextPt} function.
-Simulated annealing's  new \texttt{utility} function took ten
-lines of code and half an hour to implement.
+Random hill climbing took 50~lines of code and one~day to
+implement.  
+Simulated annealing requires only a new
+\texttt{utility} function, which took 15~lines of code and half an hour to implement.
 (Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
 Our genetic algorithm reuses the same
 \texttt{pt0} and \texttt{SearchStop} functions, and its \texttt{utility}
 function took only a few lines of code.
+\remark{This claim isn't supported by inspection of the code.}
 But~the recombination of parent
 placements in its \texttt{nextPt} function took forty lines of code
 and a full day to implement.
 
-We note that the \texttt{SearchStop} functions are not as composable as we
-would like, and we would like to have a combinator library for searches.
+We're not entirely happy with the way we're writing individual
+functions.
+In~particular, \texttt{SearchStop} functions aren't composable;
+we~can't, for example, combine two functions to say that we'd like to
+stop if scores aren't improving or if we've tried a thousand points,
+whichever comes first.
+Eventually, we'd like to have
+combinator libraries for \texttt{SearchStop} and \texttt{nextGen}, at~least.
 
 %%  Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
 %%  style of programming.
