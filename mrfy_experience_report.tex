@@ -183,8 +183,8 @@ biology.
 % \terms
 % term1, term2
 % 
-% \keywords
-% keyword1, keyword2
+\keywords
+memoization, stochastic search, QuickCheck, homology detection
 
 \section{Introduction}
 
@@ -985,11 +985,9 @@ Simulated annealing requires only a new
 (Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
-Our genetic algorithm reuses the same
-\texttt{pt0} and \texttt{SearchStop} functions, and its \texttt{utility}
-function took only a few lines of code.
-\remark{This claim isn't supported by inspection of the code.}
-But~the recombination of parent
+Our genetic algorithm is very similar in three out of its four
+functions,
+but~the recombination of parent
 placements in its \texttt{nextPt} function took forty lines of code
 and a full day to implement.
 
@@ -1069,31 +1067,30 @@ SMURF takes 0.29~seconds.
 
 But \mrfy's job is not to run Viterbi's algorithm on large models;
 \mrfy's job is to detect homologies to structures on which Viterbi's
-algorithm is intractable.
-We~benchmarked \mrfy\ 
-using a model of an ``8-bladed beta propeller,''
+algorithm, and SMURF's more complex algorithm, are unsuited.
+SMURF may be faster than \mrfy\ in some cases,
+but \mrfy\ can solve problems that SMURF cannot.
+\mrfy\ can compute an alignment to a complex, 12-stranded ``beta sandwich''
+structure within one minute, while on the same structure, SMURF allocates
+over 16GB of memory and does not terminate even after eight ours.
+The Markov random field model for this structure contains 252 nodes,
+97 of which appear in the 12 beta strands.
+The models between beta strands typically have at most 12~nodes.
+We used a query sequence of 237 amino acids, but each placement
+breaks the sequence into 13 pieces, each of which typically has at most
+11~amino acids.
+On these smaller problems, performance is good enough that \mrfy\ can
+do its job.
+
+We benchmarked \mrfy\ using a model of an ``8-bladed beta propeller,''
 which has 343 nodes, of which 178 appear in 40~beta strands.
 The models between beta strands typically have at most 10~nodes.
 We~used a query sequence of 592 amino acids, but each placement breaks
 the sequence into 41~pieces, each of which typically has at most 20 amino
 acids.
-CAN WE PLEASE REPLACE THE TEXT ABOVE WITH A DESCRIPTION OF WHAT'S
-GOING ON IN THE CODE WE ACTUALLY RAN???
-On~these smaller problems, 
-performance is good enough that \mrfy\ can do its job.
-%%
-%%
-%%
-SUDDEN CHANGE OF BENCHMARK CONSIDERED HARMFUL.
-%%
-%%
-Given a Markov random field with a 12-stranded ``beta sandwich''
-structure,
-\mrfy\ typically computes an alignment within a minute;
-SMURF allocates over 16GB of memory
-and does not terminate even after eight hours.
-
-Because \mrfy\ works on many subproblems independently, we~found it easy
+Because \mrfy\ can solve the models between the beta strands independently,
+this benchmark has a very high degree of parallelism.
+And, in Haskell, we~found it easy
 to improve performance through parallelism.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
@@ -1105,10 +1102,11 @@ On a 48-core, 2.3GHz AMD Opteron 6176 system,
 parallel performance is good up to about 12~cores.
 \figref{fig:speedup} shows speedup when
 using a model of an ``8-bladed beta propeller'' with 1~to~48 cores.
-The model has 165 ordinary nodes and 40~beta strands totalling
-178 nodes; the benchmark query sequence has
-592 amino acids.
-AND WHAT DO WE CONCLUDE FROM THE FIGURE, JOHNNY?
+We can conclude that, at least on this particular system,
+a single instance of \mrfy\ scales well to about 12~cores.
+However, typical usage of \mrfy\ includes running many searches
+in parallel, which gives us a way to use all 48 cores on this system.
+
 
 
 %%  \begin{figure}[h!]
@@ -1527,7 +1525,8 @@ and stream fusion, which led us eventually to the \texttt{Utility} type.
 Koen Claessen instantly diagnosed an inappropriately strict
 implementation of the \texttt{Rand} monad.
 We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
-Larsen, and Nathan Ricci. 
+Larsen, and Nathan Ricci.
+Noah Daniels and Andrew Gallant were funded in part by NIH grant 1R01GM080330 (to Lenore Cowen).
 
 
 \bibliographystyle{plainnat}

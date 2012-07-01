@@ -1,7 +1,7 @@
 #!/usr/bin/env lua
 
 local multicore_times = {
-  { cores =  1, time = 134.2, error = 1.933 },
+  { cores =  1, time = 136.0, error = 0.228 },
   { cores =  2, time = 83.0,   error = 0.099 },
   { cores =  4, time = 46.8, error = 0.208 },
   { cores =  8, time =  26.9, error = 0.216 },
