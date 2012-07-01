@@ -1058,14 +1058,20 @@ using
 \texttt{Control.Parallel}:
 we substituted
 \texttt{parmap rseq} for \texttt{map}.
-We have access to a
-one 48-core, 2.3GHz AMD Opteron 6176 system, on which we benchmarked \mrfy\ performing
-a search on a large protein structure (an ``8-bladed beta-propeller'')
-comprising 343 hidden Markov model nodes and 40 beta strands, and a query sequence
-592 amino acids long.
-Figure~\ref{multicore} illustrates the mean speedup \mrfy\ achieves as the number of
-processing cores increases.
-Optimal speedup appears to occur between 12 and 16 processors.
+On a 48-core, 2.3GHz AMD Opteron 6176 system, 
+parallel performance is good up to about 12~cores.
+\figref{fig:efficiency} shows parallel efficiency when
+using a model of an ``8-bladed beta propeller;''
+the model has 343 ordinary nodes and 40~beta strands TOTALLING HOW
+MANY NODES?
+We~benchmarked \mrfy\ using a query sequence of
+592 amino acids.
+Figure~\ref{fig:speedup} SHOWS NOTHING OF VALUE BECAUSE RANDOMNESS
+BREAKS EVERYTHING.  AND IT SHOULD HAVE ERROR BARS.
+(Parallel efficiency is 1.0 when the speedup is equal to the number of cores
+used.
+Lower speedups mean lower efficiency.)
+
 
 %%  \begin{figure}[h!]
 %%  \centerline{\includegraphics[width=6cm]{mrfy_multicore_log}}
@@ -1074,21 +1080,13 @@ Optimal speedup appears to occur between 12 and 16 processors.
 %%  \label{multicore}
 %%  \end{figure}
 
-\begin{figure}[h!]
-\centerline{\includegraphics{speedup}}
-\bigskip
-\caption{\mrfy's parallel speedup}
-\label{fig:speedup}
-\end{figure}
 
-\begin{figure}[h!]
+\begin{figure}%%%[h!]
 \centerline{\includegraphics{efficiency}}
 \bigskip
-\caption{\mrfy's parallel efficiency}
+\caption{\mrfy's WRONG parallel efficiency}
 \label{fig:efficiency}
 \end{figure}
-
-
 
 MRFy's implementation of Viterbi's algorithm appears dramatically
 slower than the C++ version implemented in \mrfy\'s predecessor,
@@ -1595,5 +1593,18 @@ drown.}
 %%%%    
 %%%%    
 %%%%    
+
+\break
+
+
+\begin{figure}%%%[h!]
+\centerline{\includegraphics{speedup}}
+\bigskip
+\caption{\mrfy's parallel speedup}
+\label{fig:speedup}
+\end{figure}
+
+
+
 
 \end{document}
