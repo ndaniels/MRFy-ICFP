@@ -1,6 +1,7 @@
 TGT=mrfy_experience_report
 
-all:V: $TGT.dvi $TGT.pdf
+all:V: $TGT.dvi $TGT.pdf $TGT.ps
+ps:V: $TGT.ps
 dvi:V: $TGT.dvi
 pdf:V: $TGT.pdf
 bibtex:V:
@@ -29,8 +30,11 @@ $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	done
 
 
-$TGT.pdf: $TGT.tex
-	latexmk -pdf $TGT.tex
+$TGT.pdf: $TGT.ps
+	ps2pdf14 -dPDFSETTINGS=/prepress -dEmbedAllFonts=true $TGT.ps $target
+
+$TGT.ps:D: $TGT.dvi
+	dvips -o $target -P pdf $prereq
 
 
 latex:V: ${CODES:%=%.tex}
