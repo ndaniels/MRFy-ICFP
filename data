@@ -1,14 +1,14 @@
 #!/usr/bin/env lua
 
 local multicore_times = {
-  { cores =  1, time = 288 },
-  { cores =  2, time = 108 },
-  { cores =  4, time = 37 },
-  { cores =  8, time = 26 },
-  { cores = 12, time = 17 },
-  { cores = 16, time = 17 },
-  { cores = 24, time = 24 },
-  { cores = 48, time = 47 },
+  { cores =  1, time = 288, error = 0.0 },
+  { cores =  2, time = 108, error = 0.0 },
+  { cores =  4, time =  37, error = 0.0 },
+  { cores =  8, time =  26, error = 0.0 },
+  { cores = 12, time =  17, error = 0.0 },
+  { cores = 16, time =  17, error = 0.0 },
+  { cores = 24, time =  24, error = 0.0 },
+  { cores = 48, time =  47, error = 0.0 },
 }
 
 local sequential_time = 288 -- ???
