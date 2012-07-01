@@ -919,8 +919,8 @@ laziness:
 from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
 tag each one with a cumulative cost and a utility.
-If~you look carefully at how \texttt{successors} is computed,
-we~hope you will understand why we
+We~hope that if you look carefully at how \texttt{successors} is computed,
+you will understand why we
 separate \texttt{pt0}~from~\texttt{nextPt} instead of using a single
 function that produces an infinite list:
 We~don't \emph{want} the infinite list that would result from
@@ -963,7 +963,7 @@ First, we need \texttt{Utility} because if we omit the useless states,
 search might not terminate.
 Second, we need \texttt{CCosted} because some of our test functions
 decide to terminate based either on the cumulative cost of the most
-recent point or on the difference between costs of successive points.
+recent point or on the difference between costs of successive useful points.
 
 Despite these non-modular aspects, the search
 interface provides ample scope for
