@@ -56,7 +56,7 @@ timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
       words="(could not compute signature words)"
 	fi
 	case $USER in
-      noah) echo "\def\mdfivestamp{\\rlap{\\textbf{`date -u` signature}}}\def\mdfivewords{$words}" > $target ;;
+      noah) echo "\def\mdfivestamp{\\rlap{\\textbf{`date -u` $signature}}}\def\mdfivewords{$words}" > $target ;;
       *) date -u -d "$date" "+\def\mdfivestamp{\\rlap{\\textbf{%a %e %b %Y, %l:%M %p UCT$signature}}}\def\mdfivewords{$words}" > $target ;;
     esac
 	echo "Wrote $target"
