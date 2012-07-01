@@ -124,8 +124,8 @@
 
 
 \begin{document}
-\parskip=0.9\parskip % cheating
-\advance \parskip by 0pt plus 0.1pt
+%\parskip=0.9\parskip % cheating
+%\advance \parskip by 0pt plus 0.1pt
 
 \overfullrule=10pt
 
@@ -731,6 +731,8 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{hofs}
 \seclabel{mrfy}
 
+We're using our implementation of Viterbi's algorithm to help detect
+homologies in new kinds of proteins.
 When a real protein folds in three dimensions, 
 amino acids 
 that are far away in the one-dimensional sequence can be
@@ -764,6 +766,8 @@ When column~$j$ of an alignment is part of a beta strand and is paired
 with another column  $\pairedwith j$,
 the probability of finding amino acid~$x_i$ in column~$j$ 
 depends on~$x_{\pairedwith j}$.
+\remark{This looks wrong.  $x$ should be subscripted with a
+query-sequence index, but $\pairedwith j$ is a model index.}
 The~relevant term in
 Viterbi's equations 
 $V_{j}^{\prime M}(i)$ becomes
