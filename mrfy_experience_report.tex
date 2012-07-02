@@ -124,8 +124,8 @@
 
 
 \begin{document}
-\parskip=0.9\parskip % cheating
-\advance \parskip by 0pt plus 0.1pt
+%\parskip=0.9\parskip % cheating
+%\advance \parskip by 0pt plus 0.1pt
 
 \overfullrule=10pt
 
@@ -193,7 +193,9 @@ biology.
 % term1, term2
 % 
 \keywords
-memoization, stochastic search, parallel strategies,  QuickCheck, remote homology detection
+memoization, stochastic search, parallel strategies,  QuickCheck,
+remote homology detection 
+{\raggedright\par}
 
 
 \endgroup
@@ -778,8 +780,8 @@ MRFy detects homologous proteins that include hydrogen-bonded beta
 strands; using prior methods, many instances of this problem are
 intractable. 
 
-To~account for beta strands, computational biologists add
-a term to Viterbi's equations, and they build
+To~account for beta strands, computational biologists extend
+Viterbi's equations, and they build
 richer models of protein structure.
 %%  The~richer model recognizes that only certain pairs of amino acids are
 %%  able to bond to each other.
@@ -795,9 +797,13 @@ richer models of protein structure.
 When column~$j$ of an alignment is part of a beta strand and is paired
 with another column  $\pairedwith j$,
 the probability of finding amino acid~$x_i$ in column~$j$ 
+\ifpagetuning
+depends on the amino acid~$x'$ in column~${\pairedwith i}$.
+\else
 depends on whatever amino acid~$x'$  is in column~${\pairedwith i}$.
-If~$x'$ is located in position~$i'$ in the query sequence, Viterbi's
-equations must be altered so that, for example
+\fi
+If~$x'$ is in position~$i'$ in the query sequence, Viterbi's
+equations are altered so that, for example
 $V_{j}^{\prime M}(i)$ depends not only on
 $V_{j-1}^{\prime M}(i-1)$ but also on
 $V_{\pairedwith j}^{\prime M}(i')$.\remark{I can't get an equation I
@@ -811,7 +817,7 @@ $V_{\pairedwith j}^{\prime M}(i')$,
 dynamic programming cannot compute the maximum likelihood quickly 
 \cite{Menke:2010ti,Daniels:2012}.
 
-The new terms in Viterbi's equations are accompanied by a new model.
+The change in Viterbi's equations is accompanied by a new model.
 Within a beta strand, amino acids are not inserted or deleted, so
 a bonded pair of beta strands is modeled by
  a pair of sequences of match states.
@@ -825,15 +831,19 @@ strands in the model
  as ``beads'' which can slide along the query sequence.
 A~positioning of the beta strands is called
  a \emph{placement}.
-A~placement's probability is computed
-based on observed frequencies of paired amino acids in 
+A~placement's likelihood is computed
+based on frequencies of amino-acid pairs observed in 
 hydrogen-bonded beta strands~\cite{Cowen:2002p588}.
-Given a placement, the maximum likelihood of the remaining parts of
-the query sequence, which appear between and around beta strands,
-can be computed quickly and exactly 
+Given a placement, the maximum likelihood of the rest of
+the query sequence, between and around beta strands,
+is computed quickly and exactly 
 using Viterbi's algorithm.
+\ifpagetuning
+This likelihood is \emph{conditioned} on the placement.
+\else
 The exact result is a probability that is
 \emph{conditioned} on the placement.
+\fi
 
 MRFy searches for good placements stochastically.
 \mrfy\ implements
@@ -845,6 +855,19 @@ higher-order functions,
 existentially 
 quantified types, and lazy evaluation.
 
+
+\begin{figure}
+\ifpdfmadness
+\centerline{\includegraphics[width=7.8cm]{mrf_interleave_diagram.pdf}} 
+\else
+\centerline{\includegraphics[width=7.8cm]{mrf_interleave_diagram.eps}} 
+\fi
+Each shaded node represents a beta-strand position.
+Nodes connected by dashed edges are hydrogen-bonded.
+
+\caption{A Markov random field with two beta-strand pairs}
+\label{mrf} 
+\end{figure}
 
 
 
@@ -893,19 +916,6 @@ Given an infinite sequence of useless inputs, a filter would not
 produce any values, and the search would diverge.
 
 
-
-\begin{figure}
-\ifpdfmadness
-\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.pdf}} 
-\else
-\centerline{\includegraphics[width=8cm]{mrf_interleave_diagram.eps}} 
-\fi
-Each shaded node represents a beta-strand position.
-Nodes connected by dashed edges are hydrogen-bonded.
-
-\caption{A Markov random field with two beta-strand pairs}
-\label{mrf} 
-\end{figure}
 
 
 
@@ -1141,7 +1151,7 @@ in parallel, which gives us a way to use all 48 cores on this system.
 
 \begin{figure}%%%[h!]
 \centerline{\includegraphics{speedup}}
-\bigskip
+\medskip
 \caption{Parallel speedup}
 \label{fig:speedup}
 \end{figure}
