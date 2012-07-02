@@ -1449,24 +1449,18 @@ GHC's profiler assigns costs not to functions but to ``cost
 centers'' \cite{sansom-pj}.
 In GHC~7.0, which we used 
 for most of MRFy's development, 
-cost-center annotations can be added automatically only
-to top-level 
-functions.
-But most of our code is in nested functions.
-We~annotated such functions manually,
-but the annotations
+cost-center annotations must be added manually
+to nested functions.
+The annotations
 made our code so ugly that we felt compelled to
 remove them as soon as possible.
-Without the annotations, however, GHC's call-site and allocation
-profiles did not give us enough information to be useful.
+Nonetheless, GHC's profiler led us to the performance
+improvements discussed in \secref{perf}.
 We~miss valgrind, whose profiler gives useful information
 without \emph{any} annotations.
 GHC~7.4 provides much
 better profiling tools, which eliminate most of these obstacles,
-rendering this experience no longer as relevant.
-\remark{given that this experience is no longers as relevant,
-and we're tight on space, should we cut this entire paragraph
-about profiling? --ND}
+and we look forward to further profiling MRFy.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
