@@ -25,7 +25,7 @@
    \fi
 \fi
 
-\documentclass[nonatbib,blockstyle,times]{sigplanconf}
+\documentclass[preprint,nonatbib,blockstyle,times]{sigplanconf}
   % at 9pt anything but block style is unreadable
 
 \newcommand\mrfy{MRFy} % damn you Noah
@@ -435,8 +435,12 @@ probabilities, and it is also labeled with one of these labels:
 We~use the ``Plan7'' hidden Markov model, which forbids direct
 transitions between insertion 
 states and deletion states \cite{Eddy:1998ut}. 
-The model gets its name because there are exactly
-seven possible transitions
+\ifpagetuning
+``Plan7'' implies that
+\else
+The model gets its name because
+\fi
+ there are exactly~7 possible transitions
 into the states of any column~$j$.
 Each transition has its own probability:
 \begin{itemize} 
@@ -612,18 +616,20 @@ scores to be added and subtracted but not multiplied.
 In a hidden Markov model, each transition is actually labeled with a
 score, not a probability.
 And in~a Plan7 model, as discussed above, 
-there are seven transitions into each node:
+there are 7~transitions into each node,
+each labeled $a_{s\hat s}$,
+where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
+labels: 
 \smallverbatiminput{tprob-tprobs}
 %\smallverbatiminput{tprobs}
-In~our code, we select from this 7-tuple using \texttt{aScore}, a
-function which satisfies
-\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$},
-where $s$~and~$\hat s$ form one of the 7~pairs above.
-Such a 7-tuple of scores is stored in each node in
+To~choose a transition score from this 7-tuple, we use
+function \texttt{aScore}, 
+where
+\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$}.
+A~7-tuple is stored in each node in
 the model.
-A~node also contains tables of emission probabilities
-$e_{M_j}$~and~$e_{I_j}$.
-These tables are read using function
+Each node also contains tables of emission probabilities
+$e_{M_j}$~and~$e_{I_j}$, which are read using function
 \mbox{$\mathtt{eScore}\;s\;j\;i = e_{s_j}(x_i)$}.
 
 %%  DROP THIS PARA??
@@ -1550,9 +1556,71 @@ ND and AG were funded in part by NIH grant 1R01GM080330 (to Lenore Cowen).
 
 \bibliographystyle{plainnat}
 
-% The bibliography should be embedded for final submission.
-
+\iffalse
 \bibliography{mrfy_experience_report}
+\else
+\begin{thebibliography}{9}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Cowen et~al.(2002)Cowen, Bradley, Menke, King, and
+  Berger]{Cowen:2002p588}
+Lenore Cowen, Philip Bradley, Matt Menke, Jonathan King, and Bonnie Berger.
+\newblock {Predicting the beta-helix fold from protein sequence data}.
+\newblock \emph{Journal of Computational Biology}, 2002.
+
+\bibitem[Daniels et~al.(2012)Daniels, Hosur, Berger, and Cowen]{Daniels:2012}
+Noah Daniels, Raghavendra Hosur, Bonnie Berger, and Lenore Cowen.
+\newblock {SMURFLite: combining simplified Markov random fields with simulated
+  evolution improves remote homology detection for beta-structural proteins
+  into the twilight zone}.
+\newblock \emph{Bioinformatics (to appear)}, 2012.
+
+\bibitem[Durbin et~al.(1998)Durbin, Eddy, Krogh, and Mitchison]{Durbin:1998wz}
+Rirchard Durbin, Sean Eddy, Anders Krogh, and Graeme Mitchison.
+\newblock \emph{{Biological Sequence Analysis: Probabilistic Models of Proteins
+  and Nucleic Acids}}.
+\newblock Cambridge University Press, May 1998.
+
+\bibitem[Eddy(1998)]{Eddy:1998ut}
+Sean Eddy.
+\newblock {Profile hidden Markov models}.
+\newblock \emph{Bioinformatics}, 14:\penalty0 755--763, 1998.
+
+\bibitem[Hughes(1989)]{hughes:why}
+John Hughes.
+\newblock Why functional programming matters.
+\newblock \emph{The Computer Journal}, 32\penalty0 (2):\penalty0 98--107, April
+  1989.
+
+\bibitem[Menke et~al.(2008)Menke, Berger, and Cowen]{Menke:2008wu}
+Matthew Menke, Bonnie Berger, and Lenore Cowen.
+\newblock {Matt: local flexibility aids protein multiple structure alignment}.
+\newblock \emph{PLoS Computational Biology}, 2008.
+
+\bibitem[Menke et~al.(2010)Menke, Berger, and Cowen]{Menke:2010ti}
+Matthew Menke, Bonnie Berger, and Lenore Cowen.
+\newblock {Markov random fields reveal an N-terminal double beta-propeller
+  motif as part of a bacterial hybrid two-component sensor system}.
+\newblock \emph{Proceedings of the National Academy of Science}, 2010.
+
+\bibitem[Sansom and Peyton~Jones(1997)]{sansom-pj}
+Patrick Sansom and Simon~L Peyton~Jones.
+\newblock Formally based profiling for higher-order functional languages.
+\newblock \emph{ACM TOPLAS}, 19\penalty0 (2):\penalty0 334--385, 1997.
+
+\bibitem[Viterbi(1967)]{Viterbi:1967hq}
+Andrew Viterbi.
+\newblock {Error bounds for convolutional codes and an asymptotically optimum
+  decoding algorithm}.
+\newblock \emph{IEEE Transactions on Information Theory}, 13\penalty0
+  (2):\penalty0 260--269, April 1967.
+
+\end{thebibliography}
+\fi
 
 \iffinaldraft
 
