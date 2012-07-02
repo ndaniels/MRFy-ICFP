@@ -71,21 +71,19 @@
    \@noligs}
 \makeatother
 
+\newskip\presvtopsep
+
 \newenvironment{smallverbatim}{\par\small\verbatimsmalltrue\verbatim}{\endverbatim}
 \newcommand\smallverbatiminput[1]{%
-  \everypar=\expandafter{\the\everypar
-       \verbatimsmallfalse
-%       \belowdisplayskip=\abovedisplayskip
-%       \belowdisplayshortskip=\abovedisplayshortskip
-       \topsep=\standardvspace}%
+  \verbatimsmalltrue
+  \presvtopsep=\topsep
   \topsep=0.78\topsep
-%  \belowdisplayskip=0.78\belowdisplayskip
-%  \belowdisplayshortskip=0.78\belowdisplayshortskip
-  \verbatimsmalltrue\verbatiminput{#1}}
-\newcommand\smallverbatiminputx[1]{\vspace*{-8pt}{\small\verbatiminput{#1}}} % WTF?? {\LaTeX} hell
+  \verbatiminput{#1}%
+  \verbatimsmallfalse
+  \topsep=\presvtopsep
+}
 \newcommand\smallfuzzverbatiminput[2]{%
-  \everypar\expandafter{\the\everypar\hfuzz=0pt\relax}%
-  \hfuzz=#1 \smallverbatiminput{#2}}
+  \hfuzz=#1 \smallverbatiminput{#2}\hfuzz=0pt }
 
 \renewcommand\ttdefault{aett}
 
@@ -268,7 +266,7 @@ promise powerful abstractions.
 Some kept the promise, saved us lots of effort, and were a pleasure
 to~use.
 Others, not so much.
-And~we couldn't tell in advance which 
+We couldn't tell in advance which 
 \ifpagetuning
 would be which
 \else
@@ -992,8 +990,8 @@ Because our code is monadic, we~use the monadic composition
 operator~\texttt{=<<}, which is the bind operator with its arguments
 swapped: 
 \smallverbatiminput{search}
-The \texttt{test} function has type \mono{SearchStop~pt}:\\
-\smallverbatiminputx{stop}
+The \texttt{test} function has type \mono{SearchStop~pt}:
+\smallverbatiminput{stop}
 Type \mono{History~pt} retains only the useful points.
 (Internally, \mrfy\ needs only the \emph{final} useful point,
 but because we want to study how different search algorithms behave,
