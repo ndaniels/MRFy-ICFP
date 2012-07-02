@@ -1449,22 +1449,26 @@ refactoring and testing.
 
 \subsection{Obstacles to be overcome}
 
-GHC's profiler assigns costs not to functions but to ``cost
-centers'' \cite{sansom-pj}.
-In GHC~7.0, which we used 
+We~had quite some difficulty profiling, but we hope that
+this difficulty may be mitigated by new profiling tools released early
+in~2012 with
+GHC~7.4.
+GHC assigns costs to ``cost centers'' \cite{sansom-pj},
+and
+in GHC~7.0, which we used 
 for most of MRFy's development, 
-cost-center annotations must be added manually
+cost-center annotations had to be added manually
 to nested functions.
-The annotations
+Although these annotations
 made our code so ugly that we felt compelled to
-remove them as soon as possible.
-Nonetheless, GHC's profiler led us to the performance
-improvements discussed in \secref{perf}.
-We~miss valgrind, whose profiler gives useful information
-without \emph{any} annotations.
-GHC~7.4 provides much
-better profiling tools, which eliminate most of these obstacles,
-and we look forward to further profiling MRFy.
+remove them, they did enable us to improve the performance of~\verb+vee'+ as
+discussed in \secref{perf}.
+%We~miss valgrind, whose profiler gives useful information
+%without \emph{any} annotations.
+GHC~7.4 provides 
+more sophisticated profiling tools, which we look forward to using.
+Difficulties using Cabal to enable profiling of installed libraries
+may remain.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
