@@ -11,6 +11,17 @@ local multicore_times = {
   { cores = 48, time =  77.5, half_sigma = 8.574, n_runs = 5 },
 }
 
+for _, t in ipairs(multicore_times) do
+  t.sigma = t.sigma or 2 * t.half_sigma
+end
+
+local function ratio_variance(x, y, varx, vary)
+  return varx / (y * y) + (x * x) * vary / (y * y * y * y)
+    -- assume zero covariance
+end
+
+
+
 local sequential_time = 134.20
 local sequential_sigma = 4.32
 local sequential_n     = 5
@@ -21,7 +32,7 @@ newgraph
   yaxis label fontsize 9 font Times-Roman
   xaxis no_auto_hash_labels size 2.5 $log min 1 max $xmax label : Cores used
   yaxis size 1.3 min 0 max $ymax label : $ylabel
-  newcurve pts $pts
+  newcurve $curve pts $pts
   $labels
 ]]
 
@@ -41,12 +52,21 @@ end
 
 local function speedup()
   local fields = { ylabel = "Speedup", ymax = '7 hash 1 mhash 1', xmax = 50,
-                   labels = 'xaxis auto_hash_labels', log = '' }
+                   labels = 'xaxis auto_hash_labels', log = '',
+                   curve = '  marktype circle marksize 0.36 0.10'  }
   -- y_eps x y y-minus y_plus
 
-  local points = ""
+  local points = "y_epts"
+  local seqvar = sequential_sigma * sequential_sigma
   for _, pt in ipairs(multicore_times) do
-    points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
+    local ptvar = pt.sigma * pt.sigma
+    local svar = ratio_variance(sequential_time, pt.time, seqvar, ptvar)
+    local error = math.sqrt(svar) / math.sqrt(math.min(sequential_n, pt.n_runs)-1)
+--    points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
+    local ratio = sequential_time / pt.time
+    points = string.format("%s %d %.2f %.2f %.2f", points, pt.cores, ratio,
+                           ratio - error, ratio + error)
+                  
   end
   fields.pts = points
   return fill(template, fields)
@@ -56,7 +76,7 @@ end
   
 local function efficiency()
   local fields = { ylabel = "Parallel efficiency", ymax = 1.0, xmax = 48,
-                   log = 'log', labels = labels(),
+                   log = 'log', labels = labels(),  curve = '',
                  }
   local points = ""
   for _, pt in ipairs(multicore_times) do

@@ -25,7 +25,7 @@
    \fi
 \fi
 
-\documentclass[preprint,nonatbib,blockstyle,times]{sigplanconf}
+\documentclass[nonatbib,blockstyle,times]{sigplanconf}
   % at 9pt anything but block style is unreadable
 
 \newcommand\mrfy{MRFy} % damn you Noah
@@ -1150,11 +1150,11 @@ as  substituting
 \figref{fig:speedup} shows speedups when using from 
  1~to~48 of the cores 
 on a 48-core, 2.3GHz AMD Opteron 6176 system.
+Errors are estimated from 5~runs.
 After about 12~cores, where \mrfy\ runs 6~times as fast as sequential
 code, speedup rolls off.
 By~running 4~instances of \mrfy\ in parallel on different searches,
 we~hope to be able to use all 48~cores with about 50\%~efficiency.
-{\ifpagetuning\looseness=1 \par\fi}
 
 
 %%  \begin{figure}[h!]

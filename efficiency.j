@@ -1,9 +1,9 @@
 newgraph
-  xaxis label fontsize 9
-  yaxis label fontsize 9
+  xaxis label fontsize 9 font Times-Roman
+  yaxis label fontsize 9 font Times-Roman
   xaxis no_auto_hash_labels size 2.5 log min 1 max 48 label : Cores used
   yaxis size 1.3 min 0 max 1 label : Parallel efficiency
-  newcurve pts  1 0.99 2 0.81 4 0.72 8 0.62 12 0.50 16 0.40 24 0.26 48 0.04
+  newcurve  pts  1 0.99 2 0.81 4 0.72 8 0.62 12 0.50 16 0.40 24 0.26 48 0.04
   xaxis no_auto_hash_marks
   xaxis hash_label at 1 : 1
   xaxis hash_at 1
