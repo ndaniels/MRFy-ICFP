@@ -633,7 +633,7 @@ acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
 
 A~model is represented as a sequence of \emph{nodes};
 node~$j$ includes states $M_j$, $I_j$, and~$D_j$,
-as well as the probabilities of transitions into that node.
+as well as the probabilities of transitions out of that node.
 Each node contains tables of emission scores
 $e'_{M_j}$~and~$e'_{I_j}$.
 These table are read by function
@@ -774,25 +774,23 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{hofs}
 \seclabel{mrfy}
 
-We're using our implementation of Viterbi's algorithm to help detect
+We use Viterbi's algorithm to help detect
 homologies in new kinds of proteins.
 When a real protein folds in three dimensions, 
 amino acids 
 that are far away in the one-dimensional sequence can be
 adjacent in three-dimensional space.
-Some proteins contain groups of such acids called \emph{beta
-strands}.
+Some groups of such acids are called \emph{beta strands}.
 Beta strands
-can become hydrogen-bonded to each other,
-making them ``stuck together,''
-and these beta strands help distinguish groups of homologous
-proteins from one another.
+can be hydrogen-bonded to each other,
+making them ``stuck together.''
+These beta strands help identify groups of homologous
+proteins.
 MRFy detects homologous proteins that include hydrogen-bonded beta
 strands; using prior methods, many instances of this problem are
 intractable. 
 
-To~account for beta strands, computational biologists extend
-Viterbi's equations, and they build
+Beta strands require new equations and
 richer models of protein structure.
 %%  The~richer model recognizes that only certain pairs of amino acids are
 %%  able to bond to each other.
@@ -814,13 +812,14 @@ depends on the amino acid~$x'$ in column~${\pairedwith i}$.
 depends on whatever amino acid~$x'$  is in column~${\pairedwith i}$.
 \fi
 If~$x'$ is in position~$i'$ in the query sequence, Viterbi's
-equations are altered so that, for example
+equations are altered; for example,
 $V_{j}^{\prime M}(i)$ depends not only on
 $V_{j-1}^{\prime M}(i-1)$ but also on
-$V_{\pairedwith j}^{\prime M}(i')$.\remark{I can't get an equation I
-believe in. ---NR I think it's fine, unless we want to introduce
-notation to distinguish paired amino acids from paired
-model nodes --ND}
+$V_{\pairedwith j}^{\prime M}(i')$.
+%%  \remark{I can't get an equation I
+%%  believe in. ---NR I think it's fine, unless we want to introduce
+%%  notation to distinguish paired amino acids from paired
+%%  model nodes --ND}
 The distance between $j$~and~$\pairedwith j$ can be as small as a few
 columns or as large as a few hundreds of columns.
 Because $V_j^{\prime M}(i)$~depends not only on nearby values but also on
@@ -828,9 +827,9 @@ $V_{\pairedwith j}^{\prime M}(i')$,
 dynamic programming cannot compute the maximum likelihood quickly 
 \cite{Menke:2010ti,Daniels:2012}.
 
-The change in Viterbi's equations is accompanied by a new model.
-Within a beta strand, amino acids are not inserted or deleted, so
-a bonded pair of beta strands is modeled by
+The new equations are accompanied by a new model.
+Within a beta strand, amino acids are not inserted or deleted, so~a
+bonded pair of beta strands is modeled by 
  a pair of sequences of match states.
 Between beta strands, the model is structured as before.
 The~combined model, an~example of which is shown in \figref{mrf}, is called a
