@@ -73,6 +73,8 @@ strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsou
 
 $TGT.dvi: speedup.eps efficiency.eps
 
+$TGT.dvi: sigplanconf.cls
+
 speedup.j efficiency.j:D: ./data
 	lua ./data
 

@@ -1,18 +1,19 @@
 #!/usr/bin/env lua
 
 local multicore_times = {
-  { cores =  1, time = 136.0, error = 0.228 },
-  { cores =  2, time = 83.0,   error = 0.099 },
-  { cores =  4, time = 46.8, error = 0.208 },
-  { cores =  8, time =  26.9, error = 0.216 },
-  { cores = 12, time =  22.5, error = 0.327 },
-  { cores = 16, time =  21.0, error = 0.301 },
-  { cores = 24, time =  21.9, error = 0.512 },
-  { cores = 48, time =  77.5, error = 8.574 },
+  { cores =  1, time = 136.0, half_sigma = 0.228 },
+  { cores =  2, time = 83.0,   half_sigma = 0.099 },
+  { cores =  4, time = 46.8, half_sigma = 0.208 },
+  { cores =  8, time =  26.9, half_sigma = 0.216 },
+  { cores = 12, time =  22.5, half_sigma = 0.327 },
+  { cores = 16, time =  21.0, half_sigma = 0.301 },
+  { cores = 24, time =  21.9, half_sigma = 0.512 },
+  { cores = 48, time =  77.5, half_sigma = 8.574 },
 }
 
 local sequential_time = 134.20
-local sequential_error = 1.93 -- sigma = 4.32
+local sequential_sigma = 4.32
+local sequential_n     = 5
 
 local template = [[
 newgraph

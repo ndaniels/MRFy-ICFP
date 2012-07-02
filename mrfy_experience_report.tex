@@ -25,7 +25,7 @@
    \fi
 \fi
 
-\documentclass[nonatbib,preprint,blockstyle,times]{sigplanconf}
+\documentclass[nonatbib,blockstyle,times]{sigplanconf}
   % at 9pt anything but block style is unreadable
 
 \newcommand\mrfy{MRFy} % damn you Noah
@@ -176,6 +176,15 @@ made it easy for us to develop new algorithms in computational
 biology.
 \end{abstract}
 
+\begingroup
+\ifpagetuning
+\makeatletter
+\@paragraphaboveskip = 0.5\@paragraphaboveskip
+\makeatother
+\fi
+
+
+
 \category{D.1.1}{Applicative (Functional) Programming}{}
 \category{J.3}{Biology and genetics}{}
 % \category{CR-number}{subcategory}{third-level}
@@ -184,7 +193,10 @@ biology.
 % term1, term2
 % 
 \keywords
-memoization, stochastic search, QuickCheck, homology detection
+memoization, stochastic search, parallel strategies,  QuickCheck, remote homology detection
+
+
+\endgroup
 
 \section{Introduction}
 
@@ -206,20 +218,25 @@ We had to reimplement an
 algorithm already implemented in~C++, 
 and the Haskell code is slower.
 But the Haskell code was easy to write,     % coherent subject!
-it is clearly connected to the underlying
-algorithm (\secref{viterbi}),
-it was easy to parallelize,
-and it performs well enough
+clearly implements the underlying mathematics
+ (\secref{viterbi}),
+ was easy to parallelize,
+and performs well enough
 (\secref{perf}).
 \ifpagetuning
-And overall,
+  And our new tool solves a problem that could not be solved by
+  the~C++ tool which preceded~it.
 \else
-Moreover, measured as a whole, 
+  \ifpagetuning
+  And overall,
+  \else
+  Moreover, measured as a whole, 
+  \fi
+  the software that incorporates our new
+  code 
+  performs significantly
+  better than the~C++ software that preceded~it.
 \fi
-the software that incorporates our new
-code 
-performs significantly
-better than the~C++ software that preceded~it.
 \item
 Higher-order functions made it unusually easy to
 create and experiment with new stochastic-search algorithms
@@ -234,11 +251,12 @@ performance (\secref{awkward-profiling}).
 %%  performance of Haskell programs (\secref{awkward-profiling}).
 \item
 Although the first two authors are computational
-biologists with little background in functional programming,
-Haskell has made it easy for us to explore new research ideas.
+biologists
+with little functional-programming experience,
+Haskell made it easy for us to explore new research ideas.
 By~contrast,
-our group's C++ code has not
-made it easy to explore
+our group's C++ code has 
+made it hard to explore
 % been a good vehicle for exploring 
 new ideas
 (\secref{comparo}).
