@@ -11,7 +11,8 @@ local multicore_times = {
   { cores = 48, time =  77.5, error = 8.574 },
 }
 
-local sequential_time = 134 -- ???
+local sequential_time = 134.20
+local sequential_error = 1.93 -- sigma = 4.32
 
 local template = [[
 newgraph
@@ -40,6 +41,8 @@ end
 local function speedup()
   local fields = { ylabel = "Speedup", ymax = '7 hash 1 mhash 1', xmax = 50,
                    labels = 'xaxis auto_hash_labels', log = '' }
+  -- y_eps x y y-minus y_plus
+
   local points = ""
   for _, pt in ipairs(multicore_times) do
     points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
