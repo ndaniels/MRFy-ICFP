@@ -385,7 +385,7 @@ be homologous to the proteins in the alignment.
 We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
 an amino acid.
-$N$~need not be the same as the number of columns in the alignment,
+The number of amino acids $N$ can differ from the number of columns in the alignment,
 which we write~\alignwidth.
 
 
@@ -426,7 +426,12 @@ has lost an amino acid by deletion from column~$j$.
 \end{itemize}
 The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are \emph{emission probabilities}.
 
-A hidden Markov model also has distinguished \emph{Begin} and \emph{End} states.
+A hidden Markov model also has distinguished ``begin'' and ``end''
+states.
+%%
+%% for consistency with the text above 'begin' and 'end' are neither
+%% capitalized nor italicized.
+%%
 In~our representation, each state contains a probability or a table of
 probabilities, and it is also labeled with one of these labels:
 \smallverbatiminput{statelabel}
@@ -576,7 +581,7 @@ likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
 Probabilities $V_j^D(i)$ and $V_j^D(i)$ are similar.
 These
-equations are very clearly explained by
+equations are explained very clearly by
 \citet[Chapter~5]{Durbin:1998wz}
 
 
@@ -593,44 +598,60 @@ In~idiomatic Haskell,
 we might represent an individual amino acid~$x_i$
 using a value of algebraic data type:
 \begin{smallverbatim}
-data Amino = Ala | Cys | Asp | Glu | Gly | ...
+data Amino = Ala | Cys | Asp | Glu | ...   -- not used
 \end{smallverbatim}
 But our models use a
-legacy file format that represents each amino acid as a small integer.
-Our representation is therefore
+legacy file format in which each amino acid is a small integer
+used only to index arrays.
+%which we use only as an array index.
+We therefore chose 
 \smallverbatiminput{aa}
 
-\remark{I'm not sure if this is the whole story, since the reader might simply
-  ask, ``Why not map 0 to Ala, 1 to Cys, etc.?''. The real reason we keep the
-  ``Int'' here I think, is that it provides easy indexing into the match and
-  insertion emission vectors.}
+%%  \remark{I'm not sure if this is the whole story, since the reader might simply
+%%    ask, ``Why not map 0 to Ala, 1 to Cys, etc.?''. The real reason we keep the
+%%    ``Int'' here I think, is that it provides easy indexing into the match and
+%%    insertion emission vectors.}
 
-The log of a probability is a negative number.
-To~make these numbers more pleasant to read, we negate them,
-which eliminates hordes of minus signs from our file formats.
+Our legacy file format also represents
+the log of a probability \emph{negated}, which makes it a positive number.
+%%To~make these numbers more pleasant to read, we negate them,
+%%which eliminates hordes of minus signs from our file formats.
 The negated logarithm of a probability is called a \emph{score}.
 \smallverbatiminput{score}
 Type \texttt{Score} has a limited \texttt{Num} instance which permits
 scores to be added and subtracted but not multiplied.
 
-In a hidden Markov model, each transition is actually labeled with a
-score, not a probability.
-And in~a Plan7 model, as discussed above, 
-there are 7~transitions into each node,
-each labeled $a_{s\hat s}$,
+In a real hidden Markov model, each probability is represented as a score.
+Our code implements a transformed version of Viterbi's equations, 
+which operates on scores, not on probabilities.
+This version is
+shown on the right-hand side of \figref{viterbi}.
+The transformed equations minimize the
+score (the negated log probability) for each combination of
+column~$j$, amino 
+acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+
+A~model is represented as a sequence of \emph{nodes};
+node~$j$ includes states $M_j$, $I_j$, and~$D_j$,
+as well as the probabilities of transitions into that node.
+Each node contains tables of emission scores
+$e'_{M_j}$~and~$e'_{I_j}$.
+These table are read by function
+\texttt{eScore}, which satisfies
+the law % parallel structure for line breaking below
+\mbox{$\mathtt{eScore}\;s\;j\;i = e'_{s_j}(x_i)$}.
+%
+We place the transition probabilities 
+into a record in which each field is labeled
+\texttt{$s$\_$\mskip 1mu\hat s$},
 where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
 labels: 
 \smallverbatiminput{tprob-tprobs}
-%\smallverbatiminput{tprobs}
-To~choose a transition score from this 7-tuple, we use
+These scores are read by
 function \texttt{aScore}, 
-where
+which satisfies
+the law % line breaking
 \mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$}.
-A~7-tuple is stored in each node in
-the model.
-Each node also contains tables of emission probabilities
-$e_{M_j}$~and~$e_{I_j}$, which are read using function
-\mbox{$\mathtt{eScore}\;s\;j\;i = e_{s_j}(x_i)$}.
 
 %%  DROP THIS PARA??
 %%  Nodes are numbered, and the representation of a node includes 
@@ -642,14 +663,29 @@ $e_{M_j}$~and~$e_{I_j}$, which are read using function
 %%  into the states of that node.
 %%  \smallverbatiminput{hmmnode}
 
-In~Viterbi's equations,
-the probability in each state is a function of the probabilities
+Scores can be usefully attached to many types of values,
+so we have defined a small abstraction:
+\smallfuzzverbatiminput{10.8pt}{vscore}
+Think of a value of type \mono{Scored~a} as a container holding
+ an~``\texttt a'' with a score written on the side.
+The \texttt{/+/} function adds to the score without touching the
+ container.
+%
+We~also made \texttt{Scored} an instance of~\texttt{Ord}.
+Containers are ordered by score alone, so applying
+\texttt{minimum} to a list of scored things chooses the thing with the
+smallest (and therefore best) score.
+
+
+Armed with our models and with the \texttt{Scored} abstraction, we
+attacked Viterbi's equations. 
+The probability in each state is a function of the probabilities
 in its predecessor states, 
 and all probabilities can be computed by a classic dynamic-programming
 algorithm.
-This algorithm starts at the begin state,
+This algorithm starts at the {begin} state,
 computes probabilites in nodes $1$~through~$\alignwidth$ in
-succession, and terminates at the end state.
+succession, and terminates at the {end} state.
 One of us implemented this algorithm, storing the probabilities in an array.
 The cost was
 $O(|N|\times|\alignwidth|)$;
@@ -667,6 +703,11 @@ thousand.
 %%  and because they are \textit{negative} logs, the problem transforms from 
 %%  maximization to minimization.
 
+
+\seclabel{cons}
+\seclabel{vee-prime}
+
+
 Another of us was curious to try coding Viterbi's equations
 directly as recursive functions.
 Like a recursive Fibonacci function, Viterbi's functions,
@@ -674,55 +715,27 @@ when implemented \naive ly,
 take exponential time.
 But like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
-Our code implements a transformed version of Viterbi's equations, 
-which operates on scores, not on probabilities.
-This version is
-shown on the right-hand side of \figref{viterbi}.
-The transformed equations minimize the
-score (the negated log probability) for each combination of
-node~$j$, amino 
-acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
-
-Scores can be usefully paired with many types of values,
-so we have defined a small abstraction:
-\smallfuzzverbatiminput{10.8pt}{vscore}
-Think of a value of type \mono{Scored~a} as a container holding
- an~``\texttt a'' with a score written on the side.
-The \texttt{/+/} function adds to the score without touching the
- container.
-
-We~also made \texttt{Scored} an instance of~\texttt{Ord}.
-Containers are ordered by score alone, so applying
-\texttt{minimum} to a list of scored things chooses the thing with the
-smallest (and therefore best) score.
-
-
-\seclabel{cons}
-\seclabel{vee-prime}
-
-The \texttt{Scored} abstraction makes it easy to implement
-Viterbi's equations.
 For example, to compute $V_j^{\prime M}(i)$ using the equation at the top
-right of \figref{viterbi}, we call 
+right of \figref{viterbi}, we define
 \mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}.
 The equation adds~$e^{\prime}_{M_{j}}(x_{i})$, computed
 with \texttt{eScore}, to a minimum of sums.
-The sum of an~$a'_{s\hat s}$~term and a $V^{\prime s}_{j-1}(i-1)$ term 
+The~sum of an~$a'_{s\hat s}$~term and a $V^{\prime s}_{j-1}(i-1)$ term 
 is computed by function \texttt{avSum}, in which
 the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively:
-\smallverbatiminput{vfix}
+\smallfuzzverbatiminput{2.9pt}{vfix}
 %%%%%%%%%% horrible line break
 % The right-hand side of \verb+vee'+ is wrapped in a call to
 What about the call to
 \mono{\mbox{fmap (Mat `cons`)}}?
 This call performs a computation \emph{not} shown in \figref{viterbi}:
 \mrfy\ computes not only the {probability} of the most likely path but 
-also the actual path itself.
+also the path itself.
 Function \mono{(Mat `cons`)} adds~$M$ to a path;
 we~avoid \mbox{\mono{(Mat :)}} for reasons explained
 in \secref{performance} below. 
 
-Function~\verb+vee''+ is the \emph{memoized} version of~\verb+vee'+.
+Function~\verb+vee''+ is the {memoized} version of~\verb+vee'+.
 Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,
 but faster: 
 \smallverbatiminput{memo}
