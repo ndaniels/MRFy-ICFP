@@ -775,7 +775,7 @@ Because the memoized version so faithfully resembles the equations in
 \seclabel{mrfy}
 
 We use Viterbi's algorithm to help detect
-homologies in new kinds of proteins.
+homologies in proteins with specific kinds of structure.
 When a real protein folds in three dimensions, 
 amino acids 
 that are far away in the one-dimensional sequence can be
@@ -868,7 +868,10 @@ higher-order functions,
 existentially 
 quantified types, and lazy evaluation.
 
-
+%
+%  placement at top left column is not ideal, but right column results
+%  in a bad page break elsewhere
+%
 \begin{figure}
 \ifpdfmadness
 \centerline{\includegraphics[width=7.8cm]{mrf_interleave_diagram.pdf}} 
@@ -969,8 +972,7 @@ sequence containing a mix of useful and useless moves:
 }
 \noindent
 Both \texttt{nextPt} and \texttt{utility} are monadic, but 
-we can still use 
-laziness:
+we can still exploit laziness:
 from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
 tag each one with a cumulative cost and a utility.
@@ -999,6 +1001,8 @@ which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
 points, and then continues recursively with another call to \texttt{everyPt}.
 
+%%\begingroup\parskip=0.9\parskip
+%% \makeatletter\@sectionaboveskip=0.9\@sectionaboveskip\makeatother
 The rest of the search uses Hughes's
 classic composition of generator  and test function.
 Because our code is monadic, we~use the monadic composition
@@ -1014,9 +1018,9 @@ we~keep all the useful points.)
 
 The definition of \texttt{SearchStop} reveals two forms of
 non-modularity which are inherent in \mrfy's search algorithm.
-First, we need \texttt{Utility} because if we omit the useless states,
+First, we need \texttt{Utility}, because if we omit the useless states,
 search might not terminate.
-Second, we need \texttt{CCosted} because some of our test functions
+Second, we need \texttt{CCosted}, because some of our test functions
 decide to terminate based either on the cumulative cost of the most
 recent point or on the difference between costs of successive useful points.
 
@@ -1025,25 +1029,25 @@ interface provides ample scope for
 experiments.
 Random hill climbing took 50~lines of code and one~day to
 implement.  
-Simulated annealing requires only a new
+Simulated annealing required only a new
 \texttt{utility} function, which took 15~lines of code and half an hour to implement.
 (Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
-Our genetic algorithm is very similar in three out of its four
-functions,
-but~the recombination of parent
-placements in its \texttt{nextPt} function took forty lines of code
+Our genetic algorithm uses very similar
+functions, except for \texttt{nextPt}:
+recombination of parent
+placements took forty lines of code
 and a full day to implement.
 
-We're not entirely happy with the way we're writing individual
+We're not entirely happy with the way we're writing all the individual
 functions.
 In~particular, \texttt{SearchStop} functions aren't composable;
 we~can't, for example, combine two functions to say that we'd like to
 stop if scores aren't improving or if we've tried a thousand points,
 whichever comes first.
 Eventually, we'd like to have
-combinator libraries for \texttt{SearchStop} and \texttt{nextGen}, at~least.
+combinator libraries for \texttt{SearchStop} and \texttt{nextPt}, at~least.
 
 %%  Our \texttt{SearchStrategy} interface somewhat resembles an object-oriented
 %%  style of programming.
@@ -1082,11 +1086,10 @@ run time by nearly~50\%.
 %%version of \verb+vee'+ that \emph{does} compute a path, so we can
 %%extract the optimal parse for that placement.
 
-How could we keep the improvement without 
+Could we keep the improvement without 
 maintaining two versions of \verb+vee'+?
 In~Lisp or Ruby we would have used macros or metaprogramming,
-but we were not confident of our ability to metaprogram a solution
-using Template Haskell.
+but we were not confident of our ability to use Template Haskell.
 Instead, we use higher-order functions.
 As~shown in \secref{vee-prime},
 \verb+vee'+ does not use primitive~\primcons\ but instead
@@ -1097,61 +1100,57 @@ to~get just a score, we pass in
 \verb+\_ _ -> []+.
 This trick is simple and easy to implement, and it provides the same
 speedup as the cloned and modified~code.
-But~we have an uneasy feeling that it may work only because of
+But~we worry that it may work only because of
 undocumented properties of GHC's inliner, which may 
-change without warning. 
+change.
 
 Even with this trick,
 MRFy's implementation of Viterbi's algorithm is much
-slower than the C++ version implemented in \mrfy\'s predecessor,
+slower than the C++ version in \mrfy's predecessor,
 SMURF.
-For example, on a micro-benchmark that searches for a
-structural motif of 343 nodes in a protein of 2000 amino acids
-using only the Viterbi algorithm and no beta-strand information,
+For example, on a microbenchmark that searches for a
+structural motif of 343~nodes in a protein of 2000 amino acids
+using only Viterbi's algorithm and no beta-strand information,
 \mrfy\ takes 2.32~seconds and
 SMURF takes 0.29~seconds.
 
 But \mrfy's job is not to run Viterbi's algorithm on large models;
-\mrfy's job is to detect homologies to structures on which Viterbi's
-algorithm, and SMURF's more complex algorithm, are unsuited.
-SMURF may be faster than \mrfy\ in some cases,
-but \mrfy\ can solve problems that SMURF cannot.
-We have tested \mrfy\ on a complex, 12-stranded ``beta sandwich''
-structure, which contains 252 nodes,
-97 of which appear in the 12 beta strands.
+\mrfy's job is to detect homologies to structures for which both Viterbi's
+algorithm and SMURF's more complex algorithm are unsuited.
+\mrfy\ can solve problems that SMURF cannot.
+For~example, we tried both programs on a complex, 12-stranded ``beta
+sandwich'' 
+model.
+The~model contains 252~nodes,
+97~of which appear in the 12~beta strands.
 % The models between beta strands typically have at most 12~nodes.
 % We used a query sequence of 237 amino acids, but each placement
 % breaks the sequence into 13 pieces, each of which typically has at most
 % 11~amino acids.
-\mrfy\ computes an alignment in this instance in under one minute,
-while on the same structure, SMURF allocates
-over 16GB of memory and does not terminate even after eight ours.
+\mrfy\ computes an alignment in under a~minute,
+but SMURF allocates
+over 16GB of memory and does not terminate even after eight hours.
 
-We also benchmarked \mrfy\ using a model of an ``8-bladed beta propeller,''
-which has 343 nodes, of which 178 appear in 40~beta strands.
-The models between beta strands typically have at most 10~nodes.
+We also benchmarked \mrfy\ using a model of an ``8-bladed beta propeller.''
+The model has 343~nodes, of which 178 appear in 40~beta strands.
+The segments between beta strands typically have at most 10~nodes.
 We~used a query sequence of 592 amino acids, but each placement breaks
 the sequence into 41~pieces, each of which typically has at most 20 amino
 acids.
 Because \mrfy\ can solve the models between the beta strands independently,
-this benchmark has a very high degree of parallelism.
-And, in Haskell, we~found it easy
-to improve performance through parallelism.
-Calls on query sequences between beta strands are independent,
-as are calls on different placements.
+this benchmark has a lot of parallelism,
+which Haskell made it easy to exploit.
 Using
-\texttt{Control.Parallel}, parallelizing this computation was as easy
+\texttt{Control.Parallel}, parallelizing the computation was as easy
 as  substituting
 \texttt{parmap rseq} for \texttt{map}.
-On a 48-core, 2.3GHz AMD Opteron 6176 system, 
-parallel performance is good up to about 12~cores.
-\figref{fig:speedup} shows speedup when
-using a model of an ``8-bladed beta propeller'' with 1~to~48 cores.
-We can conclude that, at least on this particular system,
-a single instance of \mrfy\ scales well to about 12~cores.
-However, typical usage of \mrfy\ includes running many searches
-in parallel, which gives us a way to use all 48 cores on this system.
-
+\figref{fig:speedup} shows speedups when using from 
+ 1~to~48 of the cores 
+on a 48-core, 2.3GHz AMD Opteron 6176 system.
+After about 12~cores, where \mrfy\ runs 6~times as fast as sequential
+code, speedup rolls off.
+By~running 4~instance of \mrfy\ in parallel on different searches,
+we~hope to be able to use all 48~cores with about 50\%~efficiency.
 
 
 %%  \begin{figure}[h!]
@@ -1186,37 +1185,38 @@ in parallel, which gives us a way to use all 48 cores on this system.
 
 \seclabel{awkward-profiling}
 
-We've shown you some of the code we like, but we've also written 
-code we dislike.
-The~code we like least is what we've written to work around
-obstacles we 
-encountered in debugging.
+Our experience writing code and trying new ideas was excellent, as~was
+the ease of parallelizing \mrfy.
+Higher-order functions, memoization, laziness, and parallel strategies
+really worked.
+But~we also encountered obstacles that prevented functional
+programming from serving us as well as we would like.
+The~most significant obstacles were in debugging and testing.
 
-We hate the code we've written to help debug
-run-time errors.
-Our~group's legacy file
-format is poorly documented: when beta
-strands overlap and are doubly paired, the invariants of the
-format are not clear.
-This format is hard to deal with no matter what
-programming language is used, and faults are to be expected.
-But using Haskell, we had a hard time diagnosing run-time errors.
+We had a hard time diagnosing run-time errors.
+We~expected some run-time errors;
+our~group's legacy file
+format is poorly documented and hard to deal with.
+(When beta
+strands overlap and are doubly paired, even the invariants of the
+format are unclear.)
+But using Haskell, we~found the errors hard to diagnose.
 Calls to
 \texttt{trace} 
 littered our code,
 even when relegated to wrapper functions.
-We~weren't aware of the backtrace feature of GHC's profiler,
-and even after we discovered that feature, it didn't help:
-the profiler can be used only on very small test cases that didn't always trigger
-run-time errors.
-This same limitation affected the GHCi debugger; 
+We~didn't know about the backtrace feature of GHC's profiler,
+and even after we learned about it, it didn't help:
+the profiler can be used only on very small test cases,
+which didn't always trigger the errors.
+This same limitation affected GHCi's debugger; 
 in~GHCi, our \texttt{vee'} function
 is too slow to be runnable on nontrivial
 inputs.
-Moreover, the GHCi debugger can set breakpoints only at top-level functions
+Moreover,  GHCi's debugger can set breakpoints only at top-level functions
 or at specific column/line positions, which made debugging the memoized
 \texttt{vee''} function impractical.
-In~August 2011, 
+In~August~2011, 
 Lennart Augustsson said that the biggest advantage of Strict
 Haskell is getting a stack trace on error,
 and Simon Marlow said that he may have figured out how to track call
