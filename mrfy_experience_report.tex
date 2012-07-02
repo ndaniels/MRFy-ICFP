@@ -183,8 +183,8 @@ biology.
 % \terms
 % term1, term2
 % 
-% \keywords
-% keyword1, keyword2
+\keywords
+memoization, stochastic search, QuickCheck, homology detection
 
 \section{Introduction}
 
@@ -577,6 +577,12 @@ But our models use a
 legacy file format that represents each amino acid as a small integer.
 Our representation is therefore
 \smallverbatiminput{aa}
+
+\remark{I'm not sure if this is the whole story, since the reader might simply
+  ask, ``Why not map 0 to Ala, 1 to Cys, etc.?''. The real reason we keep the
+  ``Int'' here I think, is that it provides easy indexing into the match and
+  insertion emission vectors.}
+
 The log of a probability is a negative number.
 To~make these numbers more pleasant to read, we negate them,
 which eliminates hordes of minus signs from our file formats.
@@ -771,7 +777,9 @@ equations must be altered so that, for example
 $V_{j}^{\prime M}(i)$ depends not only on
 $V_{j-1}^{\prime M}(i-1)$ but also on
 $V_{\pairedwith j}^{\prime M}(i')$.\remark{I can't get an equation I
-believe in. ---NR}
+believe in. ---NR I think it's fine, unless we want to introduce
+notation to distinguish paired amino acids from paired
+model nodes --ND}
 The distance between $j$~and~$\pairedwith j$ can be as small as a few
 columns or as large as a few hundreds of columns.
 Because $V_j^{\prime M}(i)$~depends not only on nearby values but also on
@@ -823,7 +831,7 @@ a single placement or perhaps a population of placements.
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
 
-Ideally, MRFy would use now-classic, lazy, modular
+Ideally, MRFy would use the now-classic, lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
 computes an infinite sequence of points, and another function
 uses a finite prefix to decide on an approximation.
@@ -975,11 +983,9 @@ Simulated annealing requires only a new
 (Hill climbing accepts a point if and only if it scores better than its
 predecessor;
 simulated annealing may accept a point that scores worse.)
-Our genetic algorithm reuses the same
-\texttt{pt0} and \texttt{SearchStop} functions, and its \texttt{utility}
-function took only a few lines of code.
-\remark{This claim isn't supported by inspection of the code.}
-But~the recombination of parent
+Our genetic algorithm is very similar in three out of its four
+functions,
+but~the recombination of parent
 placements in its \texttt{nextPt} function took forty lines of code
 and a full day to implement.
 
@@ -1053,37 +1059,36 @@ MRFy's implementation of Viterbi's algorithm is much
 slower than the C++ version implemented in \mrfy\'s predecessor,
 SMURF.
 For example, on a micro-benchmark that searches for a
-structural motif of 343 nodes in a protein of 2000 amino acids,
+structural motif of 343 nodes in a protein of 2000 amino acids
+using only the Viterbi algorithm and no beta-strand information,
 \mrfy\ takes 2.32~seconds and
 SMURF takes 0.29~seconds.
 
 But \mrfy's job is not to run Viterbi's algorithm on large models;
 \mrfy's job is to detect homologies to structures on which Viterbi's
-algorithm is intractable.
-We~benchmarked \mrfy\ 
-using a model of an ``8-bladed beta propeller,''
+algorithm, and SMURF's more complex algorithm, are unsuited.
+SMURF may be faster than \mrfy\ in some cases,
+but \mrfy\ can solve problems that SMURF cannot.
+We have tested \mrfy\ on a complex, 12-stranded ``beta sandwich''
+structure, which contains 252 nodes,
+97 of which appear in the 12 beta strands.
+% The models between beta strands typically have at most 12~nodes.
+% We used a query sequence of 237 amino acids, but each placement
+% breaks the sequence into 13 pieces, each of which typically has at most
+% 11~amino acids.
+\mrfy\ computes an alignment in this instance in under one minute,
+while on the same structure, SMURF allocates
+over 16GB of memory and does not terminate even after eight ours.
+
+We also benchmarked \mrfy\ using a model of an ``8-bladed beta propeller,''
 which has 343 nodes, of which 178 appear in 40~beta strands.
 The models between beta strands typically have at most 10~nodes.
 We~used a query sequence of 592 amino acids, but each placement breaks
 the sequence into 41~pieces, each of which typically has at most 20 amino
 acids.
-CAN WE PLEASE REPLACE THE TEXT ABOVE WITH A DESCRIPTION OF WHAT'S
-GOING ON IN THE CODE WE ACTUALLY RAN???
-On~these smaller problems, 
-performance is good enough that \mrfy\ can do its job.
-%%
-%%
-%%
-SUDDEN CHANGE OF BENCHMARK CONSIDERED HARMFUL.
-%%
-%%
-Given a Markov random field with a 12-stranded ``beta sandwich''
-structure,
-\mrfy\ typically computes an alignment within a minute;
-SMURF allocates over 16GB of memory
-and does not terminate even after eight hours.
-
-Because \mrfy\ works on many subproblems independently, we~found it easy
+Because \mrfy\ can solve the models between the beta strands independently,
+this benchmark has a very high degree of parallelism.
+And, in Haskell, we~found it easy
 to improve performance through parallelism.
 Calls on query sequences between beta strands are independent,
 as are calls on different placements.
@@ -1095,10 +1100,11 @@ On a 48-core, 2.3GHz AMD Opteron 6176 system,
 parallel performance is good up to about 12~cores.
 \figref{fig:speedup} shows speedup when
 using a model of an ``8-bladed beta propeller'' with 1~to~48 cores.
-The model has 165 ordinary nodes and 40~beta strands totalling
-178 nodes; the benchmark query sequence has
-592 amino acids.
-AND WHAT DO WE CONCLUDE FROM THE FIGURE, JOHNNY?
+We can conclude that, at least on this particular system,
+a single instance of \mrfy\ scales well to about 12~cores.
+However, typical usage of \mrfy\ includes running many searches
+in parallel, which gives us a way to use all 48 cores on this system.
+
 
 
 %%  \begin{figure}[h!]
@@ -1409,6 +1415,9 @@ without \emph{any} annotations.
 GHC~7.4 provides much
 better profiling tools, which eliminate most of these obstacles,
 rendering this experience no longer as relevant.
+\remark{given that this experience is no longers as relevant,
+and we're tight on space, should we cut this entire paragraph
+about profiling? --ND}
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
@@ -1517,7 +1526,8 @@ and stream fusion, which led us eventually to the \texttt{Utility} type.
 Koen Claessen instantly diagnosed an inappropriately strict
 implementation of the \texttt{Rand} monad.
 We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
-Larsen, and Nathan Ricci. 
+Larsen, and Nathan Ricci.
+ND and AG were funded in part by NIH grant 1R01GM080330 (to Lenore Cowen).
 
 
 \bibliographystyle{plainnat}
