@@ -1039,6 +1039,7 @@ functions, except for \texttt{nextPt}:
 recombination of parent
 placements took forty lines of code
 and a full day to implement.
+{\ifpagetuning\looseness=1 \par\fi}
 
 We're not entirely happy with the way we're writing all the individual
 functions.
@@ -1108,6 +1109,7 @@ Even with this trick,
 MRFy's implementation of Viterbi's algorithm is much
 slower than the C++ version in \mrfy's predecessor,
 SMURF.
+\ifpagetuning\vadjust{\break}\fi
 For example, on a microbenchmark that searches for a
 structural motif of 343~nodes in a protein of 2000 amino acids
 using only Viterbi's algorithm and no beta-strand information,
@@ -1151,6 +1153,7 @@ After about 12~cores, where \mrfy\ runs 6~times as fast as sequential
 code, speedup rolls off.
 By~running 4~instance of \mrfy\ in parallel on different searches,
 we~hope to be able to use all 48~cores with about 50\%~efficiency.
+{\ifpagetuning\looseness=1 \par\fi}
 
 
 %%  \begin{figure}[h!]
@@ -1226,10 +1229,10 @@ We~can't wait.
 Our difficulties with debugging led to internal disagreements.
 The~junior members of our team wanted to apply the debugging
 skills they had honed through years of imperative programming.
-These skills did not transfer well to Haskell.
-The senior member of the team kept saying that any proper approach to
+But these skills did not transfer well to Haskell.
+The senior member of the team kept repeating that a proper approach to
 debugging Haskell code should involve QuickCheck.
-This exhortation was unhelpful.
+But mere exhortation was unhelpful.
 
 \seclabel{awkward-quickcheck}
 
@@ -1268,15 +1271,16 @@ After the fact, we were overwhelmed by the work
 involved in writing and testing instances
 of
 \texttt{Arbitrary}.
-The work got done only because the whole team got involved in order to
+The work got done only when the whole team pitched in to
 meet the deadlines for this paper.
 
-Based on the QuickCheck properties we did write, we have identified and
-easily fixed a bug in our implementation of Viterbi's algorithm; we had not
-been including the score for the transition from the final node of the hidden
+At the last minute, QuickCheck did find
+a bug in our implementation of Viterbi's algorithm: we had omitted
+the score for the transition from the final node of the hidden
 Markov model to the special ``end'' state.
-Without QuickCheck, it is unlikely that we would have found this bug,
-and if we had, determining the cause would have required much time.
+Without QuickCheck, we~probably wouldn't have known anything was wrong.
+%it is unlikely that we would have found this bug,
+%and if we had, determining the cause would have required much time.
 
 %%  At~that point, we were quickly about to write QuickCheck
 %%  specifications for several properties of the Viterbi algorithm:
@@ -1308,13 +1312,10 @@ and if we had, determining the cause would have required much time.
 Our Haskell code for hidden Markov models and Viterbi's algorithm
 solves the same problems as existing C++~code.
 Other researchers using Haskell may also have to reimplement code,
-but researchers may also reimplement code out of choice, not
-necessity.
-In computational biology, reimplementing existing algorithms is unremarkable.
-For~example, both SMURF and HMMER contain new implementations of these
-same algorithms.
-In~MRFy, we are using the Haskell implementations to help solve new
-problems. 
+but
+in computational biology, reimplementing existing algorithms is unremarkable.
+For~example, both SMURF and HMMER contain new implementations of
+hidden Markov models and Viterbi's algorithm.
 
 When performance has mattered, members of our group, like other
 computational biologists, have used~C++.
@@ -1342,17 +1343,17 @@ computationally intractable.
 \item
 MRFy is used to detect homologous proteins in the presence of paired
 beta strands; it effectively supplants SMURF.
-It~comprises about 2300 lines of~Haskell, 300 of which are devoted
-to tests and QuickCheck properties and generators.
-Neither C++ codebase includes any testing facilities.
+It~comprises about 2,500 lines of~Haskell, about 500 of which are devoted
+to tests, QuickCheck properties, and generators.
+Neither C++ codebase includes any test code.
 MRFy~uses several external tools and libraries, of which the most
 notable are Parsec, the BioHaskell bioinformatics library, and
 the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
-Its initial development took about three months.
+\mrfy's initial development took about three months.
 %%%% \remark{Others were mostly full-time work, but no need to distinguish.}
 \end{itemize}
-Like much research software, all three of these tools were written
+Like much research software, all three tools were written
  in~haste.
 We~have experience modifying the older tools.
 
@@ -1428,10 +1429,11 @@ Haskell continue to mature.
 
 \section{What can you learn from our experience?}
 
-If~you are a computational biologist, 
-you can be productive in Haskell without extensive preparation.
+If~you are a computational biologist and you are interested in
+functional programming, you don't need extensive preparation
+to be productive in Haskell.
 Two~of us (Daniels and Gallant) are graduate students.
-Daniels has taken a graduate seminar in functional programming, which
+Daniels has taken a seminar in functional programming, which
 included some Haskell;
 Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
@@ -1516,7 +1518,6 @@ using mutable state the way the C++ code does, was difficult.
 
 While the Haskell community offers many
 enticing tools, libraries, and packages,
-be aware that
 not all of them are worth using.
 Some are not ready for prime time, and some were once great but are
 no~longer maintained.
@@ -1574,7 +1575,8 @@ Koen Claessen instantly diagnosed an inappropriately strict
 implementation of the \texttt{Rand} monad.
 We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci.
-ND and AG were funded in part by NIH grant 1R01GM080330 (to Lenore Cowen).
+
+This work was funded in part by NIH grant 1R01GM080330.
 
 
 \bibliographystyle{plainnat}
