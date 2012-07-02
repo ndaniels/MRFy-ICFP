@@ -836,6 +836,9 @@ The~combined model, an~example of which is shown in \figref{mrf}, is called a
 \textit{Markov random field}. 
 
 
+%
+% N.B. very tight paragraph...
+%
 MRFy treats the beta 
 strands in the model
  as ``beads'' which can slide along the query sequence.
@@ -855,7 +858,7 @@ The exact result is a probability that is
 \emph{conditioned} on the placement.
 \fi
 
-MRFy searches for good placements stochastically.
+MRFy searches for likely placements stochastically.
 \mrfy\ implements
 random hill
 climbing, simulated  
@@ -893,7 +896,7 @@ technique advocated by \citet{hughes:why}, in which one function
 computes an infinite sequence of points, and another function
 uses a finite prefix to decide on an approximation.
 But because MRFy's search is stochastic, 
-making MRFy's search lazy and modular is not so easy.
+making MRFy's search modular is not so easy.
 
 To illustrate the difficulties, we~discuss our simplest search:
 random hill climbing.
@@ -920,8 +923,8 @@ a \emph{filter} that selects the useful moves, and
 a \emph{test} function that enumerates finitely many useful moves
 and returns the final destination.
 But a generator may produce an infinite sequence of useless moves.
-(For example, if \mrfy\ should find a global optimum, every move from
-that point is guaranteed to be useless.)
+(For example, if \mrfy\ should stumble upon a global optimum, every move from
+that point would be useless.)
 Given an infinite sequence of useless inputs, a filter would not
 produce any values, and the search would diverge.
 
@@ -966,7 +969,7 @@ sequence containing a mix of useful and useless moves:
 }
 \noindent
 Both \texttt{nextPt} and \texttt{utility} are monadic, but 
-we can still use a little bit of
+we can still use 
 laziness:
 from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
@@ -994,7 +997,7 @@ The most informative part of \texttt{everyPt} is last expression of
 the \texttt{do} block,
 which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
-points, and then continues recursively with the results of \texttt{everyPt}.
+points, and then continues recursively with another call to \texttt{everyPt}.
 
 The rest of the search uses Hughes's
 classic composition of generator  and test function.
