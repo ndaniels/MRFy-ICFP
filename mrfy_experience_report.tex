@@ -385,8 +385,8 @@ be homologous to the proteins in the alignment.
 We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
 an amino acid.
-The number of amino acids $N$ can differ from the number of columns in the alignment,
-which we write~\alignwidth.
+The number of amino acids, $N$, can differ from the number of columns
+in the alignment,~\alignwidth. 
 
 
 \begin{figure}
@@ -579,8 +579,8 @@ The computation is specified on the left-hand side of \figref{viterbi}.
 A~probability $V_j^M(i)$ represents the probability of the most
 likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
-Probabilities $V_j^D(i)$ and $V_j^D(i)$ are similar.
-These
+Probabilities $V_j^I(i)$ and $V_j^D(i)$ are similar.
+The
 equations are explained very clearly by
 \citet[Chapter~5]{Durbin:1998wz}
 
@@ -592,7 +592,7 @@ math,
 which made the code easy to write and gives us confidence that it is
 correct.
 
-Our code represents a query sequence as an immutable vector of amino
+Our code represents a query sequence as an immutable array of amino
 acids.
 In~idiomatic Haskell, 
 we might represent an individual amino acid~$x_i$
@@ -612,8 +612,8 @@ We therefore chose
 %%    ``Int'' here I think, is that it provides easy indexing into the match and
 %%    insertion emission vectors.}
 
-Our legacy file format also represents
-the log of a probability \emph{negated}, which makes it a positive number.
+Our legacy file format also \emph{negates}
+the log of each probability, making it a positive number.
 %%To~make these numbers more pleasant to read, we negate them,
 %%which eliminates hordes of minus signs from our file formats.
 The negated logarithm of a probability is called a \emph{score}.
@@ -622,14 +622,14 @@ Type \texttt{Score} has a limited \texttt{Num} instance which permits
 scores to be added and subtracted but not multiplied.
 
 In a real hidden Markov model, each probability is represented as a score.
-Our code implements a transformed version of Viterbi's equations, 
-which operates on scores, not on probabilities.
-This version is
+Our code implements a transformed version of Viterbi's equations
+which operates on scores.
+The transformed equations are
 shown on the right-hand side of \figref{viterbi}.
-The transformed equations minimize the
+They minimize the
 score (the negated log probability) for each combination of
 column~$j$, amino 
-acid~$x_i$, and state $M_j$, $I_j$, or $D_j$.
+acid~$x_i$, and state $M_j$, $I_j$, or~$D_j$.
 
 A~model is represented as a sequence of \emph{nodes};
 node~$j$ includes states $M_j$, $I_j$, and~$D_j$,
@@ -637,8 +637,8 @@ as well as the probabilities of transitions out of that node.
 Each node contains tables of emission scores
 $e'_{M_j}$~and~$e'_{I_j}$.
 These tables are read by function
-\texttt{eScore}, which satisfies
-the law % parallel structure for line breaking below
+\texttt{eScore}, whose specification
+is % parallel structure for line breaking below
 \mbox{$\mathtt{eScore}\;s\;j\;i = e'_{s_j}(x_i)$}.
 %
 We place the transition probabilities 
@@ -649,8 +649,7 @@ labels:
 \smallverbatiminput{tprob-tprobs}
 These scores are read by
 function \texttt{aScore}, 
-which satisfies
-the law % line breaking
+whose specification is
 \mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$}.
 
 %%  DROP THIS PARA??
@@ -670,8 +669,10 @@ Think of a value of type \mono{Scored~a} as a container holding
  an~``\texttt a'' with a score written on the side.
 The \texttt{/+/} function adds to the score without touching the
  container.
+Function \texttt{fmap} is also defined; it~applies a function to a
+ container's contents. 
 %
-We~also made \texttt{Scored} an instance of~\texttt{Ord}.
+Finally, we~made \texttt{Scored} an instance of~\texttt{Ord}.
 Containers are ordered by score alone, so applying
 \texttt{minimum} to a list of scored things chooses the thing with the
 smallest (and therefore best) score.
@@ -1091,7 +1092,7 @@ Could we keep the improvement without
 maintaining two versions of \verb+vee'+?
 In~Lisp or Ruby we would have used macros or metaprogramming,
 but we were not confident of our ability to use Template Haskell.
-Instead, we use higher-order functions.
+Instead, we used higher-order functions.
 As~shown in \secref{vee-prime},
 \verb+vee'+ does not use primitive~\primcons\ but instead
 uses an unknown function \texttt{cons}, which is
@@ -1151,7 +1152,7 @@ as  substituting
 on a 48-core, 2.3GHz AMD Opteron 6176 system.
 After about 12~cores, where \mrfy\ runs 6~times as fast as sequential
 code, speedup rolls off.
-By~running 4~instance of \mrfy\ in parallel on different searches,
+By~running 4~instances of \mrfy\ in parallel on different searches,
 we~hope to be able to use all 48~cores with about 50\%~efficiency.
 {\ifpagetuning\looseness=1 \par\fi}
 
@@ -1167,7 +1168,7 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 \begin{figure}%%%[h!]
 \centerline{\includegraphics{speedup}}
 \medskip
-\caption{Parallel speedup}
+\caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
 \label{fig:speedup}
 \end{figure}
 
@@ -1193,7 +1194,7 @@ the ease of parallelizing \mrfy.
 Higher-order functions, memoization, laziness, and parallel strategies
 really worked.
 But~we also encountered obstacles that prevented functional
-programming from serving us as well as we would like.
+programming from working as well as we would have liked.
 The~most significant obstacles were in debugging and testing.
 
 We had a hard time diagnosing run-time errors.
@@ -1249,10 +1250,10 @@ already implemented class \texttt{Arbitrary}.
 We~didn't understand the \texttt{Arbitrary} class very well, 
 perhaps because the overloaded \texttt{arbitrary} value is not a
 function.
-For programmers accustomed to object-oriented dispatch
+(For programmers accustomed to object-oriented dispatch
 on \emph{arguments}, it is hard to grasp how Haskell's type-class
 system can find the proper version
-of \texttt{arbitrary}.
+of \texttt{arbitrary} using only the type of a \emph{value}.)
 \item
 Our difficulties were compounded by a weak understanding of monads.
 We~were too baffled by QuickCheck's \texttt{Gen} monad to grasp its
@@ -1314,7 +1315,7 @@ solves the same problems as existing C++~code.
 Other researchers using Haskell may also have to reimplement code,
 but
 in computational biology, reimplementing existing algorithms is unremarkable.
-For~example, both SMURF and HMMER contain new implementations of
+For~example, both SMURF and HMMER also contain new implementations of
 hidden Markov models and Viterbi's algorithm.
 
 When performance has mattered, members of our group, like other
@@ -1345,13 +1346,14 @@ MRFy is used to detect homologous proteins in the presence of paired
 beta strands; it effectively supplants SMURF.
 It~comprises about 2,500 lines of~Haskell, about 500 of which are devoted
 to tests, QuickCheck properties, and generators.
-Neither C++ codebase includes any test code.
+Neither Matt nor SMURF includes test code.
 MRFy~uses several external tools and libraries, of which the most
 notable are Parsec, the BioHaskell bioinformatics library, and
 the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
 \mrfy's initial development took about three months.
 %%%% \remark{Others were mostly full-time work, but no need to distinguish.}
+{\ifpagetuning\looseness=1 \par\fi}
 \end{itemize}
 Like much research software, all three tools were written
  in~haste.
@@ -1369,7 +1371,8 @@ data structures as mutable oct-trees, vectors, and arrays.
 It~uses clever pointer arithmetic.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was \emph{too} clever: 
-nearly every change resulted in new segfaults.
+nearly every change resulted in new~segfaults.
+{\ifpagetuning\looseness=1 \par\fi}
 
 We~had hoped to extend Matt further, with support for partial alignments,
 which we~expected to require only 
@@ -1408,6 +1411,7 @@ But despite being hasty programmers, we produced code
 that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
+{\ifpagetuning\looseness=1 \par\fi}
 
 
 Looking beyond our research group to computational biology more
