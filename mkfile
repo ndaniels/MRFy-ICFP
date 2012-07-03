@@ -31,10 +31,10 @@ $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 
 
 $TGT.pdf: $TGT.ps
-	ps2pdf14 -dPDFSETTINGS=/prepress -dEmbedAllFonts=true $TGT.ps $target
+	ps2pdf14 -sPAPERSIZE=letter -dPDFSETTINGS=/prepress -dEmbedAllFonts=true $TGT.ps $target
 
 $TGT.ps:D: $TGT.dvi
-	dvips -o $target -P pdf $prereq
+	dvips -t letter -o $target -P pdf $prereq
 
 
 latex:V: ${CODES:%=%.tex}
