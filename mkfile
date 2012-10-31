@@ -15,8 +15,12 @@ $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 &.pdf: &.eps
   epstopdf $prereq
 
-CODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
+OLDCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
+
+# drop dependence on codes: now that paper is final, codes should not be remade
+
+CODES=$TGT
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex

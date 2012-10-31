@@ -25,7 +25,7 @@
    \fi
 \fi
 
-\documentclass[nonatbib,blockstyle,times]{sigplanconf}
+\documentclass[nonatbib,blockstyle,times,reprint]{sigplanconf}
   % at 9pt anything but block style is unreadable
 
 \newcommand\mrfy{MRFy} % damn you Noah
@@ -133,6 +133,11 @@
 \copyrightdata{978-1-4503-1054-3/12/09}
 
 %\titlebanner{banner above paper title}        % These are ignored unless
+\titlebanner{\textsf{Reprinted from \textrm{\emph{Proceedings of the
+2012 {ACM} {SIGPLAN} International
+Conference on Functional Programming}} (ICFP'12)}}
+\setcounter{page}{227}
+
 \preprintfooter{Haskell in Computational Biology}   % 'preprint' option specified.
 \iftimestamp
 \preprintfooter{\mdfivestamp} 
