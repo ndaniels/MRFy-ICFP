@@ -1,5 +1,64 @@
-Performance of our implementation of the Viterbi algorithm
-==========================================================
+Introduction
+============
+A preliminary version of this paper was presented as an *Experience
+Report* at ICFP 2012.  In this revised paper, we add to our original
+work the results of two different attempts to improve and deepen the
+application of functional programming to the detection of remote
+homologies in proteins:
+
+  - To detect the likelihood that a protein is drawn from a family
+    represented by a given Hidden Markov Model, we implemented
+    Viterbi's algorithm in Haskell.  The algorithm uses dynamic
+    programming, which we implemented by memoizing a recursive
+    function.
+
+    Our original Haskell code ran 7 to 8 times slower than C++ code
+    built in the same research group for the same purpose.  Because
+    MRFy exploits parallelism well, we could afford to give up this
+    factor of 7 or 8, but we felt this number was awfully high.  In
+    Section XXXX we report our efforts to speed up a native Haskell
+    implementation. 
+
+  - Our code for Viterbi's algorithm is carefully crafted to reflect
+    the equations usually used in textbooks to describe the
+    algorithm.  But an experienced functional programmer might find
+    our original code distasteful:
+
+      - The central data structure is an array, and it is used in a
+        way that is more typical of FORTRAN than of any functional
+        language.  (Lots of index arithmetic, no wholemeal
+        programming.)
+
+      - There is a good deal of fiddling with indices at the
+        boundaries.
+
+      - The elegant structure of the Plan 7 Hidden Markov Model is
+        *not* reflected in the static types used in the Haskell code.
+
+      - There are an alarming number of cases.
+
+    In Section YYYY, we report on our efforts to make the data
+    structures and algorithms "more functional."  We refactor our
+    original code and assess it on three dimensions:
+
+      - How much is it still manifestly an implementation of Viterbi's
+        equations? 
+
+      - How well do the static types model the structure of the
+        problem?
+
+      - How do we feel about the code?
+
+      - How does making the code "more functional" affect performance}
+
+
+
+ original code uses Viter detects the most likely parse
+
+
+
+XXXX: Experience trying to make Haskell competitive with C++
+============================================================
 
 As new Haskell programmers, we tended write parts of MRFy as we would in a 
 C program. For example, our representation of an `HMM` is an array of records 
