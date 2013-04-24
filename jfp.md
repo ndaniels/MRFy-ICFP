@@ -53,12 +53,23 @@ homologies in proteins:
 
 
 
- original code uses Viter detects the most likely parse
-
 
 
 XXXX: Experience trying to make Haskell competitive with C++
 ============================================================
+
+[to be continued]
+
+
+YYYY: Experience making things "more functional"
+================================================
+
+[to be continued]
+
+
+Andrew's Notes
+==============
+
 
 As new Haskell programmers, we tended write parts of MRFy as we would in a 
 C program. For example, our representation of an `HMM` is an array of records 
