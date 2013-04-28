@@ -49,7 +49,7 @@ homologies in proteins:
 
       - How do we feel about the code?
 
-      - How does making the code "more functional" affect performance}
+      - How does making the code "more functional" affect performance?
 
 
 
@@ -57,35 +57,160 @@ homologies in proteins:
 
 XXXX: Experience trying to make Haskell competitive with C++
 ============================================================
+We asked, according to our relatively naive understanding of what
+factors affect performance, how Haskell code might differ from C++
+code.  We came up with these ideas:
 
-[to be continued]
+ 1. In C and C++, record structures compose with no additional cost in
+    allocations or indirections.  That is, a record of records is
+    allocated in a single block of memory, and a member of a member
+    can be addressed with only one address-arithmetic
+    operation---there is no "pointer-chasing".
 
+    In Haskell, because the language is polymorphic, we believe that a
+    typical value must be represented in a single machine word.  If
+    the value is too big to fit in a machine word, it must be
+    allocated on the heap and represented by a pointer.  Such a
+    representation is called "boxed".
+
+    Because Haskell is lazy, even individual members of a record may
+    be either evaluated or unevaluated, and may therefore be boxed.
+
+    We set out to make the *machine-level* representation of our
+    Haskell data structures more like the machine-level representation
+    that a C programmer would use.  We were able to discover two
+    mechanism:
+
+      - A *strictness annotation* can force the evaluation of a part
+        of a record and therefore prevent it from being boxed in a
+        thunk.
+
+      - The `UNPACK` pragma: where do we learn about it (aside from
+        Johan Tibell), what do we cite, how is it known how to use it?
+
+      - Does GHC provide an option that enables us to look at some
+        kind of GHC IR and know if we have succeeded?
+
+ 2. C and C++ use pointer arithmetic and unsafe array access.
+
+      - What happens if we change the record of transition
+        probabilities to an array indexed by pair of states?
+
+        What should the index type be?
+
+        Can we look at GHC output (maybe `-ddump-simpl`) and figure
+        out whether we are getting a flat two-dimensional array vs an
+        array of arrays?
+
+        Is there a one-dimensional array that works?
+
+        Since we are indexing using every element of an enumeration
+        type, what is a way we can introduce unsafe indexing that we
+        believe is safe according to the type system?  Can we convince
+        the compiler?
 
 YYYY: Experience making things "more functional"
 ================================================
+After the experience of presenting our work at ICFP and meeting other
+functional programmers there, we became aware that our central data
+structure is not what a functional programmer might expect to see.
+We were curious to see what effect it might have to change this data
+structure.  [questions from above]?
 
-[to be continued]
+Diagramatically, a Hidden Markov Model looks like a Begin node
+followed by zero (one?) or more ordinary nodes followed by an End
+node.  But in our original code, all nodes are represented in the same
+way, and the distinct properties of Begin and End nodes are present
+only in the code, not in the types.  (As new Haskell programmers, we
+tended to choose representations similar to the C representations we
+had used before, and because C does not provide discriminated-union
+type, the responsibility for knowing which node we're looking at
+*always* resides in the code.  Our groups C code does not even use C
+unions (**check this**); there would be little benefit.)
+
+  - Because every node has to be capable of representing a Begin node,
+    every node stores two probabilities used only for transitions out
+    of Begin nodes, even though in all but one of the nodes, these
+    probabilities go unused.
+
+  - (Mumbo jumbo about chopping the node sequence into pieces, so that
+    any node might become a Begin node after beta strands are placed.
+    Again, the different interpretations of the "same" node are not
+    explicit in the type system.)
+
+Experiments to be carried out:
+
+ 1. Refactor the basic representation to eliminate the unused
+    transition probabilities.
+
+ 2. Introduce an explicit Begin node with its own custom
+    representation.
+
+ 3. Create a `Model` type with the form `Begin {Middle} End`.
+    Inspired by REPA-style indexing tricks (also seen elsewhere),
+    represent the middle sequence as a function of type `Int ->
+    Middle`.  Implement a slicing function `Array Node -> Interval ->
+    Model`.
+
+ 4. Rewrite Viterbi with the new representation.    
+
+N.B. The elimination of unused transition probabilities is
+*incompatible* with the change in representation to use a
+two-dimensional array.  These experiments will have to be handled
+carefully; we may need to build all four variants from
+
+    { one node type, three node types } * { probability record, probability array }
 
 
-Andrew's Notes
-==============
+A more radical change in the representation is to use the functional
+programmer's mainstay: a list instead of an array.  This means lists
+of nodes as well as lists of residues.  This change was motivated by
+two observations:
+
+  - Our Viterbi code was doing an awful lot of array indexing and
+    index arithmetic.  This felt more like FORTRAN than like Haskell.
+
+  - There were a *lot* of special cases around indices like 0 and -1.
+    [Some of these cases arose because we didn't have a distinct Begin
+    node, so we'll have to see what the code looks like when a Begin
+    node is introduced.]
+
+Changing to lists had several effects:
+
+  - The algorithm suddenly came into focus as something familiar to
+    functional programmers.  Instead of being something blindly
+    translated from equations in a textbook, it became (probabilistic)
+    minimum edit distance.  We thought this was pretty cool.
+
+  - It's no longer so obvious how our code relates to Viterbi's
+    algorithm as explained in textbooks.  Instead, we are relying on a
+    deeper understanding of the underlying problem.  Perhaps good for
+    us, but maybe not so good for communicating with, e.g., new
+    graduate students in the group.  The jury is still out here.
+
+  - Memoization is *much* hairier.  The junior members of the team
+    might not have been able to pull this off on their own.  Lots of
+    QuickCheck action, and significant uncertainty.
+
+  - We've knowingly introduced new pointer indirections, with who
+    knows what effect on locality or on memory traffic.  How did this
+    affect performance?  [This problem militates toward testing on
+    multiple hardware platforms, including NR's ancient AMD chip
+    before it goes away.]
 
 
-As new Haskell programmers, we tended write parts of MRFy as we would in a 
-C program. For example, our representation of an `HMM` is an array of records 
-where some fields are not always used. We therefore endeavored to rewrite some 
-of our fundamental types to make better use of Haskell's type system while also 
-benchmarking each change to see how it affects the performance of our 
-implementation of Viterbi. {Perhaps this is a lie.}
 
+Benchmarking
+============
 We created several benchmarks without beta strands so that MRFy *only* executes 
 a single pass of Viterbi without executing a stochastic search. For every 
 benchmark, we tested a change in either the implementation of `viterbi` or a 
 change in the representation. We report figures relative to a baseline, which 
 was established to account for IO and parsing.
 
-We now detail each of the changes.
 
+Naming the parts of the design space, Take One
+==============================================
 {Since there are many changes, my idea here is to give names to each of the 
 changes. Ideally, they'd correspond to a branch name. I have not thought this 
 through.}
@@ -112,4 +237,33 @@ changes: {I don't think we know yet.}
 need that for all tests---maybe only the `static-trans` and `HMM-list` tests?
 What about `separate-begin`? With `separate-begin`, what if we constructed the 
 special node within `viterbi`?}
+
+
+
+Naming the parts of the design space, Take Two
+==============================================
+The design space is combinatorial.  I suggest we name the individual
+elements: 
+
+  - Records of records: nested, flat
+
+      - relates to special directives and indirection removal?
+
+  - Transition tables: named fields, single array, array of arrays
+
+  - Transition array indexing: safe, unsafe
+
+  - Viterbi decreases: lists, array indices
+
+  - Node array indexing: safe, unsafe, not used in inner loop
+
+  - Residue array indexing: safe, unsafe, not used in inner loop
+
+Some of these are independent and some are connected.   For example,
+if Viterbi decreases array indices, then that indexing must be safe or
+unsafe.  If Viterbi decreases lists, then array indexing is not used
+in the inner loop.
+
+
+
 
