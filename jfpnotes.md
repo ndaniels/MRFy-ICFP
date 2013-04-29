@@ -128,6 +128,8 @@ type, the responsibility for knowing which node we're looking at
 *always* resides in the code.  Our groups C code does not even use C
 unions (**check this**); there would be little benefit.)
 
+{I checked. The entire SMURF code base does not contain the word 'union' once.}
+
   - Because every node has to be capable of representing a Begin node,
     every node stores two probabilities used only for transitions out
     of Begin nodes, even though in all but one of the nodes, these
