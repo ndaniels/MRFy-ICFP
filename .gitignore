@@ -3,6 +3,7 @@
 *.synctex.gz
 *.graffle
 *.swp
+*.key
 .DS_Store
 mrfy.md
 
