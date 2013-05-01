@@ -257,6 +257,10 @@ elements:
 
   - Viterbi decreases: lists, array indices
 
+  - preceders --- distinction between original viterbi and index based
+      
+      - how to handle impossible transitions
+
   - Node array indexing: safe, unsafe, not used in inner loop
 
   - Residue array indexing: safe, unsafe, not used in inner loop
