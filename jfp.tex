@@ -998,15 +998,23 @@ we can still exploit laziness:
 from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
 tag each one with a cumulative cost and a utility.
-We~hope that if you look carefully at how \texttt{successors} is computed,
-you will understand why we
-separate \texttt{pt0}~from~\texttt{nextPt} instead of using a single
-function that produces an infinite list:
-We~don't \emph{want} the infinite list that would result from
-applying \texttt{nextPt} to many points in succession;
-we~want the infinite list that results from applying \texttt{nextPt}
-to \texttt{startPt} many times in succession, each time with a
-different source of randomness.
+
+In Hughes's \citeyearpar{hughes:why} classic model of lazy search,
+we~might expect to use an infinite sequence of points obtained by
+applying \texttt{nextPt} to many points in succession, as done by
+the Prelude function \texttt{iterate}.
+But~if you look carefully at how \texttt{successors} is computed,
+that's not what's happening:
+instead, we~compute an infinite list by applying \texttt{nextPt} to
+a~\emph{single} initial point using infinitely many distinct sources
+of random variation.
+Then, when we find a useful \texttt{newPt}, a~recursive call
+to \texttt{everyPt} computes a \emph{fresh} infinite sequence of
+single jumps starting at~\texttt{newPt}.
+\mrfy's search may explore an arbitrary number of infinite
+lists of points, and the representation we~found easiest to think
+about is the pair of elements
+\texttt{pt0}~and~\texttt{nextPt} in the \texttt{SearchGen} record.
 
 Once the successors have been computed and tagged,
 \texttt{span} finds the first useful successor.
