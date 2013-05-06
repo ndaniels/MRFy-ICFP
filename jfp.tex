@@ -172,6 +172,52 @@ biology.
 \input{jfpnotes}
 
 
+\subsection{Software deltas}
+
+\subsubsection{Reducing cases in Viterbi}
+
+Original Viterbi took a state and two indices as argument, and it
+dealt with impermissible transitions by assigning a very large score
+(which translates to a very small probability).
+Indices 1, 0, and $-1$ were all used to indicate special conditions,
+and 
+the function had 25~cases overall.
+
+\newcommand\pv{\textit{Predecessor Viterbi}}
+\newcommand\ov{{Original Viterbi}}
+
+Our first step in adapting the code was to create \pv.
+Like \ov, \pv\ takes a state and two indices as an argument.
+But at top level, there is no case analysis on the state, and the only
+indices considered are zero and nonzero, so there are only four cases.
+(The state is used in two ways: to compute transition probabilities,
+and to decide which states may permissibly precede the current state.
+The set of permissible preceding states is looked up in a data
+structure, not computed by case analysis.)
+
+Here is the general case in the new code:
+\smallverbatiminput{hoviterbi}
+THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
+WE SHOULD PROBABLY FIX THAT.
+In the old code, there are three corresponding cases: one each for
+match, insert, and delete states.  
+Here is the code for the match case:
+\smallverbatiminput{viterbi}
+The other case are similar; the second argument to \texttt{aScore} is
+always equal to the first (state) argument to \texttt{vee'},
+and the argument to \texttt{map from} is different in each case.
+(In the new code, this argument is identical to \texttt{preceders !
+stateRight}.)
+NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
+
+
+The main benefit is that the Viterbi function is reduced from 90~lines
+of code to just 40~lines.
+This change laid the groundwork for more experiments.
+
+BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
+
+
 
 \section{Introduction}
 

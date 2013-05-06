@@ -1,4 +1,4 @@
-TGT=mrfy_experience_report
+TGT=jfp
 
 all:V: $TGT.dvi $TGT.pdf $TGT.ps
 ps:V: $TGT.ps
@@ -20,7 +20,9 @@ OLDCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility mov
 
 # drop dependence on codes: now that paper is final, codes should not be remade
 
-CODES=$TGT
+# now add the new stuff
+
+CODES=hoviterbi
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex
@@ -86,6 +88,9 @@ vscore.tex score.tex:D: ./xsource Smurf2/Score.hs
  	lua $prereq
 
 memo.tex edge.tex viterbi.tex:D: ./xsource Smurf2/Viterbi.hs
+	lua $prereq
+
+hoviterbi.tex:D: ./xsource Smurf2/ViterbiThree.hs
 	lua $prereq
 
 statelabel.tex hmmnode.tex tprob.tex tprobs.tex tprob-tprobs.tex:D: ./xsource Smurf2/MRFTypes.hs
