@@ -1008,6 +1008,7 @@ that's not what's happening:
 instead, we~compute an infinite list by applying \texttt{nextPt} to
 a~\emph{single} initial point using infinitely many distinct sources
 of random variation.
+\remark{This is the place to bring in a figure, I~think. ---NR}
 Then, when we find a useful \texttt{newPt}, a~recursive call
 to \texttt{everyPt} computes a \emph{fresh} infinite sequence of
 single jumps starting at~\texttt{newPt}.
@@ -1015,6 +1016,7 @@ single jumps starting at~\texttt{newPt}.
 lists of points, and the representation we~found easiest to think
 about is the pair of elements
 \texttt{pt0}~and~\texttt{nextPt} in the \texttt{SearchGen} record.
+
 
 Once the successors have been computed and tagged,
 \texttt{span} finds the first useful successor.
