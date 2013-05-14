@@ -15,6 +15,7 @@
 
 \newif\ifpdfmadness
 
+
 \ifx\pdfoutput\undefined
    \pdfmadnessfalse
 \else
@@ -24,6 +25,14 @@
      \pdfmadnessfalse
    \fi
 \fi
+
+\ifpdfmadness
+  \def\loadpdf[#1]#2{\includegraphics[#1]{#2.pdf}}
+\else
+  \def\loadpdf[#1]#2{\includegraphics[#1]{#2.eps}}
+\fi
+
+
 
 \documentclass[]{jfp1}
 
@@ -54,7 +63,9 @@
     language = Haskell
     }    
 
-\newcommand\figref[1]{Figure~\ref{#1}}
+\newcommand\figref[1]{Figure~\ref{fig:#1}}
+\newcommand\figrefpair[3][and]{Figures \ref{fig:#2}~#1~\ref{fig:#3}}
+\newcommand\figlabel[1]{\label{fig:#1}}
 \newcommand\secref[1]{Section~\ref{sec:#1}}
 \newcommand\seclabel[1]{\label{sec:#1}}
 
@@ -167,57 +178,6 @@ made it easy for us to develop new algorithms in computational
 biology.
 \end{abstract}
 
-\section{Notes on the new paper}
-
-\input{jfpnotes}
-
-
-\subsection{Software deltas}
-
-\subsubsection{Reducing cases in Viterbi}
-
-Original Viterbi took a state and two indices as argument, and it
-dealt with impermissible transitions by assigning a very large score
-(which translates to a very small probability).
-Indices 1, 0, and $-1$ were all used to indicate special conditions,
-and 
-the function had 25~cases overall.
-
-\newcommand\pv{\textit{Predecessor Viterbi}}
-\newcommand\ov{{Original Viterbi}}
-
-Our first step in adapting the code was to create \pv.
-Like \ov, \pv\ takes a state and two indices as an argument.
-But at top level, there is no case analysis on the state, and the only
-indices considered are zero and nonzero, so there are only four cases.
-(The state is used in two ways: to compute transition probabilities,
-and to decide which states may permissibly precede the current state.
-The set of permissible preceding states is looked up in a data
-structure, not computed by case analysis.)
-
-Here is the general case in the new code:
-\smallverbatiminput{hoviterbi}
-THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
-WE SHOULD PROBABLY FIX THAT.
-In the old code, there are three corresponding cases: one each for
-match, insert, and delete states.  
-Here is the code for the match case:
-\smallverbatiminput{viterbi}
-The other case are similar; the second argument to \texttt{aScore} is
-always equal to the first (state) argument to \texttt{vee'},
-and the argument to \texttt{map from} is different in each case.
-(In the new code, this argument is identical to \texttt{preceders !
-stateRight}.)
-NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
-
-
-The main benefit is that the Viterbi function is reduced from 90~lines
-of code to just 40~lines.
-This change laid the groundwork for more experiments.
-
-BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
-
-
 
 \section{Introduction}
 
@@ -232,7 +192,11 @@ software is usually written in a dynamically typed
 or domain-specific language like
 Perl, Python, Ruby, SPSS, or~R.
 In~this paper, we report on experience using a third kind of language,
-Haskell: 
+Haskell.
+Although we encountered some obstacles that kept Haskell from working
+as well as we would have liked, our overall experience was positive:
+Haskell really worked for us, and we believe it will work equally well
+for other computational biologists.
 \begin{itemize}
 \item
 We had to reimplement an
@@ -294,9 +258,14 @@ would be which
 experience we were likely to have
 \fi
  (\secref{penumbra}).
-\looseness=-1
+\item
+\emph{[POTENTIAL BULLETS ABOUT SPEED AND ``MORE FUNCTIONAL'']}
 \end{itemize}
-
+A~preliminary version of this
+paper \citep{daniels:haskell-in-bio:2012} was presented as 
+an \emph{Experience Report} in ICFP~2012.
+This~paper adds to the original paper by describing our experience in
+trying to simplify and speed up the central algorithm.
 
 
 
@@ -412,13 +381,13 @@ in the alignment,~\alignwidth.
 
 \begin{figure}
 \ifpdfmadness
-\centerline{\includegraphics[width=6cm]{alignment.pdf}} 
+\centerline{\includegraphics[width=8cm]{alignment.pdf}} 
 \else
-\centerline{\includegraphics[width=6cm]{alignment.eps}} 
+\centerline{\includegraphics[width=8cm]{alignment.eps}} 
 \fi
 
 \caption{A~structural alignment of four proteins $(\alignwidth = 12)$}
-\label{alignment} 
+\figlabel{alignment} 
 \end{figure}
 
 
@@ -444,6 +413,7 @@ For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}~$D_j$.
 The deletion state determines the probability that a homologous protein
 has lost an amino acid by deletion from column~$j$.
+\hfuzz=1.5pt % fix blot
 \end{itemize}
 The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are \emph{emission probabilities}.
 
@@ -458,9 +428,25 @@ probabilities, and it is also labeled with one of these labels:
 \smallverbatiminput{statelabel}
 
 
+
+\begin{figure} 
+\ifpdfmadness
+\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
+\else
+\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
+\fi
+
+\caption{A hidden Markov model $(\alignwidth = 4)$}
+
+\figlabel{plan7}
+\end{figure}
+
+
 We~use the ``Plan7'' hidden Markov model, which forbids direct
 transitions between insertion 
 states and deletion states \cite{Eddy:1998ut}. 
+\seclabel{plan7}%
+\remark{Reference to \figref{plan7}??}%
 \ifpagetuning
 ``Plan7'' implies that
 \else
@@ -490,14 +476,6 @@ $\txprobjj M I$~or~$\txprobjj I I$.
 
 
 
-\begin{figure} 
-\ifpdfmadness
-\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
-\else
-\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
-\fi
-
-
 This model
 has begin and end states $B$~and~$E$,
 as well as four
@@ -506,17 +484,38 @@ an insertion state~$I$,
 a match state~$M$, and a
 deletion state~$D$.
 
-\caption{A hidden Markov model $(\alignwidth = 4)$}
-
-\label{plan7} \end{figure}
 
 
 
-\begin{figure*}
-\newcommand\vsum[2]{#2&{}+{}& #1}
+
+
+\subsection{Computing probabilities using perspicuous Haskell}
+
+\seclabel{viterbi}
+
+
+Given a hidden Markov model, 
+an~established software package called HMMER (pronounced ``hammer'') 
+can compute the probability
+that a new protein shares structure 
+\ifnotcutting and evolutionary history \fi
+with the proteins used to train the model.
+The computation finds the most likely path through the hidden Markov model.
+To~make best use of floating-point arithmetic, the software computes
+the \emph{logarithm} of the probability of each path, by~summing
+the logs of the 
+probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
+The~path that maximizes the
+log of the probability is the most likely path.
+
+
 
 \def\goo{18pt}
 \def\gum{14pt}
+\newcommand\vsum[2]{#2&{}+{}& #1}
+
+\begin{figure}
+
 \[
 \def\maxiquad{\hskip 1.2em\relax}
 %\mskip -5mu
@@ -538,9 +537,16 @@ V_{j}^{D}(i) &=& \max \left\{
   \vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
   \end{array} \right.\\
 \end{array}
-%
-\hskip 1.5em\relax % \qquad too big
-%
+\]
+
+\caption{Viterbi's original equations}
+\figlabel{viterbi-original}
+
+
+\bigskip
+
+%\begin{figure}
+\[
 \begin{array}{l@{}c@{}l@{}}
 V_{j}^{\prime M}(i) &{}={}& e^{\prime}_{M_{j}}(x_{i}) + \min \left\{
   \begin{array}{l@{}c@{}l}
@@ -568,35 +574,15 @@ V_{j}^{\prime D}(i) &=& \min \left\{
 }
 \\
 \end{array}
-%\mskip -5mu
 \]
 
-\caption{Viterbi's equations, in original and negated forms}
-\label{viterbi}
-\end{figure*}
+\caption{Viterbi's equations transformed to work with scores}
+\figlabel{viterbi-transformed}
+\end{figure}
 
 
 
-\subsection{Computing probabilities using perspicuous Haskell}
-
-\seclabel{viterbi}
-
-
-Given a hidden Markov model, 
-an~established software package called HMMER (pronounced ``hammer'') 
-can compute the probability
-that a new protein shares structure 
-\ifnotcutting and evolutionary history \fi
-with the proteins used to train the model.
-The computation finds the most likely path through the hidden Markov model.
-To~make best use of floating-point arithmetic, the software computes
-the \emph{logarithm} of the probability of each path, by summing
-the logs of the 
-probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
-The~path that maximizes the
-log of the probability is the most likely path.
-
-The computation is specified on the left-hand side of \figref{viterbi}.
+The computation is specified in \figref{viterbi-original}.
 A~probability $V_j^M(i)$ represents the probability of the most
 likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
@@ -645,8 +631,8 @@ scores to be added and subtracted but not multiplied.
 In a real hidden Markov model, each probability is represented as a score.
 Our code implements a transformed version of Viterbi's equations
 which operates on scores.
-The transformed equations are
-shown on the right-hand side of \figref{viterbi}.
+The~transformed equations are
+shown in \figref{viterbi-transformed}.
 They minimize the
 score (the negated log probability) for each combination of
 column~$j$, amino 
@@ -668,9 +654,10 @@ into a record in which each field is labeled
 where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
 labels: 
 \smallverbatiminput{tprob-tprobs}
-These scores are read by
+The fields of this record are read by
 function \texttt{aScore}, 
-whose specification is
+which is given states $s$~and~$\hat s$ and a node index; its %% fixes a bad line break
+specification is
 \mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$}.
 
 %%  DROP THIS PARA??
@@ -738,7 +725,7 @@ take exponential time.
 But like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
 For example, to compute $V_j^{\prime M}(i)$ using the equation at the top
-right of \figref{viterbi}, we define
+of \figref{viterbi-transformed}, we define
 \mbox{\texttt{vee\char`\'} \texttt{Mat} $j$ $i$}.
 The equation adds~$e^{\prime}_{M_{j}}(x_{i})$, computed
 with \texttt{eScore}, to a minimum of sums.
@@ -750,7 +737,8 @@ the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively:
 % The right-hand side of \verb+vee'+ is wrapped in a call to
 What about the call to
 \mono{\mbox{fmap (Mat `cons`)}}?
-This call performs a computation \emph{not} shown in \figref{viterbi}:
+This call performs a computation \emph{not} shown
+in \figrefpair[or]{viterbi-original}{viterbi-transformed} :
 \mrfy\ computes not only the {probability} of the most likely path but 
 also the path itself.
 Function \mono{(Mat `cons`)} adds~$M$ to a path;
@@ -763,7 +751,8 @@ but faster:
 \smallverbatiminput{memo}
 Functions \texttt{Memo.memo3} and \texttt{Memo.arrayRange} come from
 Luke Palmer's
-\path{Data.MemoCombinators} package.
+package
+\path{Data.MemoCombinators}.
 The value
 \texttt{numNodes} represents~$\alignwidth$,
 and \texttt{seqlen} represents~$N$.
@@ -778,7 +767,7 @@ managing dynamic-programming tables.
 Haskell enabled us write simple, performant code with little effort.
 %
 Because the memoized version so faithfully resembles the equations in
-\figref{viterbi}, we~retired the classic version.
+\figref{viterbi-transformed}, we~retired the classic version.
 
 
 
@@ -808,9 +797,10 @@ can be hydrogen-bonded to each other,
 making them ``stuck together.''
 These beta strands help identify groups of homologous
 proteins.
-MRFy detects homologous proteins that include hydrogen-bonded beta
+MRFy's \emph{raison d'\^etre} is to detect homologous proteins that
+include hydrogen-bonded beta 
 strands; using prior methods, many instances of this problem are
-intractable. 
+intractable \cite{daniels:thesis}. 
 
 Beta strands require new equations and
 richer models of protein structure.
@@ -848,6 +838,23 @@ Because $V_j^{\prime M}(i)$~depends not only on nearby values but also on
 $V_{\pairedwith j}^{\prime M}(i')$,
 dynamic programming cannot compute the maximum likelihood quickly 
 \cite{Menke:2010ti,Daniels:2012}.
+
+\begin{figure}
+\ifpdfmadness
+\centerline{\includegraphics[width=11cm]{mrf_interleave_diagram.pdf}} 
+\else
+\centerline{\includegraphics[width=11cm]{mrf_interleave_diagram.eps}} 
+\fi
+Each shaded node represents a beta-strand position.\\
+Nodes connected by dashed edges are hydrogen-bonded.
+
+\smallskip
+
+\caption{A Markov random field with two beta-strand pairs}
+\figlabel{mrf} 
+\end{figure}
+
+
 
 The new equations are accompanied by a new model.
 Within a beta strand, amino acids are not inserted or deleted, so~a
@@ -890,22 +897,6 @@ higher-order functions,
 existentially 
 quantified types, and lazy evaluation.
 
-%
-%  placement at top left column is not ideal, but right column results
-%  in a bad page break elsewhere
-%
-\begin{figure}
-\ifpdfmadness
-\centerline{\includegraphics[width=7.8cm]{mrf_interleave_diagram.pdf}} 
-\else
-\centerline{\includegraphics[width=7.8cm]{mrf_interleave_diagram.eps}} 
-\fi
-Each shaded node represents a beta-strand position.
-Nodes connected by dashed edges are hydrogen-bonded.
-
-\caption{A Markov random field with two beta-strand pairs}
-\label{mrf} 
-\end{figure}
 
 
 
@@ -915,6 +906,29 @@ The type of point is existentially quantified, but it is typically
 a single placement or perhaps a population of placements. 
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
+
+\begin{figure}
+\tabcolsep=0.5cm
+\centerline{%
+\begin{tabular}{cc}
+\loadpdf[width=5cm]{search-figs/search-graph1}&
+\loadpdf[width=5cm]{search-figs/search-graph5}\\
+\begin{minipage}{4cm}
+\caption{Stochastic search with useful and useless steps}%
+\figlabel{search-steps}
+\end{minipage}%
+&
+\begin{minipage}{4cm}
+\caption{Filtering out useless steps could cause nontermination}%
+\figlabel{filtered-search-steps}
+\end{minipage}\\
+\end{tabular}%
+}
+\end{figure}
+
+
+
+
 
 Ideally, MRFy would use the now-classic, lazy, modular
 technique advocated by \citet{hughes:why}, in which one function
@@ -1200,7 +1214,7 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 \centerline{\includegraphics{speedup}}
 \medskip
 \caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
-\label{fig:speedup}
+\figlabel{speedup}
 \end{figure}
 
 %%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
@@ -1611,6 +1625,60 @@ We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci.
 
 This work was funded in part by NIH grant 1R01GM080330.
+
+
+\section{Notes on the new paper}
+
+\input{jfpnotes}
+
+
+\subsection{Software deltas}
+
+\subsubsection{Reducing cases in Viterbi}
+
+Original Viterbi took a state and two indices as argument, and it
+dealt with impermissible transitions by assigning a very large score
+(which translates to a very small probability).
+Indices 1, 0, and $-1$ were all used to indicate special conditions,
+and 
+the function had 25~cases overall.
+
+\newcommand\pv{\textit{Predecessor Viterbi}}
+\newcommand\ov{{Original Viterbi}}
+
+Our first step in adapting the code was to create \pv.
+Like \ov, \pv\ takes a state and two indices as an argument.
+But at top level, there is no case analysis on the state, and the only
+indices considered are zero and nonzero, so there are only four cases.
+(The state is used in two ways: to compute transition probabilities,
+and to decide which states may permissibly precede the current state.
+The set of permissible preceding states is looked up in a data
+structure, not computed by case analysis.)
+
+Here is the general case in the new code:
+\smallverbatiminput{hoviterbi}
+THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
+WE SHOULD PROBABLY FIX THAT.
+In the old code, there are three corresponding cases: one each for
+match, insert, and delete states.  
+Here is the code for the match case:
+\smallverbatiminput{viterbi}
+The other case are similar; the second argument to \texttt{aScore} is
+always equal to the first (state) argument to \texttt{vee'},
+and the argument to \texttt{map from} is different in each case.
+(In the new code, this argument is identical to \texttt{preceders !
+stateRight}.)
+NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
+
+
+The main benefit is that the Viterbi function is reduced from 90~lines
+of code to just 40~lines.
+This change laid the groundwork for more experiments.
+
+BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
+
+
+
 
 
 \bibliography{mrfy_experience_report}
