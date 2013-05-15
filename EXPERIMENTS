@@ -1,0 +1,53 @@
+NR's Qs
+=======
+(1) What did you change?
+(2) Why did you change it? (What was the question or hypothesis) 
+(3) what were the results? On what machines and benchmarks? Measured with 
+    what tools?
+
+
+Short benchmark on ICFP
+=======================
+master  8.hmm+         4.480000  x86_64  Intel i7-3930K
+master  barwin.hmm+    1.010000  x86_64  Intel i7-3930K
+master  micro8.hmm+    0.040000  x86_64  Intel i7-3930K
+master  sandwich.hmm+  4.020000  x86_64  Intel i7-3930K
+master  total          9.550000  x86_64  Intel i7-3930K
+
+
+AG attempt 1
+three-node-record
+=================
+(1) Adapted NR's hoViterbi with a new "Model" representation of an HMM.
+    e.g., constant time slicing with arrays
+
+(2) Speed up Viterbi relative to C++ by reducing the amount of case
+    analysis without leaving the essentially index-based nature of
+    the computation.
+
+(3) Results of short benchmark:
+
+    three-node-record  8.hmm+         5.310000   x86_64  Intel i7-3930K
+    three-node-record  barwin.hmm+    1.590000   x86_64  Intel i7-3930K
+    three-node-record  micro8.hmm+    0.540000   x86_64  Intel i7-3930K
+    three-node-record  sandwich.hmm+  4.840000   x86_64  Intel i7-3930K
+    three-node-record  total          12.280000  x86_64  Intel i7-3930K
+
+    Problem: it's ~30% slower.
+
+
+AG attempt 2
+three-node-record-orig-array
+============================
+(1) Adapted AG#1 to use the original array `HMM` type from ICFP.
+
+(2) AG#1 was slow. Rule out a possibility for the slow down.
+
+(3) Results of short benchmark:
+
+    three-node-record-orig-array  8.hmm+         5.340000   x86_64  Intel i7-3930K
+    three-node-record-orig-array  barwin.hmm+    1.610000   x86_64  Intel i7-3930K
+    three-node-record-orig-array  micro8.hmm+    0.560000   x86_64  Intel i7-3930K
+    three-node-record-orig-array  sandwich.hmm+  4.830000   x86_64  Intel i7-3930K
+    three-node-record-orig-array  total          12.340000  x86_64  Intel i7-3930K
+
