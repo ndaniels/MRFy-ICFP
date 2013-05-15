@@ -71,6 +71,7 @@ three-node-record-orig-array-func
     micro8.hmm+    0.550000   x86_64  Intel i7-3930K
     sandwich.hmm+  4.390000   x86_64  Intel i7-3930K
     total          11.280000  x86_64  Intel i7-3930K
+    Commit: 910383cfc3a87a0f19460e59ae32d1a02c1fb869
 
     Problem: it's still 17.5% slower than our ICFP version.
     It looks like `preceders` wasn't being memoized? Why?
