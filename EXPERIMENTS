@@ -76,3 +76,25 @@ three-node-record-orig-array-func
     Problem: it's still 17.5% slower than our ICFP version.
     It looks like `preceders` wasn't being memoized? Why?
 
+
+AG attempt 4
+three-node-record-orig-func
+=================================
+(1) Adapted AG#1 to compute `preceders` with case analysis in lieu
+    of an array. This is just like AG#3, but using the new HMM
+    representation.
+
+(2) Try to narrow down the performance hit.
+
+(3) Results of short benchmark:
+
+    8.hmm+         4.750000   x86_64  Intel i7-3930K
+    barwin.hmm+    1.460000   x86_64  Intel i7-3930K
+    micro8.hmm+    0.540000   x86_64  Intel i7-3930K
+    sandwich.hmm+  4.340000   x86_64  Intel i7-3930K
+    total          11.090000  x86_64  Intel i7-3930K
+    Commit: c38d37c0729bb94430f1904e22e5a0cdd3f7a4ec
+
+    OK. Not much change from AG#3, so it seems like the
+    representation of an HMM isn't at fault here.
+
