@@ -98,3 +98,16 @@ three-node-record-orig-func
     OK. Not much change from AG#3, so it seems like the
     representation of an HMM isn't at fault here.
 
+
+three-node-record-strict
+========================
+(1) Added two strictness annotations to `child` function for `hoViterbi`.
+    A small change from `three-node-record`.
+
+(2) What effect does strictness have?
+
+(3) Results of short benchmark compared with `three-node-record`:
+
+    ode-record f24c479    12.33s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
+    ord-strict 19e65f6*   11.62s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
+
