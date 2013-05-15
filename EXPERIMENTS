@@ -8,11 +8,12 @@ NR's Qs
 
 Short benchmark on ICFP
 =======================
-master  8.hmm+         4.480000  x86_64  Intel i7-3930K
-master  barwin.hmm+    1.010000  x86_64  Intel i7-3930K
-master  micro8.hmm+    0.040000  x86_64  Intel i7-3930K
-master  sandwich.hmm+  4.020000  x86_64  Intel i7-3930K
-master  total          9.550000  x86_64  Intel i7-3930K
+8.hmm+         4.480000  x86_64  Intel i7-3930K
+barwin.hmm+    1.010000  x86_64  Intel i7-3930K
+micro8.hmm+    0.040000  x86_64  Intel i7-3930K
+sandwich.hmm+  4.020000  x86_64  Intel i7-3930K
+total          9.550000  x86_64  Intel i7-3930K
+Commit: 2f9bd4fbc20ef50702bed2a01059f04bcdf03b44
 
 
 AG attempt 1
@@ -27,11 +28,12 @@ three-node-record
 
 (3) Results of short benchmark:
 
-    three-node-record  8.hmm+         5.310000   x86_64  Intel i7-3930K
-    three-node-record  barwin.hmm+    1.590000   x86_64  Intel i7-3930K
-    three-node-record  micro8.hmm+    0.540000   x86_64  Intel i7-3930K
-    three-node-record  sandwich.hmm+  4.840000   x86_64  Intel i7-3930K
-    three-node-record  total          12.280000  x86_64  Intel i7-3930K
+    8.hmm+         5.310000   x86_64  Intel i7-3930K
+    barwin.hmm+    1.590000   x86_64  Intel i7-3930K
+    micro8.hmm+    0.540000   x86_64  Intel i7-3930K
+    sandwich.hmm+  4.840000   x86_64  Intel i7-3930K
+    total          12.280000  x86_64  Intel i7-3930K
+    Commit: feccfc1d3821e06ace71945f894a00db749aef98
 
     Problem: it's ~30% slower.
 
@@ -45,9 +47,31 @@ three-node-record-orig-array
 
 (3) Results of short benchmark:
 
-    three-node-record-orig-array  8.hmm+         5.340000   x86_64  Intel i7-3930K
-    three-node-record-orig-array  barwin.hmm+    1.610000   x86_64  Intel i7-3930K
-    three-node-record-orig-array  micro8.hmm+    0.560000   x86_64  Intel i7-3930K
-    three-node-record-orig-array  sandwich.hmm+  4.830000   x86_64  Intel i7-3930K
-    three-node-record-orig-array  total          12.340000  x86_64  Intel i7-3930K
+    8.hmm+         5.340000   x86_64  Intel i7-3930K
+    barwin.hmm+    1.610000   x86_64  Intel i7-3930K
+    micro8.hmm+    0.560000   x86_64  Intel i7-3930K
+    sandwich.hmm+  4.830000   x86_64  Intel i7-3930K
+    total          12.340000  x86_64  Intel i7-3930K
+    Commit: 01a74a28769343611122fd2e92a49cc309648b17
+
+
+AG attempt 3
+three-node-record-orig-array-func
+=================================
+(1) Adapted AG#2 to compute `preceders` with case analysis in lieu
+    of an array.
+
+(2) AG#2 showed no noticeable improvement over AG#1, so we want to
+    rule out more possibilities.
+
+(3) Results of short benchmark:
+
+    8.hmm+         4.830000   x86_64  Intel i7-3930K
+    barwin.hmm+    1.510000   x86_64  Intel i7-3930K
+    micro8.hmm+    0.550000   x86_64  Intel i7-3930K
+    sandwich.hmm+  4.390000   x86_64  Intel i7-3930K
+    total          11.280000  x86_64  Intel i7-3930K
+
+    Problem: it's still 17.5% slower than our ICFP version.
+    It looks like `preceders` wasn't being memoized? Why?
 
