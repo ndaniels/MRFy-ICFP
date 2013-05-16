@@ -115,6 +115,10 @@ three-node-record-strict
 Comparisons on many machines related to MRFy#9
 ==============================================
 
+Regardless of name, the first branch in each set is the first iteration of 
+hoViterbi. The second branch is hoViterbi with strict scoring and preceders as 
+a function. The third branch is ICFP.
+
 ### 2013-05-15 21:13  Running short: three-node-record-orig-func-strict master three-node-record
 ...ode-record 12186bc     10.61s  x86_64  GHC 7.6.3  Core i7-3770 @ 3.40GHz
 ...unc-strict 049883f     10.47s  x86_64  GHC 7.6.3  Core i7-3770 @ 3.40GHz
