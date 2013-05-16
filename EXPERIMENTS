@@ -144,10 +144,10 @@ master 2f9bd4f           103.22s  x86_64  GHC 7.6.3  AMD Phenom II X6 1075T Proc
 ...unc-strict 049883f     11.10s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
 master 2f9bd4f             9.62s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
 
-### 2013-05-15 21:09  Running med: three-node-record three-node-record-orig-func-strict master
-...ode-record 12186bc    104.15s  x86_64  GHC 7.6.3  AMD Phenom II X6 1075T Processor
-...unc-strict 049883f    102.17s  x86_64  GHC 7.6.3  AMD Phenom II X6 1075T Processor
-master 2f9bd4f           103.22s  x86_64  GHC 7.6.3  AMD Phenom II X6 1075T Processor
+### 2013-05-15 22:01  Running med: three-node-record three-node-record-orig-func-strict master
+...ode-record 12186bc     63.14s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
+...unc-strict 049883f     56.55s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
+master 2f9bd4f            55.08s  x86_64  GHC 7.6.3  Core i7-3930K @ 3.20GHz
 
 
 NR's benchmarks (branches are different names but correspond to above)
