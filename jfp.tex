@@ -652,8 +652,9 @@ We place the transition probabilities
 into a record in which each field is labeled
 \texttt{$s$\_$\mskip 1mu\hat s$},
 where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
-labels: 
+labels:\label{sec:tprobs}
 \smallverbatiminput{tprob-tprobs}
+\remark{Need to explain those last two fields. HMMer?}
 The fields of this record are read by
 function \texttt{aScore}, 
 which is given states $s$~and~$\hat s$ and a node index; its %% fixes a bad line break
@@ -1350,6 +1351,140 @@ Without QuickCheck, we~probably wouldn't have known anything was wrong.
 %%  properties},
 
 
+\subsection{Competing with C++; less FORTRAN; more Haskell}
+
+EXPLAIN SECTION TITLE.
+
+WHY IS THIS SECTION RELEVANT?  TO SHOW TRAPS AND PITFALLS FOR NEW
+HASKELL PROGRAMMERS.
+
+FIRST STEP WAS TO SIMPLIFY THE CODE.
+
+As shown in \figrefpair{viterbi-original}{viterbi-transformed} and in
+the code for \verb+vee'+ on page~\pageref{code:vee-prime}, Viterbi's
+$V'$ is indexed by a residue index~$i$, a~node index~$j$,
+and
+a state $M$, $I$, or~$D$.
+A~query sequence is simply an array of~\texttt{AA} indexed by~$i$,
+and a model is an array of nodes indexed by~$j$.
+The node array and its indices are handled as in our group's C++ code:
+all nodes have the same representation, and every node can be
+interpreted in one of the special states Begin and End.
+(This possible interpretation causes the introduction of the
+mysterious probabilities \verb+b_m+ and \verb+m_e+ into the transition
+table on page~\pageref{sec:tprobs}.)
+These conventions of representation lead to a full implementation of
+Viterbi's algorithm that is more reminiscent of FORTRAN than of
+Haskell:
+\begin{itemize}
+\item
+Recursive computations are done on smaller array indices, not smaller
+models.
+\item
+Array indices 1, 0, and $-1$ are all used to indicate special
+conditions.
+\item
+Senseless combinations of array indices and states are handled by
+assigning each such combination the largest representable score, which
+corresponds to the smallest representable probability.
+\end{itemize}
+This is the code in which \mrfy\ spends 98\%\ of its time, and that
+we~wanted to speed up to make it more competitive with~C++.
+But the central function \verb+vee'+ has 25~cases overall.
+Before thinking seriously about how to tune it, we~decided to simplify~it.
+
+Our first step in simplification was to start thinking like Haskell
+programmers and make more effective use of both the static type system:
+(AND THE PATTERN-MATCH COMPILER)
+\begin{itemize}
+\item
+We introduced a \texttt{Model} type that consists of a single Begin
+node, an~unbounded sequence of Middle nodes, and a single End node.
+\item
+We~observed that the main algorithm where \mrfy\ spends all its time
+uses only Match, Insert, and Delete states.
+We~redefined the \texttt{StateLabel} type to include only these
+states; the Begin and End labels are now part of
+type \texttt{FullStateLabel}. 
+\end{itemize}
+As a result of these changes, in the revised code,
+\begin{itemize}
+\item
+Only array index~0 is used to indicate a special
+conditions: the transition from the leftmost middle node to the unique
+begin node.
+\item
+All well-typed combinations of array indices and states make sense;
+senseless combinations are ruled out by the static type system.
+\end{itemize}
+
+
+
+\begin{figure}
+\def\vsum#1#2{#1+#2}
+\[
+V_{j}^{\prime \hat s}(i) = e^{\prime}_{\hat s_{j}}(x_{i}) 
+  + \min\limits_s \left\{
+       \vsum{V_{j-1}^{\prime s}(i - 1)} {a^{\prime}_{s \,\hat
+       s}}, \mbox{ where $s$ can precede $\hat s$} \right \}
+\]
+
+\caption{Viterbi's transformed equations, abstracted over states $s$
+and $\hat s$, defining $e^{\prime}_D(x) = 0$}
+\figlabel{viterbi-abstracted}
+\end{figure}
+
+We also 
+
+
+
+The right-hand sideOur 
+Indices 1, 0, and $-1$ were all used to indicate special conditions,
+and 
+
+
+
+
+
+
+\subsubsection{Reducing cases in Viterbi}
+
+
+\newcommand\pv{\textit{Predecessor Viterbi}}
+\newcommand\ov{{Original Viterbi}}
+
+Our first step in adapting the code was to create \pv.
+Like \ov, \pv\ takes a state and two indices as an argument.
+But at top level, there is no case analysis on the state, and the only
+indices considered are zero and nonzero, so there are only four cases.
+(The state is used in two ways: to compute transition probabilities,
+and to decide which states may permissibly precede the current state.
+The set of permissible preceding states is looked up in a data
+structure, not computed by case analysis.)
+
+Here is the general case in the new code:
+\smallverbatiminput{hoviterbi}
+THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
+WE SHOULD PROBABLY FIX THAT.
+In the old code, there are three corresponding cases: one each for
+match, insert, and delete states.  
+Here is the code for the match case:
+\smallverbatiminput{viterbi}
+The other case are similar; the second argument to \texttt{aScore} is
+always equal to the first (state) argument to \texttt{vee'},
+and the argument to \texttt{map from} is different in each case.
+(In the new code, this argument is identical to \texttt{preceders !
+stateRight}.)
+NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
+
+
+The main benefit is that the Viterbi function is reduced from 90~lines
+of code to just 40~lines.
+This change laid the groundwork for more experiments.
+
+BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
+
+
  
  
 \section{Our previous experience compared}
@@ -1561,6 +1696,10 @@ Writing an iterative search in purely functional style was~easy.
 Transforming data in the HMMER file format, \emph{without}
 using mutable state the way the C++ code does, was difficult.
 
+NEW PARAGRAPH: STEP SLOWLY AWAY FROM YOUR CODE, AND SEE IF YOU THINK
+IT RESEMBLES ANYTHING A HASKELL PROGRAMMER WOULD HAVE WRITTEN.
+
+
 \seclabel{penumbra}
 
 While the Haskell community offers many
@@ -1630,52 +1769,6 @@ This work was funded in part by NIH grant 1R01GM080330.
 \section{Notes on the new paper}
 
 \input{jfpnotes}
-
-
-\subsection{Software deltas}
-
-\subsubsection{Reducing cases in Viterbi}
-
-Original Viterbi took a state and two indices as argument, and it
-dealt with impermissible transitions by assigning a very large score
-(which translates to a very small probability).
-Indices 1, 0, and $-1$ were all used to indicate special conditions,
-and 
-the function had 25~cases overall.
-
-\newcommand\pv{\textit{Predecessor Viterbi}}
-\newcommand\ov{{Original Viterbi}}
-
-Our first step in adapting the code was to create \pv.
-Like \ov, \pv\ takes a state and two indices as an argument.
-But at top level, there is no case analysis on the state, and the only
-indices considered are zero and nonzero, so there are only four cases.
-(The state is used in two ways: to compute transition probabilities,
-and to decide which states may permissibly precede the current state.
-The set of permissible preceding states is looked up in a data
-structure, not computed by case analysis.)
-
-Here is the general case in the new code:
-\smallverbatiminput{hoviterbi}
-THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
-WE SHOULD PROBABLY FIX THAT.
-In the old code, there are three corresponding cases: one each for
-match, insert, and delete states.  
-Here is the code for the match case:
-\smallverbatiminput{viterbi}
-The other case are similar; the second argument to \texttt{aScore} is
-always equal to the first (state) argument to \texttt{vee'},
-and the argument to \texttt{map from} is different in each case.
-(In the new code, this argument is identical to \texttt{preceders !
-stateRight}.)
-NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
-
-
-The main benefit is that the Viterbi function is reduced from 90~lines
-of code to just 40~lines.
-This change laid the groundwork for more experiments.
-
-BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
 
 
 

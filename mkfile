@@ -12,17 +12,17 @@ DIAGRAMS=Plan7 alignment mrf_interleave_diagram
 # $TGT.dvi: ${DIAGRAMS:%=%.eps}
 $TGT.pdf: ${DIAGRAMS:%=%.pdf}
 
-&.pdf: &.eps
+jfp.dvi: search-figs/search-graph1.eps
+jfp.dvi: search-figs/search-graph5.eps
+
+%.pdf: %.eps
   epstopdf $prereq
 
-OLDCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
+ICFPCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
 
-# drop dependence on codes: now that paper is final, codes should not be remade
+CODES=$ICFPCODES hoviterbi
 
-# now add the new stuff
-
-CODES=hoviterbi
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex
