@@ -1,0 +1,97 @@
+### Running lazy-score icfp-branch mrfy bang-score-only v3-orig
+lazy-score 42fa05e*      9.25s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1      9.23s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8ee93bc             8.55s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+...score-only 12186bc*   10.05s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc         10.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+lazy-score 42fa05e*        9.17s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1        9.27s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355               8.53s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+...score-only 12186bc*    10.02s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.05s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+The only difference
+   git diff 12186bc..5862355
+is making `preceders` into a function!
+
+
+
+### Running lazy-score icfp-branch mrfy v3-orig
+lazy-score 42fa05e*       51.21s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       57.94s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355              47.19s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           55.17s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+
+### Running short parallel: lazy-score icfp-branch mrfy v3-orig
+mrfy 5862355               9.90s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+lazy-score 42fa05e*       10.85s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           11.44s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       11.69s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### Running med parallel: lazy-score icfp-branch mrfy v3-orig
+mrfy 5862355              64.08s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+lazy-score 42fa05e*       67.85s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           71.06s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       73.99s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+### 2013-05-15 19:59  Running short: lazy-score icfp-branch mrfy v3-orig
+lazy-score 42fa05e*        9.18s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1        9.28s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355               8.56s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-15 20:34  Running short: lazy-score icfp-branch mrfy v3-orig
+lazy-score 3a14c82         9.22s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch 2f9bd4f        9.25s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 049883f               8.59s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.02s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-15 20:42  Running short: icfp-branch lazy-score mrfy v3-orig
+icfp-branch 2f9bd4f       19.11s    i686  GHC 7.4.1  AMD Phenom 9850 
+lazy-score 3a14c82        19.20s    i686  GHC 7.4.1  AMD Phenom 9850 
+mrfy 049883f              19.10s    i686  GHC 7.4.1  AMD Phenom 9850 
+v3-orig 12186bc           20.11s    i686  GHC 7.4.1  AMD Phenom 9850 
+
+### 2013-05-15 20:45  Running med: icfp-branch lazy-score mrfy v3-orig
+icfp-branch 2f9bd4f      123.53s    i686  GHC 7.4.1  AMD Phenom 9850
+lazy-score 3a14c82       107.50s    i686  GHC 7.4.1  AMD Phenom 9850
+mrfy 049883f             107.21s    i686  GHC 7.4.1  AMD Phenom 9850
+v3-orig 12186bc          113.64s    i686  GHC 7.4.1  AMD Phenom 9850
+
+----------------------------------------------------------------
+at this point the 'mrfy' branch is the new, short, 11-line viterbi
+
+### 2013-05-17 21:47  Running short: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf        9.28s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd               9.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc            9.93s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-17 22:24  Running short: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf        9.50s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+mrfy 8559acd*              9.31s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+v3-orig 12186bc           11.56s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+
+### 2013-05-17 21:49  Running med: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf       57.09s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd              54.49s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           54.61s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-17 22:27  Running med: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf       61.80s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+mrfy 8559acd*             58.21s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+v3-orig 12186bc           65.69s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+
+### 2013-05-17 22:20  Running short: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf       21.91s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+mrfy 8559acd*             21.85s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+v3-orig 12186bc           26.58s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+
+### 2013-05-17 22:22  Running med: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf      133.24s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+mrfy 8559acd*            130.75s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+v3-orig 12186bc          146.08s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
