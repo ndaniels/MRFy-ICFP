@@ -1,97 +1,97 @@
-#!/usr/bin/env lua
+### Running lazy-score icfp-branch mrfy bang-score-only v3-orig
+lazy-score 42fa05e*      9.25s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1      9.23s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8ee93bc             8.55s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+...score-only 12186bc*   10.05s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc         10.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 
-local multicore_times = {
-  { cores =  1, time = 136.0, half_sigma = 0.228, n_runs = 5 },
-  { cores =  2, time = 83.0,  half_sigma = 0.099, n_runs = 5 },
-  { cores =  4, time = 46.8,  half_sigma = 0.208, n_runs = 5 },
-  { cores =  8, time =  26.9, half_sigma = 0.216, n_runs = 5 },
-  { cores = 12, time =  22.5, half_sigma = 0.327, n_runs = 5 },
-  { cores = 16, time =  21.0, half_sigma = 0.301, n_runs = 5 },
-  { cores = 24, time =  21.9, half_sigma = 0.512, n_runs = 5 },
-  { cores = 48, time =  77.5, half_sigma = 8.574, n_runs = 5 },
-}
+lazy-score 42fa05e*        9.17s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1        9.27s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355               8.53s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+...score-only 12186bc*    10.02s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.05s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 
-for _, t in ipairs(multicore_times) do
-  t.sigma = t.sigma or 2 * t.half_sigma
-end
 
-local function ratio_variance(x, y, varx, vary)
-  return varx / (y * y) + (x * x) * vary / (y * y * y * y)
-    -- assume zero covariance
-end
+The only difference
+   git diff 12186bc..5862355
+is making `preceders` into a function!
 
 
 
-local sequential_time = 134.20
-local sequential_sigma = 4.32
-local sequential_n     = 5
-
-local template = [[
-newgraph
-  xaxis label fontsize 9 font Times-Roman
-  yaxis label fontsize 9 font Times-Roman
-  xaxis no_auto_hash_labels size 2.5 $log min 1 max $xmax label : Cores used
-  yaxis size 1.3 min 0 max $ymax label : $ylabel
-  newcurve $curve pts $pts
-  $labels
-]]
-
-local function fill(s, fields)
-  return (s:gsub('%$(%w+)', fields))
-end
-
-local function labels()
-  local l = { 'xaxis no_auto_hash_marks' }
-  for _, pt in ipairs(multicore_times) do
-    table.insert(l, string.format('  xaxis hash_label at %d : %d',
-                                  pt.cores, pt.cores))
-    table.insert(l, string.format('  xaxis hash_at %d', pt.cores))
-  end
-  return table.concat(l, '\n')
-end
-
-local function speedup()
-  local fields = { ylabel = "Speedup", ymax = '7 hash 1 mhash 1', xmax = 50,
-                   labels = 'xaxis auto_hash_labels', log = '',
-                   curve = '  marktype circle marksize 0.36 0.10'  }
-  -- y_eps x y y-minus y_plus
-
-  local points = "y_epts"
-  local seqvar = sequential_sigma * sequential_sigma
-  for _, pt in ipairs(multicore_times) do
-    local ptvar = pt.sigma * pt.sigma
-    local svar = ratio_variance(sequential_time, pt.time, seqvar, ptvar)
-    local error = math.sqrt(svar) / math.sqrt(math.min(sequential_n, pt.n_runs)-1)
---    points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
-    local ratio = sequential_time / pt.time
-    points = string.format("%s %d %.2f %.2f %.2f", points, pt.cores, ratio,
-                           ratio - error, ratio + error)
-                  
-  end
-  fields.pts = points
-  return fill(template, fields)
-end
+### Running lazy-score icfp-branch mrfy v3-orig
+lazy-score 42fa05e*       51.21s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       57.94s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355              47.19s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           55.17s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 
 
-  
-local function efficiency()
-  local fields = { ylabel = "Parallel efficiency", ymax = 1.0, xmax = 48,
-                   log = 'log', labels = labels(),  curve = '',
-                 }
-  local points = ""
-  for _, pt in ipairs(multicore_times) do
-    points = string.format("%s %d %.2f", points, pt.cores,
-                           sequential_time / (pt.time * pt.cores))
-  end
-  fields.pts = points
-  return fill(template, fields)
-end
 
-local function set(filename, s)
-  local f = io.open(filename, 'w')
-  f:write(s, '\n')
-  f:close()
-end
+### Running short parallel: lazy-score icfp-branch mrfy v3-orig
+mrfy 5862355               9.90s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+lazy-score 42fa05e*       10.85s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           11.44s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       11.69s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 
-set('speedup.j', speedup())
-set('efficiency.j', efficiency())
+### Running med parallel: lazy-score icfp-branch mrfy v3-orig
+mrfy 5862355              64.08s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+lazy-score 42fa05e*       67.85s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           71.06s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1       73.99s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+### 2013-05-15 19:59  Running short: lazy-score icfp-branch mrfy v3-orig
+lazy-score 42fa05e*        9.18s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch be825e1        9.28s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5862355               8.56s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-15 20:34  Running short: lazy-score icfp-branch mrfy v3-orig
+lazy-score 3a14c82         9.22s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+icfp-branch 2f9bd4f        9.25s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 049883f               8.59s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.02s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-15 20:42  Running short: icfp-branch lazy-score mrfy v3-orig
+icfp-branch 2f9bd4f       19.11s    i686  GHC 7.4.1  AMD Phenom 9850 
+lazy-score 3a14c82        19.20s    i686  GHC 7.4.1  AMD Phenom 9850 
+mrfy 049883f              19.10s    i686  GHC 7.4.1  AMD Phenom 9850 
+v3-orig 12186bc           20.11s    i686  GHC 7.4.1  AMD Phenom 9850 
+
+### 2013-05-15 20:45  Running med: icfp-branch lazy-score mrfy v3-orig
+icfp-branch 2f9bd4f      123.53s    i686  GHC 7.4.1  AMD Phenom 9850
+lazy-score 3a14c82       107.50s    i686  GHC 7.4.1  AMD Phenom 9850
+mrfy 049883f             107.21s    i686  GHC 7.4.1  AMD Phenom 9850
+v3-orig 12186bc          113.64s    i686  GHC 7.4.1  AMD Phenom 9850
+
+----------------------------------------------------------------
+at this point the 'mrfy' branch is the new, short, 11-line viterbi
+
+### 2013-05-17 21:47  Running short: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf        9.28s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd               9.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc            9.93s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-17 22:24  Running short: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf        9.50s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+mrfy 8559acd*              9.31s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+v3-orig 12186bc           11.56s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+
+### 2013-05-17 21:49  Running med: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf       57.09s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd              54.49s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           54.61s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-17 22:27  Running med: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf       61.80s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+mrfy 8559acd*             58.21s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+v3-orig 12186bc           65.69s  x86_64  GHC 7.4.2  Core i7-3770 @ 3.40GHz
+
+### 2013-05-17 22:20  Running short: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf       21.91s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+mrfy 8559acd*             21.85s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+v3-orig 12186bc           26.58s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+
+### 2013-05-17 22:22  Running med: mrfy v3-orig icfp-branch
+icfp-branch 9b81ccf      133.24s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+mrfy 8559acd*            130.75s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+v3-orig 12186bc          146.08s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
