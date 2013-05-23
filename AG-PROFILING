@@ -1,0 +1,42 @@
+The essential changes are in the `cabal` configuration and in the options 
+passed to GHC. In `~/.cabal/config`, make sure that `library-profiling` is
+set to `True` *AND THAT IS IS UNCOMMENTED*.
+
+To add the compile options[1], in `mrfy.cabal`, change `ghc-options` to
+
+  ghc-options: -O2 -prof -fprof-auto
+
+Note that these options must be transient, since they seem to slow down the 
+execution of the program regardless of its invocation.
+
+One problem remaining: all existing libraries on your system have been compiled 
+*without* profiling support. According to StackOverflow[2], this can be 
+remedied by reinstalling the "world":
+
+  cabal install --reinstall world --dry-run   # For the cautious among us.
+  cabal install --reinstall world
+
+However, I couldn't get it working. `cabal` complained that it would break 
+packages.
+
+Instead, I blew away the world:
+
+  rm -rf ~/.ghc
+  rm -rf ~/.cabal/{bin,lib,logs,packages,share,world}
+
+The latter command deletes everything except for the cabal `config` file that 
+we modified.
+
+Finally, build and run mrfy with special `RTS` options[3]:
+
+  cd path/to/mrfy
+  cabal build
+  ./mrfy (...) +RTS -p -P  # Perhaps `+RTS -pa` would be better? Didn't try it.
+
+Interesting bits on profiling memory usage[4] also exist.
+
+[1] - http://www.haskell.org/ghc/docs/7.2.1/html/users_guide/prof-compiler-options.html
+[2] - http://stackoverflow.com/a/9086094/619216
+[3] - http://www.haskell.org/ghc/docs/7.2.1/html/users_guide/prof-time-options.html
+[4] - http://www.haskell.org/ghc/docs/7.2.1/html/users_guide/prof-heap.html
+

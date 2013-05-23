@@ -113,3 +113,101 @@ end
 
 set('speedup.j', speedup())
 set('efficiency.j', efficiency())
+||||||| merged common ancestors
+#!/usr/bin/env lua
+
+local multicore_times = {
+  { cores =  1, time = 136.0, half_sigma = 0.228, n_runs = 5 },
+  { cores =  2, time = 83.0,  half_sigma = 0.099, n_runs = 5 },
+  { cores =  4, time = 46.8,  half_sigma = 0.208, n_runs = 5 },
+  { cores =  8, time =  26.9, half_sigma = 0.216, n_runs = 5 },
+  { cores = 12, time =  22.5, half_sigma = 0.327, n_runs = 5 },
+  { cores = 16, time =  21.0, half_sigma = 0.301, n_runs = 5 },
+  { cores = 24, time =  21.9, half_sigma = 0.512, n_runs = 5 },
+  { cores = 48, time =  77.5, half_sigma = 8.574, n_runs = 5 },
+}
+
+for _, t in ipairs(multicore_times) do
+  t.sigma = t.sigma or 2 * t.half_sigma
+end
+
+local function ratio_variance(x, y, varx, vary)
+  return varx / (y * y) + (x * x) * vary / (y * y * y * y)
+    -- assume zero covariance
+end
+
+
+
+local sequential_time = 134.20
+local sequential_sigma = 4.32
+local sequential_n     = 5
+
+local template = [[
+newgraph
+  xaxis label fontsize 9 font Times-Roman
+  yaxis label fontsize 9 font Times-Roman
+  xaxis no_auto_hash_labels size 2.5 $log min 1 max $xmax label : Cores used
+  yaxis size 1.3 min 0 max $ymax label : $ylabel
+  newcurve $curve pts $pts
+  $labels
+]]
+
+local function fill(s, fields)
+  return (s:gsub('%$(%w+)', fields))
+end
+
+local function labels()
+  local l = { 'xaxis no_auto_hash_marks' }
+  for _, pt in ipairs(multicore_times) do
+    table.insert(l, string.format('  xaxis hash_label at %d : %d',
+                                  pt.cores, pt.cores))
+    table.insert(l, string.format('  xaxis hash_at %d', pt.cores))
+  end
+  return table.concat(l, '\n')
+end
+
+local function speedup()
+  local fields = { ylabel = "Speedup", ymax = '7 hash 1 mhash 1', xmax = 50,
+                   labels = 'xaxis auto_hash_labels', log = '',
+                   curve = '  marktype circle marksize 0.36 0.10'  }
+  -- y_eps x y y-minus y_plus
+
+  local points = "y_epts"
+  local seqvar = sequential_sigma * sequential_sigma
+  for _, pt in ipairs(multicore_times) do
+    local ptvar = pt.sigma * pt.sigma
+    local svar = ratio_variance(sequential_time, pt.time, seqvar, ptvar)
+    local error = math.sqrt(svar) / math.sqrt(math.min(sequential_n, pt.n_runs)-1)
+--    points = string.format("%s %d %.2f", points, pt.cores, sequential_time / pt.time)
+    local ratio = sequential_time / pt.time
+    points = string.format("%s %d %.2f %.2f %.2f", points, pt.cores, ratio,
+                           ratio - error, ratio + error)
+                  
+  end
+  fields.pts = points
+  return fill(template, fields)
+end
+
+
+  
+local function efficiency()
+  local fields = { ylabel = "Parallel efficiency", ymax = 1.0, xmax = 48,
+                   log = 'log', labels = labels(),  curve = '',
+                 }
+  local points = ""
+  for _, pt in ipairs(multicore_times) do
+    points = string.format("%s %d %.2f", points, pt.cores,
+                           sequential_time / (pt.time * pt.cores))
+  end
+  fields.pts = points
+  return fill(template, fields)
+end
+
+local function set(filename, s)
+  local f = io.open(filename, 'w')
+  f:write(s, '\n')
+  f:close()
+end
+
+set('speedup.j', speedup())
+set('efficiency.j', efficiency())
