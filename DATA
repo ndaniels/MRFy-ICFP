@@ -95,3 +95,62 @@ v3-orig 12186bc           26.58s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
 icfp-branch 9b81ccf      133.24s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
 mrfy 8559acd*            130.75s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
 v3-orig 12186bc          146.08s  x86_64  GHC 7.4.2  AMD Opteron Processor 6278
+
+---------------------------------------------
+Changed residue computation to use left state for decision on residue.
+Still getting wrong answers.  Surprisingly, speed is improved.
+
+### 2013-05-18 13:04  Running short: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf        9.26s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd*              8.42s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.00s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-18 13:04  Running med: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf       57.75s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 8559acd*             51.50s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           54.79s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+------------------------------------------------
+Changed V4 again, this time to treat the begin node as non-emitting.
+The code is now hideous, but it passes -test fight:
+
+### 2013-05-18 15:57  Running short: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf        9.25s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy ceaa5c6               7.76s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           10.11s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-18 15:59  Running med: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf       58.07s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy ceaa5c6              44.66s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+v3-orig 12186bc           55.28s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-18 16:25  Running short: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf       19.70s    i686  GHC 7.4.1  AMD Phenom 9850 
+mrfy ceaa5c6              17.28s    i686  GHC 7.4.1  AMD Phenom 9850 
+v3-orig 12186bc           20.14s    i686  GHC 7.4.1  AMD Phenom 9850 
+
+### 2013-05-18 16:26  Running med: icfp-branch mrfy v3-orig
+icfp-branch 9b81ccf      124.25s    i686  GHC 7.4.1  AMD Phenom 9850 
+mrfy ceaa5c6             102.63s    i686  GHC 7.4.1  AMD Phenom 9850 
+v3-orig 12186bc          113.51s    i686  GHC 7.4.1  AMD Phenom 9850 
+
+-------------------------------------------------------------
+Andrew refactors
+
+### 2013-05-21 13:23  Running short: icfp-branch nr-jfp mrfy v3-orig
+icfp-branch 9b81ccf       19.94s    i686  GHC 7.4.1  AMD Phenom 9850 
+nr-jfp 9ef602d            18.19s    i686  GHC 7.4.1  AMD Phenom 9850 
+mrfy b9a4316*             15.35s    i686  GHC 7.4.1  AMD Phenom 9850 
+v3-orig 12186bc           20.45s    i686  GHC 7.4.1  AMD Phenom 9850 
+
+---------------------------------------------------------------------
+icfp branch was computing paths; also fixed some bugs
+
+### 2013-05-21 22:22  Running short: icfp-branch mrfy
+icfp-branch e61d87b        8.70s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy aec6c0b               6.80s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-21 22:23  Running med: icfp-branch mrfy
+icfp-branch e61d87b       53.29s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy aec6c0b              42.52s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
