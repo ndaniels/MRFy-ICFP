@@ -1,6 +1,6 @@
-type EProbs = Vector Score
+type EScores = Vector Score
 data HMMNode = HMMNode { nodeNum :: Int
-                       , matEmissions :: EProbs
-                       , insEmissions :: EProbs
-                       , transitions  :: TProbs
+                       , matEmissions :: EScores
+                       , insEmissions :: EScores
+                       , transitions  :: TScores
                        }

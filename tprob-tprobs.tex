@@ -1,5 +1,5 @@
-newtype TProb = TProb { logProbability :: Score }
-data TProbs = TProbs
-  { m_m :: TProb, m_i :: TProb, m_d :: TProb
-  , i_m :: TProb, i_i :: TProb
-  , d_m :: TProb, d_d :: TProb }
+data TScores = TScores
+  { m_m :: Score, m_i :: Score, m_d :: Score
+  , i_m :: Score, i_i :: Score
+  , d_m :: Score, d_d :: Score
+  , b_m :: Score, m_e :: Score } -- legacy
