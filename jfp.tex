@@ -38,8 +38,9 @@
 
 \newcommand\mrfy{MRFy} % damn you Noah
 
-\newcommand\txprobj[3][]{a#1_{{#2}_{j-1}{#3}_j}}
-\newcommand\txprobjj[3][]{a#1_{{#2}_{j-1}{#3}_j}}
+\newcommand\txprobj[3][]{a#1_{{#2}_{j-1}{#3}_j}} % probability entering j
+\newcommand\txprobxj[3][]{a#1_{{#2}_{j}{#3}_{j+1}}}  % probability exiting j
+\newcommand\txprobjj[3][]{a#1_{{#2}_{j}{#3}_j}} % probability within j
 \newcommand\alignwidth{\ensuremath C} % number of columns in an alignment
 \newcommand\pairedwith[1]{{\pi(#1)}}
 
@@ -266,6 +267,7 @@ paper \citep{daniels:haskell-in-bio:2012} was presented as
 an \emph{Experience Report} in ICFP~2012.
 This~paper adds to the original paper by describing our experience in
 trying to simplify and speed up the central algorithm.
+AND FIX THE CODE AND...
 
 
 
@@ -413,21 +415,41 @@ For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}~$D_j$.
 The deletion state determines the probability that a homologous protein
 has lost an amino acid by deletion from column~$j$.
+A~deletion state contains no tables of probabilities.
 \hfuzz=1.5pt % fix blot
 \end{itemize}
 The probabilities $e_{M_j}(x)$ and $e_{I_j}(x)$ are \emph{emission probabilities}.
+The names of the states are easily confused;
+one~way to keep them straight is to imagine that the model of the
+alignment describes a prototype sequence of length~$\alignwidth$,
+and that each state describes an action used to build the query
+sequence from the prototype: 
+match a prototypical amino~acid,
+insert an unexpected amino~acid,
+or
+delete a prototypical amino~acid.
 
-A hidden Markov model also has distinguished ``begin'' and ``end''
-states.
+
+A~full hidden Markov model also has distinguished ``begin'' and ``end''
+states; begin and end states are like match states, but they
+correspond to no amino acids and contain no emission probabilities.
 %%
 %% for consistency with the text above 'begin' and 'end' are neither
 %% capitalized nor italicized.
 %%
-In~our representation, each state contains a probability or a table of
-probabilities, and it is also labeled with one of these labels:
+In~our representation, each state is referred to by its position~$j$
+within the alignment and by one of these labels:
 \smallverbatiminput{statelabel}
-
-
+We~group states that share a column~$j$; these states are referred
+to collectively as ``node~$j$,'' as shown in \figref{plan7}.
+This model
+has begin and end states $B$~and~$E$,
+as well as four
+nodes, each containing 
+an insertion state~$I$, 
+a match state~$M$, and a
+deletion state~$D$.
+\remark{We need to figure out if the begin state is really node 0}
 
 \begin{figure} 
 \ifpdfmadness
@@ -441,48 +463,35 @@ probabilities, and it is also labeled with one of these labels:
 \figlabel{plan7}
 \end{figure}
 
-
-We~use the ``Plan7'' hidden Markov model, which forbids direct
+The model in \figref{plan7} is from a well-established family
+that permits
+transitions between match states and all other adjacent states,
+but forbids
+direct
 transitions between insertion 
-states and deletion states \cite{Eddy:1998ut}. 
-\seclabel{plan7}%
-\remark{Reference to \figref{plan7}??}%
-\ifpagetuning
-``Plan7'' implies that
-\else
-The model gets its name because
-\fi
- there are exactly~7 possible transitions
-into the states of any column~$j$.
-Each transition has its own probability:
-\begin{itemize} 
-\item
-A~transition into a match state 
-is more likely when column~$j$ is a consensus column.
-Depending on the predecessor state, 
-the probability of such a transition is 
-$\txprobj M M$, $\txprobj I M$, or~$\txprobj D M$.
-\item
-A~transition into a deletion state 
-is more likely when column~$j$ is a non-consensus column.
-The probability of such a transition is 
-$\txprobj M D$~or~$\txprobj D D$.
-\item
-A~transition into an insertion state 
-is more likely when column~$j$ is a non-consensus column.
-The probability of such a transition is 
-$\txprobjj M I$~or~$\txprobjj I I$.
-\end{itemize}
+states and deletion states  \cite{Eddy:1998ut}. 
+The family is called the ``Plan7'' family because
+every model in the family has 7~transitions per node.
+Each transition has its own probability; the probabilities for
+transitions leaving states in node~$j$ are
+$\txprobjj I I$,
+$\txprobxj I M$,
+$\txprobjj M I$,
+$\txprobxj M M$,
+$\txprobxj M D$,
+$\txprobxj D M$,
+and
+$\txprobxj D D$.
+When column $j+1$ is a consensus column, the transitions that enter
+its match state 
+($\txprobxj I M$,
+$\txprobxj M M$,
+$\txprobxj D M$)
+are more likely.
+When column $j+1$ is a non-consensus column, the transitions that enter
+its insertion and deletion states are more likely.
 
 
-
-This model
-has begin and end states $B$~and~$E$,
-as well as four
-nodes, each containing 
-an insertion state~$I$, 
-a match state~$M$, and a
-deletion state~$D$.
 
 
 
@@ -498,16 +507,30 @@ Given a hidden Markov model,
 an~established software package called HMMER (pronounced ``hammer'') 
 can compute the probability
 that a new protein shares structure 
-\ifnotcutting and evolutionary history \fi
 with the proteins used to train the model.
-The computation finds the most likely path through the hidden Markov model.
-To~make best use of floating-point arithmetic, the software computes
-the \emph{logarithm} of the probability of each path, by~summing
-the logs of the 
-probabilities on the states and edges of the path \cite{Viterbi:1967hq}.
-The~path that maximizes the
-log of the probability is the most likely path.
+The computation finds the most likely matching path through the hidden Markov model.
+In~any matching path, each match state and insertion state corresponds to a
+unique amino acid in the query sequence.
+The probability of the path is the product of all of the corresponding
+emission probabilities, together with the product of the transition
+probabilities along the edges of the path.
 
+Probabilities are small, and multiplying small numbers makes smaller
+numbers.
+Using floating-point arithmetic, multiplying probabilities amounts to
+storing data in the exponent of a floating-point number, which holds
+only 11~bits.
+In~order to store data in the significand, which holds 53~bits,
+we~instead sum the logarithms of probabilities \cite{Viterbi:1967hq}.
+Moreover, in~order to work with positive numbers, 
+our legacy file format also \emph{negates}
+the logarithm of each probability, making it a positive number.
+%%To~make these numbers more pleasant to read, we negate them,
+%%which eliminates hordes of minus signs from our file formats.
+The negated logarithm of a probability is called a \emph{score}.
+\smallverbatiminput{score}
+Type \texttt{Score} has a limited \texttt{Num} instance which permits
+scores to be added and subtracted but not multiplied.
 
 
 \def\goo{18pt}
@@ -515,35 +538,35 @@ log of the probability is the most likely path.
 \newcommand\vsum[2]{#2&{}+{}& #1}
 
 \begin{figure}
-
-\[
-\def\maxiquad{\hskip 1.2em\relax}
-%\mskip -5mu
-\begin{array}{@{}l@{}c@{}l}
-V_{j}^{M}(i) &{}={}& \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-  \begin{array}{l@{}c@{}l}
-  \vsum{V_{j-1}^{M}(i - 1)} {\log a_{M_{j-1}M_{j}}}\\
-  \vsum{V_{j-1}^{I}(i - 1)} {\log a_{I_{j-1}M_{j}}}\\
-  \vsum{V_{j-1}^{D}(i - 1)} {\log a_{D_{j-1}M_{j}}}\\
-  \end{array} \right.\\[\goo]
-V_{j}^{I}(i) &=& \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
-  \begin{array}{l@{}c@{}l}
-  \vsum{V_{j}^{M}(i - 1)} {\log a_{M_{j}I_{j}}}\\
-  \vsum{V_{j}^{I}(i - 1)} {\log a_{I_{j}I_{j}}}\\
-  \end{array} \right.\\[\gum]
-V_{j}^{D}(i) &=& \max \left\{
-  \begin{array}{l@{}c@{}l}
-  \vsum{V_{j-1}^{M}(i)} {\log a_{M_{j-1}D_{j}}}\\
-  \vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
-  \end{array} \right.\\
-\end{array}
-\]
-
-\caption{Viterbi's original equations}
-\figlabel{viterbi-original}
-
-
-\bigskip
+  
+%%  \[
+%%  \def\maxiquad{\hskip 1.2em\relax}
+%%  %\mskip -5mu
+%%  \begin{array}{@{}l@{}c@{}l}
+%%  V_{j}^{M}(i) &{}={}& \log\frac{e_{M_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
+%%    \begin{array}{l@{}c@{}l}
+%%    \vsum{V_{j-1}^{M}(i - 1)} {\log a_{M_{j-1}M_{j}}}\\
+%%    \vsum{V_{j-1}^{I}(i - 1)} {\log a_{I_{j-1}M_{j}}}\\
+%%    \vsum{V_{j-1}^{D}(i - 1)} {\log a_{D_{j-1}M_{j}}}\\
+%%    \end{array} \right.\\[\goo]
+%%  V_{j}^{I}(i) &=& \log\frac{e_{I_{j}}(x_{i})}{q_{x_{i}}} + \max \left\{
+%%    \begin{array}{l@{}c@{}l}
+%%    \vsum{V_{j}^{M}(i - 1)} {\log a_{M_{j}I_{j}}}\\
+%%    \vsum{V_{j}^{I}(i - 1)} {\log a_{I_{j}I_{j}}}\\
+%%    \end{array} \right.\\[\gum]
+%%  V_{j}^{D}(i) &=& \max \left\{
+%%    \begin{array}{l@{}c@{}l}
+%%    \vsum{V_{j-1}^{M}(i)} {\log a_{M_{j-1}D_{j}}}\\
+%%    \vsum{V_{j-1}^{D}(i)} {\log a_{D_{j-1}D_{j}}}\\
+%%    \end{array} \right.\\
+%%  \end{array}
+%%  \]
+%%  
+%%  \caption{Viterbi's original equations}
+%%  \figlabel{viterbi-original}
+%%  
+%%  
+%%  \bigskip
 
 %\begin{figure}
 \[
@@ -576,19 +599,26 @@ V_{j}^{\prime D}(i) &=& \min \left\{
 \end{array}
 \]
 
-\caption{Viterbi's equations transformed to work with scores}
+\caption{Viterbi's equations expressed using scores}
 \figlabel{viterbi-transformed}
 \end{figure}
 
 
 
-The computation is specified in \figref{viterbi-original}.
-A~probability $V_j^M(i)$ represents the probability of the most
+
+The~most likely path through a model is the one with the
+smallest score.
+The~score of each path is computed by dynamic programming; the score associated with
+a path to a state~$s$ ($M$, $I$, or~$D$) at node~$j$ and position~$i$ in
+the query sequence is written $V_j^{\prime s}(i)$.
+For~example, 
+score~$V_j^{\prime M}(i)$ represents the probability of the most
 likely path of the first~$i$ amino acids in the query sequence,
 terminating with placement of amino acid $x_i$ in state~$M_j$.
-Probabilities $V_j^I(i)$ and $V_j^D(i)$ are similar.
-The
-equations are explained very clearly by
+Scores $V_j^{\prime I}(i)$~and~$V_j^{\prime D}(i)$ are similar.
+Scores are specified by Viterbi's equations, which are shown
+in \figref{viterbi-transformed}. 
+The~equations (expressed using probabilities) are explained very clearly by
 \citet[Chapter~5]{Durbin:1998wz}
 
 
@@ -619,14 +649,6 @@ We therefore chose
 %%    ``Int'' here I think, is that it provides easy indexing into the match and
 %%    insertion emission vectors.}
 
-Our legacy file format also \emph{negates}
-the log of each probability, making it a positive number.
-%%To~make these numbers more pleasant to read, we negate them,
-%%which eliminates hordes of minus signs from our file formats.
-The negated logarithm of a probability is called a \emph{score}.
-\smallverbatiminput{score}
-Type \texttt{Score} has a limited \texttt{Num} instance which permits
-scores to be added and subtracted but not multiplied.
 
 In a real hidden Markov model, each probability is represented as a score.
 Our code implements a transformed version of Viterbi's equations
@@ -1425,7 +1447,8 @@ senseless combinations are ruled out by the static type system.
 \[
 V_{j}^{\prime \hat s}(i) = e^{\prime}_{\hat s_{j}}(x_{i}) 
   + \min\limits_s \left\{
-       \vsum{V_{j-1}^{\prime s}(i - 1)} {a^{\prime}_{s \,\hat
+       \vsum{V_{\mathit{pnode}\;\hat s\;j}^{\prime
+       s}(\mathit{presidue}\;\hat s\;i)} {a^{\prime}_{s \,\hat
        s}}, \mbox{ where $s$ can precede $\hat s$} \right \}
 \]
 
@@ -1434,7 +1457,22 @@ and $\hat s$, defining $e^{\prime}_D(x) = 0$}
 \figlabel{viterbi-abstracted}
 \end{figure}
 
-We also 
+We also combined Viterbi's three equations into one.
+Each equation has the same form, but is parameterize over three
+values determined by the right-hand state~$\hat s$:
+the~index of the previous node ($j$~or~$j-1$),
+the~index of the previous residue ($i$~or~$i-1$),
+and the set of previous states~$s$ over which the minimum is taken.
+If~we abstract the index computations into functions
+$\mathit{pnode}$ 
+and 
+$\mathit{presidue}$
+respectively,
+we~get the combined, abstract form of Viterbi's equations shown in
+\figref{viterbi-abstracted}.
+The~implementation of \figref{viterbi-abstracted} looks like this:
+\smallverbatiminput{hoviterbi}
+Function \texttt{next} makes the recursive call to 
 
 
 
@@ -1463,7 +1501,7 @@ The set of permissible preceding states is looked up in a data
 structure, not computed by case analysis.)
 
 Here is the general case in the new code:
-\smallverbatiminput{hoviterbi}
+
 THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
 WE SHOULD PROBABLY FIX THAT.
 In the old code, there are three corresponding cases: one each for
