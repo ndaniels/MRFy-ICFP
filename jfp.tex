@@ -482,11 +482,15 @@ $\txprobxj M D$,
 $\txprobxj D M$,
 and
 $\txprobxj D D$.
+(The transitions from match to insertion and from insertion to
+insertion leave states in 
+node~$j$ but also enter states in node~$j$.
+The other transitions enter states in node~$j+1$.)
 When column $j+1$ is a consensus column, the transitions that enter
 its match state 
-($\txprobxj I M$,
-$\txprobxj M M$,
-$\txprobxj D M$)
+%($\txprobxj I M$,
+%$\txprobxj M M$,
+%$\txprobxj D M$)
 are more likely.
 When column $j+1$ is a non-consensus column, the transitions that enter
 its insertion and deletion states are more likely.
