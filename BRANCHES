@@ -1,0 +1,26 @@
+Interesting branches
+====================
+
+-------------------------------------------------------------------------
+nr-jfp-goodness   `Model3.hs` and `V4.hs`.  Stratified labels,
+                  explicit state types, one node type 
+                  (containing three states), no UNPACK pragmas on
+                  model, higher-order Viterbi with four cases (general
+                  case plus one case for each successor of the B
+                  state),  three of four cases handled with
+                  specialized version of higher-order `prevs`.
+                  (Current best version.)
+
+???               all of the above except the three cases are all
+                  implemented by hand, with no `prevs`
+
+???               flat model with no state types; all 7 transitions in
+                  one table.  
+
+good-split        like nr-jfp-goodness, but uses type classes to
+                  define overloaded names like `toM`.  The overhead is
+                  *not* compiled away.
+
+
+------------------------------------------------------------------------
+				  
