@@ -154,3 +154,17 @@ mrfy aec6c0b               6.80s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 icfp-branch e61d87b       53.29s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 mrfy aec6c0b              42.52s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 
+### 2013-05-26 14:40  Running short: good-split mrfy
+good-split d8e83d6         9.11s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5a17567               7.24s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-26 14:41  Running med: good-split mrfy
+good-split d8e83d6        53.62s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 5a17567              45.51s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+------
+make Scored lazy in first argument
+
+lazy-scored 7f8607b        7.14s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 78018d6               7.08s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
