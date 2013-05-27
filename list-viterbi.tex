@@ -1,0 +1,6 @@
+vee' :: StateLabel -> [HMMNode] -> [AA] -> Tree
+vee' stateHat nodes@(node:ntail) aas@(aa:aatail) =
+          ... next state ...
+  where next s@Mat = vee'' s ntail aatail
+        next s@Del = vee'' s ntail aas
+        next s@Ins = vee'' s nodes aatail

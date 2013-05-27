@@ -1,0 +1,16 @@
+The mkfile used to build this paper expects two subdirectories holding
+different checked-out branches of the MRFy repository at
+`git@github.com:ndaniels/MRFy.git`
+
+  - Subdirectory `mrfy` must contain a copy of the branch
+    `implicit-cumulative-costs`.
+
+  - Subdirectory `nr-jfp` must contain a copy of the branch `nr-jfp`.
+
+If the mkfile barfs or if not all expected tools are installed, it's
+possible that some joy might be obtained by
+
+    mk codes
+    pdflatex jfp
+
+The mkfile doesn't run bibtex; for that you're on your own.

@@ -1,6 +1,7 @@
-vee' Ins (NC 0) i = intoInsZero i
-vee' Mat (NC 1) i = intoMatOne i
-vee' Del (NC 1) i = intoDelOne i
+vee' :: StateLabel -> NodeIndex -> ResidueCount -> a
+vee' Ins (NI 0) i = intoInsZero i
+vee' Mat (NI 1) i = intoMatOne i
+vee' Del (NI 1) i = intoDelOne i
 vee' stateHat j i =
   internal [ edge score state (vee'' state pj pi)
            | state <- preceders stateHat

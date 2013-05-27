@@ -21,7 +21,8 @@ jfp.dvi: search-figs/search-graph5.eps
 ICFPCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
 
-CODES=$ICFPCODES hoviterbi aa model3-mstate model3-node hov4 hov-prevs
+CODES=$ICFPCODES hoviterbi aa model3-mstate model3-node hov4 hov-prevs list-viterbi \
+	  v4aux
 
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
@@ -49,6 +50,8 @@ latex:V: ${CODES:%=%.tex}
 GRAPHS=speedup efficiency
 GRAPHPDFS=${GRAPHS:%=%.pdf}
 
+codes:V: ${CODES:%=%.tex} 
+
 $TGT.dvi: ${CODES:%=%.tex} timestamp.tex
 $TGT.pdf: ${CODES:%=%.tex} 
 <| case $USER in noah) ;; *) echo "$TGT.pdf: $GRAPHPDFS" ;; esac
@@ -71,7 +74,7 @@ timestamp.tex:DQ: $TGT.tex ${CODES:%=%.tex}
     esac
 	echo "Wrote $target"
 
-strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource Smurf2/LazySearchModel.hs
+strat.tex stop.tex history.tex move.tex gen.tex search.tex utility.tex:D: ./xsource mrfy/LazySearchModel.hs
  	lua $prereq
 
 %.eps:D: %.j
@@ -84,28 +87,31 @@ $TGT.dvi: sigplanconf.cls
 speedup.j efficiency.j:D: ./data
 	lua ./data
 
-vscore.tex score.tex:D: ./xsource Smurf2/Score.hs
+vscore.tex score.tex:D: ./xsource mrfy/Score.hs
  	lua $prereq
 
-memo.tex edge.tex viterbi.tex:D: ./xsource Smurf2/Viterbi.hs
+memo.tex edge.tex viterbi.tex:D: ./xsource mrfy/Viterbi.hs
 	lua $prereq
 
-hoviterbi.tex:D: ./xsource Smurf2/ViterbiThree.hs
+hoviterbi.tex:D: ./xsource mrfy/ViterbiThree.hs
 	lua $prereq
 
-statelabel.tex hmmnode.tex tprob.tex tprobs.tex tprob-tprobs.tex:D: ./xsource Smurf2/MRFTypes.hs
+statelabel.tex hmmnode.tex tprob.tex tprobs.tex tprob-tprobs.tex:D: ./xsource mrfy/MRFTypes.hs
 	lua $prereq
 
-aa.tex:D: ./xsource Smurf2/Constants.hs
+aa.tex:D: ./xsource mrfy/Constants.hs
 	lua $prereq
 
-model3-mstate.tex model3-node.tex:D: ./xsource Smurf2/Model3.hs
+model3-mstate.tex model3-node.tex:D: ./xsource mrfy/Model3.hs
 	lua $prereq
 
 hov4.tex:D: ./xsource nr-jfp/V4.hs
 	lua $prereq
 
-hov-prevs.tex:D: ./xsource mrfy/V4.hs
+hov-prevs.tex v4aux.tex:D: ./xsource mrfy/V4.hs
+	lua $prereq
+
+list-viterbi.tex:D: ./xsource mrfy/V2.hs
 	lua $prereq
 
 vfix.tex:D: viterbi.tex mkfile

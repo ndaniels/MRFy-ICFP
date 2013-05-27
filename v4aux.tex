@@ -1,0 +1,5 @@
+preceders Mat = [Mat, Ins, Del]
+preceders Ins = [Mat, Ins]
+preceders Del = [Mat, Del]
+predUnless :: forall a . Enum a => a -> StateLabel -> StateLabel -> a
+predUnless n don't_move s = if s == don't_move then n else pred n

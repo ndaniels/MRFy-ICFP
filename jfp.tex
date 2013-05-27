@@ -1349,23 +1349,56 @@ into the three state types you see on page~\pageref{code:model3-node}.
 We introduced a \texttt{Model} type that consists of a special Begin
 node containing a begin and an insertion state, an~unbounded sequence
 of ordinary \texttt{Nodes}, and an end state.
+And we represented the sequence as a list, not an array.
 \item
 We~observed that the main algorithm where \mrfy\ spends all its time
 uses only match, insertion, and deletion states, so we removed the
-value constructors corresponding to begin and end states.
-Those constructors were used only to prettyprint models, so~we made
-them part of a larger type.
+\texttt{StateLabel} value constructors corresponding to begin and end
+states, leaving only the three constructors shown on
+page~\ref{code:state-label}. 
+(We~moved the begin and end labels to another type, which is used only
+to prettyprint models.) 
 \end{itemize}
-As a result of these changes, in the revised code,
-\begin{itemize}
-\item
-Only array index~0 is used to indicate a special
-condition: the transition from the leftmost middle node to the unique
-begin node.
-\item
-All well-typed combinations of array indices and states make sense;
-senseless combinations are ruled out by the static type system.
-\end{itemize}
+The immediate effect of these changes was to reduce case analysis on
+two dimensions:
+instead of five state labels, we got three;
+and instead of three special array indices, we got just one special
+list (the empty list).
+
+\begin{figure}
+\noindent\hspace*{1.5cm}\begin{minipage}{9cm}
+\smallverbatiminput{list-viterbi}
+\smallskip
+\end{minipage}
+
+\caption{Sketch of Viterbi's algorithm, using lists}
+\figlabel{list-viterbi}
+\end{figure}
+
+Our~next step was to use more abstraction---in~particular, to abstract
+over state labels.
+However, after abstracting over state labels, we~abandoned lists and
+went back to arrays.
+An~excerpt from our list-based code appears in \figref{list-viterbi}.
+The~problem is defining \verb+vee''+ as a memoized version
+of~\verb+vee'+.
+Although we experimented with specialized memo combinators that work
+with list prefixes, 
+we~were never confident that we could easily, efficiently, and
+correctly memoize~\verb+vee'+.
+Instead, we~wrote a new version, still using integer arithmetic, but
+guides by the idea $i$~is a \emph{count} of the number
+of amino acids in list~\texttt{aas}, but $j$~is the \emph{index}
+of~\texttt{node}.
+(We~also got
+an
+insight we got from
+the \texttt{next} function: Viterbi's algorithm is a form of minimum edit
+distance.
+As~we were trying to improve the code, this insight helped keep us on track.)
+Armed with this new, better way of thinking about $i$~and~$j$,
+we~turned back to arrays.
+
 
 \def\p#1{\mathit{p#1}}
 \begin{figure}
@@ -1402,14 +1435,15 @@ defining $e^{\prime}_{D_j}(x) = 0$}
 \figlabel{viterbi-abstracted}
 \end{figure}
 
-
-Our next step was to use more abstraction.
+Our final code, like the code in \figref{list-viterbi}, is abstracted
+over state labels.
+We~now turn your attention to that abstraction.
 In~Viterbi's equations,
-$V'$ is indexed by a residue index~$i$,\footnote
+$V'$ is indexed by a residue count~$i$,\footnote
 {In~biology, when an amino acid enters a protein, it often loses a few
 atoms, and so within the protein, the amino acid is often called
 a \emph{residue}.}
- a~node index~$j$,
+a~node index~$j$,
 and
 a state $M$, $I$, or~$D$.
 Each state uses a slightly different equation, but it is possible to
@@ -1424,7 +1458,34 @@ Index~$\p j$ is the index of the node containing the predecessor
 state, and $\p i; s$ is the index of the amino acid, if~any, to be
 emitted at state~$s$.
 
-NEED TO EXPLAIN PRECEDERS
+To~implement \figref{viterbi-abstracted}, we~define several
+auxiliary functions.
+The~set of states that can precede~$\hat s$
+is \mono{preceders~$\hat s$}; $\p i$~and~$\p j$ are computed using
+function \texttt{predUnless}:
+\smallverbatiminput{v4aux}
+We~also use \texttt{newtype} to define 
+a value constructor~\texttt{RC} for a residue count~$i$
+and
+a value constructor~\texttt{NI} for a node index~$j$.
+We~can then deliver the more abstract version of Viterbi's algorithm
+shown in \figref{viterbi-hov4}.
+
+
+\begin{figure}
+\noindent\hspace*{1.0cm}\begin{minipage}{11cm}
+\smallverbatiminput{hov4}
+\smallskip
+\end{minipage}
+
+\caption{Viterbi's algorithm abstracted over~$\hat s$}
+\figlabel{viterbi-hov4}
+\end{figure}
+
+
+The version of \verb+vee'+ shown in  \figref{viterbi-hov4} is abstract
+in another way: the type of the result is the unknown type~\texttt{a}.
+Type~\texttt{a} represents
 
 
 \figref{viterbi-abstracted} doesn't deal with the begin state.
@@ -1437,10 +1498,33 @@ represented as a match state, unlike a match state, the begin state
 does not emit.
 We~therefore need a special case for each of the three states that can
 follow the begin state.
+
+
 Here is the code:
-\smallverbatiminput{hov4}
 NEED TO EXPLAIN INTERNAL, EDGE, AND LEAF.
 NEED TO EXPLAIN [[transition]] and [[emission]]
+
+
+As a result of these changes, in the revised code,
+\begin{itemize}
+\item
+Only array index~0 is used to indicate a special
+condition: the transition from the leftmost middle node to the unique
+begin node.
+\item
+\end{itemize}
+
+
+
+
+
+\begin{verbatim}
+### 2013-05-27 01:23   Running med(vpasses=1): icfp-branch mrfy nr-jfp
+icfp-branch faab8dc       54.07s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy d5604bc*             44.90s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp 00ef54e*           47.59s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+\end{verbatim}
+
 
 
 
