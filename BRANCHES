@@ -9,13 +9,17 @@ nr-jfp-goodness   `Model3.hs` and `V4.hs`.  Stratified labels,
                   case plus one case for each successor of the B
                   state),  three of four cases handled with
                   specialized version of higher-order `prevs`.
-                  (Current best version.)
+                  (Current best version.)  The node containing the B
+                  state has the same representation as any other node.
 
 ???               all of the above except the three cases are all
                   implemented by hand, with no `prevs`
 
 ???               flat model with no state types; all 7 transitions in
                   one table.  
+
+???               The node containing the B state has a different
+                  representation 
 
 good-split        like nr-jfp-goodness, but uses type classes to
                   define overloaded names like `toM`.  The overhead is
