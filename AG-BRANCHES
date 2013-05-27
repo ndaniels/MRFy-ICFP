@@ -1,0 +1,110 @@
+Here's my stroll through time. My hope is to provide context.
+Unless otherwise stated, the ancestor of each branch is the one that directly 
+precedes it in this list.
+
+three-node-record
+=================
+This first branch was my attempt to do two things:
+
+  1) Port NR's higher-order Viterbi from `V2.hs` into `ViterbiThree.hs` as
+     a working implementation of Viterbi. The scores were quick checked
+     against the Oracle *from the get go*. (We learned our lesson and followed
+     our own advice. That's good!)
+
+  2) Provide a new representation of an HMM called a `Model` with slicing
+     facilities. This was also quick checked on some algebraic laws.
+     However, we never got a chance to instrument this code into the rest
+     of MRFy, so its slicing capabilities are untested.
+
+N.B. This included a version of `preceders` that returned an array.
+
+
+three-node-record-orig-*
+========================
+After getting the initial hoViterbi working, I worked on two additional
+variations with respect to `three-node-record`:
+
+  1) The `array` variation returned to the original `HMM` representation
+     in lieu of the new model created in `three-node-record`.
+
+  2) The `func` variation changed the `preceders` function to use case
+     analysis instead of creating an array.
+
+These two variations were also combined in `three-node-record-orig-array-func`.
+
+
+three-node-record-*strict
+=========================
+One last variation we tried was adding strictness annotations to the scoring
+function.
+
+
+nr-jfp
+======
+This marks a punctuation in our evolution: NR refactored the higher-order
+Viterbi with a focus on treating the begin state specially in the case 
+analysis. (Hmm. Is that right? Check the diff between `nr-jfp` and 
+`three-node-record`. It's difficult for me to articulate the difference
+between the Viterbi implementations here.)
+
+Also, my model from `three-node-record` was mostly gutted and put into a
+`Model3.hs`. The essential change was the abstraction over *states* in an HMM
+instead of a flat representation over *nodes*.
+
+Finally, this branche marks the first stratification of state labels.
+In the `three-node-record` lineage, the state type could be `beg`, `end`, etc.
+
+
+nr-jfp-refactor
+===============
+A refactoring of the higher-order Viterbi in `nr-jfp` to abstract over 
+computing the scores for previous states. This introduced the `predUnless`
+predicate. We inlined `prevs`.
+
+
+nr-jfp-noprob
+=============
+Removed all instances of `Prob` in the types in MRFy. e.g., `EProbs` -> 
+`EScores`.
+
+Notably, the `TProb` type was scrubbed out completely. The use of the record 
+member `logProbability` went away.
+
+The ancestor of this branch is `nr-jfp`.
+
+
+nr-jfp-unpack
+=============
+Added `{-# UNPACK #-}` and strictness annotations, particularly to types in the 
+`Model3.hs`.
+
+The ancestor of this branch is `nr-jfp`.
+
+
+nr-jfp-goodness
+===============
+A merge of `nr-jfp-refactor` and `nr-jfp-noprob`.
+
+(Actual ancestor is `nr-jfp-refactor`.)
+
+
+flailing
+========
+UNKN.
+
+
+---------------------------------
+
+master
+======
+The status quo when we went to ICFP.
+
+
+icfp-unpack
+===========
+Reproduced the `{-# UNPACK #-}` and strictness annotations from the 
+`experiments` branch that Noah was maintaining into the `master` branch.
+
+(So we could have an apples-to-apples test of the impact of 
+unpacking/strictness.)
+
