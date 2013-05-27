@@ -1,0 +1,26 @@
+vee' stateRight j i =
+  internal [ child score state (vee'' state pj pi)
+           | state <- preceders stateRight
+           , let score = transition node state stateRight
+                         + emission node state aa
+           ]
+  where pi = prevres  stateRight i
+        pj = prevnode stateRight j
+        node = middle pj
+        aa = rs `rat` i
+       vee' stateRight nodes@(node:ntail) aas =
+         internal [ child score state (vee'' state (nextNodes stateRight)
+                                         (nextAAs   stateRight))
+        | state <- preceders stateRight
+        , hasAA stateRight aas
+        , let score = transition node state stateRight
+                      + emission node state (head aas)
+        ]
+         where -- Del does not consume a residue
+     -- Ins does not consume a node
+     nextNodes Ins = nodes
+     nextNodes _   = ntail
+     nextAAs Del   = aas
+     nextAAs _     = tail aas
+     hasAA Del _   = True
+     hasAA _  aas  = not (null aas)

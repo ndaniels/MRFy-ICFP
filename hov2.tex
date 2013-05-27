@@ -1,0 +1,10 @@
+vee' stateRight j i =
+  internal [ edge score state (vee'' state (prevnode stateRight)
+                                           (prevres  stateRight))
+           | state <- preceders stateRight
+           , hasAA stateRight
+           , let score = transition node state stateRight
+                         + emission node state aa
+           ]
+  where aa   = residue i
+        node = middle j
