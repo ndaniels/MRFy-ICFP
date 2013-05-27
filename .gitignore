@@ -40,3 +40,18 @@ jfp2egui.toc
 mathptmx.sty
 
 readme.txt
+/old-branches
+/nr-jfp-*
+/nr-jfp
+/lazy-scored
+/master
+/good-split
+/good-split-unpack
+/icfp-branch
+/icfp-unpack
+
+/jfp.log
+/jfp.pdf
+/jfp.ps
+/jfperr.*
+/icfp-*.tex
