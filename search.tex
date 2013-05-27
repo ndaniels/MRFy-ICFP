@@ -1,4 +1,3 @@
-search :: RandomGen r => SearchGen pt r -> SearchStop pt
-       -> Rand r (History pt)
-search strat test =
-  return . test =<< everyPt strat 0 =<< pt0 strat
+search :: RandomGen r
+       => SearchGen pt r -> SearchStop pt -> Rand r (History pt)
+search sg test = return . test =<< everyPt sg . CCosted 0 =<< pt0 sg

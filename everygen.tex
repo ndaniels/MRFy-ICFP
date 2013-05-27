@@ -1,14 +1,11 @@
 everyPt :: RandomGen r
-        => SearchGen pt r -> CCost -> Scored pt
-        -> Rand r [CCosted (Utility (Scored pt))]
-everyPt sg cost startPt = do
-  successors <- mapM (nextPt sg) (repeat startPt)
-  tagged <- zipWithM costedUtility successors [succ cost..]
-  let (useless, CCosted (Useful newPt) newCost : _) =
-                      span (isUseless . unCCosted) tagged
-  (++) (CCosted (Useful startPt) cost : useless) <$>
-                                  everyPt sg newCost newPt
- where costedUtility pt cost =
-         utility sg move >>= \u -> return $ CCosted u cost
-        where move = Move { older = startPt, younger = pt
-                          , youngerCCost = cost }
+        => SearchGen pt r -> CCosted (Scored pt)
+        -> Rand r [Utility (CCosted (Scored pt))]
+everyPt sg (CCosted cost startPt) = do
+  successors <- zipWithM costedUtility [succ cost..] =<<
+                mapM (nextPt sg) (repeat startPt)
+  let (useless, Useful pt : _) = span isUseless successors
+  (++) (Useful (CCosted cost startPt) : useless) <$> everyPt sg pt
+ where
+   costedUtility cost pt = return . fmap (CCosted cost) =<< utility sg move
+     where move = Move { older = startPt, younger = pt, youngerCCost = cost }

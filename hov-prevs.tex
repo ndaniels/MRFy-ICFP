@@ -1,0 +1,12 @@
+prevs preceders stateHat fj fi =
+ internal [ edge score state (vee'' state pj pi)
+          | state <- preceders
+          , let pi = fi state
+          , pj >= 0, pi >= 0
+          , let score = transition (node pj) state stateHat
+                        + emission (node pj) state (residue pi)
+          ]
+ where pj = fj stateHat
+
+predUnless :: forall a . Enum a => a -> StateLabel -> StateLabel -> a
+predUnless n don't_move s = if s == don't_move then n else pred n

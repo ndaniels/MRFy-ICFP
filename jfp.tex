@@ -10,6 +10,8 @@
 
 % \timestampfalse % it's post-submission time
 
+\newcommand\vfilbreak[1]{\vskip 0pt plus #1 \penalty-200 \vskip 0pt plus -#1 }
+
 
 \IfFileExists{timestamp.tex}{}{\timestampfalse}
 
@@ -658,7 +660,7 @@ We therefore chose
 
 
 A~model is represented as a sequence of \emph{nodes}, 
-each of which includes three states:
+each of which includes three states:\label{code:model3-node}
 \smallverbatiminput{model3-node}
 The representation of a state~$s$ includes the scores of transitions leaving
 that state;
@@ -764,7 +766,8 @@ The equation adds~$e^{\prime}_{M_{j}}(x_{i})$, computed
 with \texttt{eScore}, to a minimum of sums.
 The~sum of an~$a'_{s\hat s}$~term and a $V^{\prime s}_{j-1}(i-1)$ term 
 is computed by function \texttt{avSum}, in which
-the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively:
+the terms are computed by \texttt{aScore} and \texttt{vee''},
+respectively:\label{code:vee-prime} 
 \smallfuzzverbatiminput{2.9pt}{vfix}
 %%%%%%%%%% horrible line break
 % The right-hand side of \verb+vee'+ is wrapped in a call to
@@ -942,25 +945,6 @@ a single placement or perhaps a population of placements.
 Each point also has a \texttt{Score}; \mrfy\ looks for points with
 good scores.
 
-\begin{figure}
-\tabcolsep=0.5cm
-\centerline{%
-\begin{tabular}{cc}
-\loadpdf[scale=0.35]{search-figs/search-graph1}&
-\loadpdf[scale=0.35]{search-figs/search-graph5}\\
-\begin{minipage}{4cm}
-\caption{Stochastic search with useful and useless moves}%
-\figlabel{search-moves}
-\end{minipage}%
-&
-\begin{minipage}{4cm}
-\caption{Filtering out useless moves could cause nontermination}%
-\figlabel{filtered-search-moves}
-\end{minipage}\\
-\end{tabular}%
-}
-\end{figure}
-
 
 
 
@@ -1002,16 +986,36 @@ the bottom point in each column is the result of a useful move, and we
 call it a useful point.
 Any points above it in the same column are useless.
 
+
+\begin{figure}
+\tabcolsep=0.5cm
+\centerline{%
+\begin{tabular}{cc}
+\loadpdf[scale=0.35]{search-figs/search-graph1}&
+\loadpdf[scale=0.35]{search-figs/search-graph5}\\
+\begin{minipage}{4cm}
+\caption{Stochastic search with useful and useless moves}%
+\figlabel{search-moves}
+\end{minipage}%
+&
+\begin{minipage}{4cm}
+\caption{Filtering out useless moves could cause nontermination}%
+\figlabel{filtered-search-moves}
+\end{minipage}\\
+\end{tabular}%
+}
+\end{figure}
+
 If~\mrfy\ could apply Hughes's technique, it~would search by composing
-a \emph{generator} 
+a~\emph{generator} 
 that produces an infinite sequence of moves, 
-a \emph{filter} that selects the useful moves, and 
-a \emph{test} function that enumerates finitely many useful moves
+a~\emph{filter} that selects the useful moves, and 
+a~\emph{test} function that enumerates finitely many useful moves
 and returns the final destination.
-But a generator may produce an infinite sequence of useless moves.
+But~a~generator may produce an infinite sequence of useless moves.
 (For example, if \mrfy\ should stumble upon a global optimum, every move from
 that point would be useless.)
-Given an infinite sequence of useless inputs, a filter would not
+Given an infinite sequence of useless inputs, a~filter would not
 produce any values, and the search would diverge.
 This situation is depicted graphically in
 \figref{filtered-search-moves}:
@@ -1048,64 +1052,86 @@ the number of points explored previously.
 The~cumulative cost of the current point is also the age of the
 search,
 and
-in~simulated annealing, for example, as the search ages,
+in~simulated annealing, for example, as the cumulative cost increases,
 the \texttt{utility} function becomes less likely to accept a move
 that worsens the score.
+To~attach a cumulative cost to a point, we use type \texttt{CCosted}:
+\smallverbatiminput{aged}
 
-\noindent
-\vbox{
 Using these pieces, function \texttt{everyPt} produces an infinite
-sequence containing a mix of useful and useless moves:
-\smallfuzzverbatiminput{10.8pt}{everygen}
-}
-\noindent
+sequence containing a mix of useful and useless points.
+Each useful point is tagged with cumulated cost and its score:
+\smallfuzzverbatiminput{6pt}{everygen}
 Both \texttt{nextPt} and \texttt{utility} are monadic, but 
 we can still exploit laziness:
 from its starting point, \texttt{everyPt} produces an infinite list of
 randomly chosen successor points, then calls \texttt{costedUtility} to
 tag each one with a cumulative cost and a utility.
+Because we want to compose monadic computations in the same order we
+compose ordinary functions, 
+our code uses the monadic composition
+operator~\texttt{=<<}, which is the bind operator with its arguments
+swapped.
 
-In Hughes's \citeyearpar{hughes:why} classic model of lazy search,
-we~might expect to use an infinite sequence of points obtained by
-applying \texttt{nextPt} to many points in succession, as done by
+
+If \mrfy\ used Hughes's classic model of lazy search,
+we~could possibly expect to see an infinite sequence of points obtained by
+applying \texttt{nextPt} to many points in succession, as~done by
 the Prelude function \texttt{iterate}.
-But~if you look carefully at how \texttt{successors} is computed,
-that's not what's happening:
-instead, we~compute an infinite list by applying \texttt{nextPt} to
-a~\emph{single} initial point using infinitely many distinct sources
-of random variation.
-\remark{This is the place to bring in a figure, I~think. ---NR}
-Then, when we find a useful \texttt{newPt}, a~recursive call
-to \texttt{everyPt} computes a \emph{fresh} infinite sequence of
-single jumps starting at~\texttt{newPt}.
-\mrfy's search may explore an arbitrary number of infinite
-lists of points, and the representation we~found easiest to think
-about is the pair of elements
-\texttt{pt0}~and~\texttt{nextPt} in the \texttt{SearchGen} record.
-
-
-Once the successors have been computed and tagged,
-\texttt{span} finds the first useful successor.
-In~case there \emph{is} no successor, \texttt{everyPt} also returns
-all the useless successors.
-If~we do find a useful successor, we start searching anew from that
-point, with a recursive call to \texttt{everyPt}.
-(Because \texttt{everyPt} is monadic, the points accumulated so far are
-appended to its result using the \verb+<$>+~operator.)
+But~that's not how \mrfy\ works;
+instead, 
+the~infinite list \texttt{successors}
+is computed by applying \texttt{nextPt} to
+the \emph{single} initial point \texttt{startPt}, \mbox{using} infinitely
+many distinct sources of random variation.
+To~understand the structure of
+ \mrfy's more complex search, it~may help to
+relate the code to \figref{search-moves}.
+Please assume that \texttt{startPt} is the point in the upper left
+corner of \figref{search-moves}.
+Then the first part of the \texttt{successors} list appears in the
+next column of \figref{search-moves}:
+the~first four elements are \texttt{useless};
+the next element, which is the first useful point, is~\texttt{pt};
+and~the remaining elements, which are never evaluated,
+match the
+underscore.
+The first useful point is located by \mono{span~isUseless}.
+After the search reaches~\texttt{pt},
+we~start the search anew with a recursive 
+call to \mono{everypt~sg}, 
+passing~\texttt{pt}.
 %
 The most informative part of \texttt{everyPt} is last expression of
 the \texttt{do} block,
 which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
-points, and then continues recursively with another call to \texttt{everyPt}.
+points, and then continues with the results of a recursive call
+to \texttt{everyPt}. 
+
+
+
+
+
+\mrfy's search may explore an arbitrary number of infinite
+lists of points, each reached using a different source of randomness.
+We~suppose this search space could be represented by a single
+value of type \mbox{\mono{Rand r [[Scored pt]]}}, but when writing
+client code, we~found it much easier to think about the
+representation we actually use in the
+\texttt{SearchGen} record:
+the~monadic value
+\texttt{pt0} together with the function \texttt{nextPt}.
+
+
 
 %%\begingroup\parskip=0.9\parskip
 %% \makeatletter\@sectionaboveskip=0.9\@sectionaboveskip\makeatother
+
+\vfilbreak{2.5\baselineskip}
+
 The rest of the search uses Hughes's
 classic composition of generator  and test function.
-Because our code is monadic, we~use the monadic composition
-operator~\texttt{=<<}, which is the bind operator with its arguments
-swapped: 
 \smallverbatiminput{search}
 The \texttt{test} function has type \mono{SearchStop~pt}:
 \smallverbatiminput{stop}
@@ -1244,7 +1270,7 @@ Using
 \texttt{Control.Parallel}, parallelizing the computation was as easy
 as  substituting
 \texttt{parmap rseq} for \texttt{map}.
-\figref{fig:speedup} shows speedups when using from 
+\figref{speedup} shows speedups when using from 
  1~to~48 of the cores 
 on a 48-core, 2.3GHz AMD Opteron 6176 system.
 Errors are estimated from 5~runs.
@@ -1279,8 +1305,173 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 % And we expect that if we cross the street, we will get to the other side.
 
 
+\subsection{Improving \mrfy's sequential performance}
+
+Research software for
+computational biology doesn't have to be fast to be useful.
+But~when we say that \mrfy\ solves some problems 8~times slower then
+SMURF, we~felt it wasn't a good showing for Haskell.
+\mrfy\ spends 98\%\ of its time running Viterbi's algorithm, and
+we~felt sure that with some love and attention, we could make it
+more competitive with~C++.
+
+The code example for \verb+vee'+ on page~\pageref{code:vee-prime}
+shows the computation of the general case of~$V^{\prime M}_j(i)$ from 
+\figref{viterbi-transformed}.
+But the full story is not nearly as nice at one could hope for:
+in~the code that accompanies our 2012 ICFP paper,
+\verb+vee'+ has 25~cases overall.
+Many of these cases exist because we~did not have enough insight into
+Haskell, and we made some decisions that might have been more
+appropriate to a FORTRAN program:
+\begin{itemize}
+\item
+Recursive computations were done on smaller array indices, not smaller
+models.
+\item
+Array indices 1, 0, and $-1$ were all used to indicate special
+conditions.
+\item
+Senseless combinations of array indices and states were handled by
+assigning each such combination the largest representable score, which
+corresponds to the smallest representable probability.
+\end{itemize}
+Before trying to speed up the code, we~simplified~it.
 
 
+Our first step in simplification was to start thinking like Haskell
+programmers and use types:
+\begin{itemize}
+\item
+We~refactored the single, flat \texttt{Node} type from our ICFP paper
+into the three state types you see on page~\pageref{code:model3-node}.
+\item 
+We introduced a \texttt{Model} type that consists of a special Begin
+node containing a begin and an insertion state, an~unbounded sequence
+of ordinary \texttt{Nodes}, and an end state.
+\item
+We~observed that the main algorithm where \mrfy\ spends all its time
+uses only match, insertion, and deletion states, so we removed the
+value constructors corresponding to begin and end states.
+Those constructors were used only to prettyprint models, so~we made
+them part of a larger type.
+\end{itemize}
+As a result of these changes, in the revised code,
+\begin{itemize}
+\item
+Only array index~0 is used to indicate a special
+condition: the transition from the leftmost middle node to the unique
+begin node.
+\item
+All well-typed combinations of array indices and states make sense;
+senseless combinations are ruled out by the static type system.
+\end{itemize}
+
+\def\p#1{\mathit{p#1}}
+\begin{figure}
+\def\vsum#1#2{#1+#2}
+\[
+\begin{array}{r@{}c@{}l}
+\multicolumn3{c}{
+  V_{j}^{\prime \hat s}(i) = e^{\prime}_{\hat s_{j}}(x_{i}) 
+    + \min\limits_s \big\{
+         \vsum{V_{\mathit{\p j}}^{\prime s}(\p i\; s)} 
+     {a^{\prime}_{s_{\p j} \,\hat s_j}}, 
+      \mbox{ where $s$ can precede $\hat s$}  \big\}
+}
+\\[10pt]
+\mbox{where }\p i\; s&{} = {}& 
+  \left\{ \begin{array}{l}
+          i \mbox{, if $s=D$}\\
+          i-1 \mbox{, otherwise}\\
+          \end{array}
+  \right.
+\\[10pt]
+\p j &{} = {}& 
+  \left\{ \begin{array}{l}
+          j \mbox{, if $\hat s=I$}\\
+          j-1 \mbox{, otherwise}\\
+          \end{array}
+  \right.
+\\
+\end{array}
+\]
+
+\caption{Viterbi's equations, abstracted over state~$\hat s$, 
+defining $e^{\prime}_{D_j}(x) = 0$}
+\figlabel{viterbi-abstracted}
+\end{figure}
+
+
+Our next step was to use more abstraction.
+In~Viterbi's equations,
+$V'$ is indexed by a residue index~$i$,\footnote
+{In~biology, when an amino acid enters a protein, it often loses a few
+atoms, and so within the protein, the amino acid is often called
+a \emph{residue}.}
+ a~node index~$j$,
+and
+a state $M$, $I$, or~$D$.
+Each state uses a slightly different equation, but it is possible to
+combine them.
+\figref{viterbi-abstracted} shows a single equation which, when
+state $\hat s$ is specialized to state $M$, $I$, or~$D$, recovers the
+original three equations from \figref{viterbi-transformed}.
+The figure sums the cost of emitting an amino acid at state~$\hat s$
+lowest of the costs of the paths entering~$\hat s$ from predecessor
+state~$s$.
+Index~$\p j$ is the index of the node containing the predecessor
+state, and $\p i; s$ is the index of the amino acid, if~any, to be
+emitted at state~$s$.
+
+NEED TO EXPLAIN PRECEDERS
+
+
+\figref{viterbi-abstracted} doesn't deal with the begin state.
+In~our legacy file format, and also in our code, the begin state is
+represented as a match state inside an ordinary node.
+In~a perfect world, then, we would add one case to say that the match
+state with $i=j=0$ is reachable at zero cost, and we'd be finished.
+But the world is imperfect, because although the begin state is
+represented as a match state, unlike a match state, the begin state
+does not emit.
+We~therefore need a special case for each of the three states that can
+follow the begin state.
+Here is the code:
+\smallverbatiminput{hov4}
+NEED TO EXPLAIN INTERNAL, EDGE, AND LEAF.
+NEED TO EXPLAIN [[transition]] and [[emission]]
+
+
+
+\smallverbatiminput{hov-prevs}
+
+
+The main benefit is that the Viterbi function is reduced from 90~lines
+of code to just 38~lines, of which 8~lines are type signatures.
+This change laid the groundwork for more experiments.
+
+
+
+
+If~we look not at the whole package but just at Viterbi's algorithm,
+the~performance story is even more grim:
+we~wrote a custom C~program that computes a score using Viterbi's
+algorithm and does nothing else, and it runs about a hundred times
+faster than \mrfy's implementation.
+
+
+
+
+
+
+
+BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
+
+
+
+
+THE STORY OF THE UNPACK PRAGMAS; CITING JOHAN TIBELL
 
 \subsection{Awkward debugging and testing}
 
@@ -1400,156 +1591,6 @@ Without QuickCheck, we~probably wouldn't have known anything was wrong.
 %%  \end{itemize}
 %%  \textbf{These properties need to be followed by more ambitious
 %%  properties},
-
-
-\subsection{Competing with C++; less FORTRAN; more Haskell}
-
-EXPLAIN SECTION TITLE.
-
-WHY IS THIS SECTION RELEVANT?  TO SHOW TRAPS AND PITFALLS FOR NEW
-HASKELL PROGRAMMERS.
-
-FIRST STEP WAS TO SIMPLIFY THE CODE.
-
-As shown in \figrefpair{viterbi-original}{viterbi-transformed} and in
-the code for \verb+vee'+ on page~\pageref{code:vee-prime}, Viterbi's
-$V'$ is indexed by a residue index~$i$, a~node index~$j$,
-and
-a state $M$, $I$, or~$D$.
-A~query sequence is simply an array of~\texttt{AA} indexed by~$i$,
-and a model is an array of nodes indexed by~$j$.
-The node array and its indices are handled as in our group's C++ code:
-all nodes have the same representation, and every node can be
-interpreted in one of the special states Begin and End.
-(This possible interpretation causes the introduction of the
-mysterious probabilities \verb+b_m+ and \verb+m_e+ into the transition
-table on page~\pageref{sec:tprobs}.)
-These conventions of representation lead to a full implementation of
-Viterbi's algorithm that is more reminiscent of FORTRAN than of
-Haskell:
-\begin{itemize}
-\item
-Recursive computations are done on smaller array indices, not smaller
-models.
-\item
-Array indices 1, 0, and $-1$ are all used to indicate special
-conditions.
-\item
-Senseless combinations of array indices and states are handled by
-assigning each such combination the largest representable score, which
-corresponds to the smallest representable probability.
-\end{itemize}
-This is the code in which \mrfy\ spends 98\%\ of its time, and that
-we~wanted to speed up to make it more competitive with~C++.
-But the central function \verb+vee'+ has 25~cases overall.
-Before thinking seriously about how to tune it, we~decided to simplify~it.
-
-Our first step in simplification was to start thinking like Haskell
-programmers and make more effective use of both the static type system:
-(AND THE PATTERN-MATCH COMPILER)
-\begin{itemize}
-\item
-We introduced a \texttt{Model} type that consists of a single Begin
-node, an~unbounded sequence of Middle nodes, and a single End node.
-\item
-We~observed that the main algorithm where \mrfy\ spends all its time
-uses only Match, Insert, and Delete states.
-We~redefined the \texttt{StateLabel} type to include only these
-states; the Begin and End labels are now part of
-type \texttt{FullStateLabel}. 
-\end{itemize}
-As a result of these changes, in the revised code,
-\begin{itemize}
-\item
-Only array index~0 is used to indicate a special
-conditions: the transition from the leftmost middle node to the unique
-begin node.
-\item
-All well-typed combinations of array indices and states make sense;
-senseless combinations are ruled out by the static type system.
-\end{itemize}
-
-
-
-\begin{figure}
-\def\vsum#1#2{#1+#2}
-\[
-V_{j}^{\prime \hat s}(i) = e^{\prime}_{\hat s_{j}}(x_{i}) 
-  + \min\limits_s \left\{
-       \vsum{V_{\mathit{pnode}\;\hat s\;j}^{\prime
-       s}(\mathit{presidue}\;\hat s\;i)} {a^{\prime}_{s \,\hat
-       s}}, \mbox{ where $s$ can precede $\hat s$} \right \}
-\]
-
-\caption{Viterbi's transformed equations, abstracted over states $s$
-and $\hat s$, defining $e^{\prime}_D(x) = 0$}
-\figlabel{viterbi-abstracted}
-\end{figure}
-
-We also combined Viterbi's three equations into one.
-Each equation has the same form, but is parameterize over three
-values determined by the right-hand state~$\hat s$:
-the~index of the previous node ($j$~or~$j-1$),
-the~index of the previous residue ($i$~or~$i-1$),
-and the set of previous states~$s$ over which the minimum is taken.
-If~we abstract the index computations into functions
-$\mathit{pnode}$ 
-and 
-$\mathit{presidue}$
-respectively,
-we~get the combined, abstract form of Viterbi's equations shown in
-\figref{viterbi-abstracted}.
-The~implementation of \figref{viterbi-abstracted} looks like this:
-\smallverbatiminput{hoviterbi}
-Function \texttt{next} makes the recursive call to 
-
-
-
-The right-hand sideOur 
-Indices 1, 0, and $-1$ were all used to indicate special conditions,
-and 
-
-
-
-
-
-
-\subsubsection{Reducing cases in Viterbi}
-
-
-\newcommand\pv{\textit{Predecessor Viterbi}}
-\newcommand\ov{{Original Viterbi}}
-
-Our first step in adapting the code was to create \pv.
-Like \ov, \pv\ takes a state and two indices as an argument.
-But at top level, there is no case analysis on the state, and the only
-indices considered are zero and nonzero, so there are only four cases.
-(The state is used in two ways: to compute transition probabilities,
-and to decide which states may permissibly precede the current state.
-The set of permissible preceding states is looked up in a data
-structure, not computed by case analysis.)
-
-Here is the general case in the new code:
-
-THERE IS A GRATUITOUS CHANGE: THE TYPE OF ARRAY USED IS DIFFERENT.
-WE SHOULD PROBABLY FIX THAT.
-In the old code, there are three corresponding cases: one each for
-match, insert, and delete states.  
-Here is the code for the match case:
-\smallverbatiminput{viterbi}
-The other case are similar; the second argument to \texttt{aScore} is
-always equal to the first (state) argument to \texttt{vee'},
-and the argument to \texttt{map from} is different in each case.
-(In the new code, this argument is identical to \texttt{preceders !
-stateRight}.)
-NORMAN THINKS THIS COMPARISON DOESN'T WORK AT ALL :-(
-
-
-The main benefit is that the Viterbi function is reduced from 90~lines
-of code to just 40~lines.
-This change laid the groundwork for more experiments.
-
-BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
 
 
  
@@ -1833,7 +1874,7 @@ Larsen, and Nathan Ricci.
 This work was funded in part by NIH grant 1R01GM080330.
 
 
-\section{Notes on the new paper}
+\section{THIS SECTION WILL BE DELETED.  SAUVE QUI PEUT!}
 
 \input{jfpnotes}
 

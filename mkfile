@@ -21,7 +21,7 @@ jfp.dvi: search-figs/search-graph5.eps
 ICFPCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility move \
       strat stop history statelabel hmmnode aa score tprob-tprobs
 
-CODES=$ICFPCODES hoviterbi aa model3-mstate model3-node
+CODES=$ICFPCODES hoviterbi aa model3-mstate model3-node hov4 hov-prevs
 
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
@@ -100,6 +100,12 @@ aa.tex:D: ./xsource Smurf2/Constants.hs
 	lua $prereq
 
 model3-mstate.tex model3-node.tex:D: ./xsource Smurf2/Model3.hs
+	lua $prereq
+
+hov4.tex:D: ./xsource nr-jfp/V4.hs
+	lua $prereq
+
+hov-prevs.tex:D: ./xsource mrfy/V4.hs
 	lua $prereq
 
 vfix.tex:D: viterbi.tex mkfile
