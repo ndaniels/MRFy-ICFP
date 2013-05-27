@@ -437,8 +437,12 @@ correspond to no amino acids and contain no emission probabilities.
 %% for consistency with the text above 'begin' and 'end' are neither
 %% capitalized nor italicized.
 %%
-In~our representation, each state is referred to by its position~$j$
-within the alignment and by one of these labels:
+In~our representation, 
+the begin and end states are known by their positions:
+in a $\alignwidth$-column model, the begin state is the only state in
+column~0 and the end state is the only state in column~$\alignwidth$.
+Every other state is referred to by its column~$j$
+and by one of these labels:
 \smallverbatiminput{statelabel}
 We~group states that share a column~$j$; these states are referred
 to collectively as ``node~$j$,'' as shown in \figref{plan7}.
@@ -452,11 +456,7 @@ deletion state~$D$.
 \remark{We need to figure out if the begin state is really node 0}
 
 \begin{figure} 
-\ifpdfmadness
-\centerline{\includegraphics[width=8cm]{Plan7.pdf}} 
-\else
-\centerline{\includegraphics[width=8cm]{Plan7.eps}} 
-\fi
+\centerline{\loadpdf[width=11cm]{Plan7_emit}} 
 
 \caption{A hidden Markov model $(\alignwidth = 4)$}
 
@@ -526,8 +526,10 @@ storing data in the exponent of a floating-point number, which holds
 only 11~bits.
 In~order to store data in the significand, which holds 53~bits,
 we~instead sum the logarithms of probabilities \cite{Viterbi:1967hq}.
-Moreover, in~order to work with positive numbers, 
-our legacy file format also \emph{negates}
+Moreover, 
+ our models use a
+legacy file format which
+\emph{negates}
 the logarithm of each probability, making it a positive number.
 %%To~make these numbers more pleasant to read, we negate them,
 %%which eliminates hordes of minus signs from our file formats.
@@ -641,8 +643,8 @@ using a value of algebraic data type:
 \begin{smallverbatim}
 data Amino = Ala | Cys | Asp | Glu | ...   -- not used
 \end{smallverbatim}
-But our models use a
-legacy file format in which each amino acid is a small integer
+But in our
+legacy file format, each amino acid is a small integer
 used only to index arrays.
 %which we use only as an array index.
 We therefore chose 
@@ -654,38 +656,39 @@ We therefore chose
 %%    insertion emission vectors.}
 
 
-In a real hidden Markov model, each probability is represented as a score.
-Our code implements a transformed version of Viterbi's equations
-which operates on scores.
-The~transformed equations are
-shown in \figref{viterbi-transformed}.
-They minimize the
-score (the negated log probability) for each combination of
-column~$j$, amino 
-acid~$x_i$, and state $M_j$, $I_j$, or~$D_j$.
 
-A~model is represented as a sequence of \emph{nodes};
-node~$j$ includes states $M_j$, $I_j$, and~$D_j$,
-as well as the probabilities of transitions out of that node.
-Each node contains tables of emission scores
-$e'_{M_j}$~and~$e'_{I_j}$.
-These tables are read by function
+A~model is represented as a sequence of \emph{nodes}, 
+each of which includes three states:
+\smallverbatiminput{model3-node}
+The representation of a state~$s$ includes the scores of transitions leaving
+that state;
+if~state~$s$ is a match or insertion state, its representation also
+includes a table of emission scores.
+For~example, the representation of a match state is \texttt{MState}:
+\smallverbatiminput{model3-mstate}
+%
+The transition scores, which are shown as $a_{s\hat s}$
+in \figref{plan7}, are read by  
+function \texttt{aScore}, 
+%which is given states $s$~and~$\hat s$ and a node index~$j$; its
+whose
+specification is
+\mbox{$\mathtt{aScore}\;s\;\hat s\;j = \txprobxj s {\hat s}$}.
+The
+emission table is read by 
 \texttt{eScore}, whose specification
 is % parallel structure for line breaking below
-\mbox{$\mathtt{eScore}\;s\;j\;i = e'_{s_j}(x_i)$}.
+\mbox{$\mathtt{eScore}\;s\;j\;i = e'_{s_j}(x_i)$},
+where $x_i$ is the amino acid located at position~$i$ in the query
+sequence. 
 %
-We place the transition probabilities 
-into a record in which each field is labeled
-\texttt{$s$\_$\mskip 1mu\hat s$},
-where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
-labels:\label{sec:tprobs}
-\smallverbatiminput{tprob-tprobs}
-\remark{Need to explain those last two fields. HMMer?}
-The fields of this record are read by
-function \texttt{aScore}, 
-which is given states $s$~and~$\hat s$ and a node index; its %% fixes a bad line break
-specification is
-\mbox{$\mathtt{aScore}\;s\;\hat s\;(j-1) = \txprobj s {\hat s}$}.
+%%  We place the transition probabilities 
+%%  into a record in which each field is labeled
+%%  \texttt{$s$\_$\mskip 1mu\hat s$},
+%%  where $s$~and~$\hat s$ form one of the 7~permissible pairs of state
+%%  labels:\label{sec:tprobs}
+%%  \smallverbatiminput{tprob-tprobs}
+%%  \remark{Need to explain those last two fields. HMMer?}
 
 %%  DROP THIS PARA??
 %%  Nodes are numbered, and the representation of a node includes 
@@ -697,11 +700,14 @@ specification is
 %%  into the states of that node.
 %%  \smallverbatiminput{hmmnode}
 
-Scores can be usefully attached to many types of values,
-so we have defined a small abstraction:
+All scores computed by \mrfy\ are sums of these transition and
+emission scores.
+Because these sums can be usefully attached to many types of values,
+we~have defined a small abstraction:
 \smallfuzzverbatiminput{10.8pt}{vscore}
 Think of a value of type \mono{Scored~a} as a container holding
  an~``\texttt a'' with a score written on the side.
+\remark{Lazy in the first arg is about 1\%~slower}
 The \texttt{/+/} function adds to the score without touching the
  container.
 Function \texttt{fmap} is also defined; it~applies a function to a
@@ -747,7 +753,7 @@ thousand.
 Another of us was curious to try coding Viterbi's equations
 directly as recursive functions.
 Like a recursive Fibonacci function, Viterbi's functions,
-when implemented \naive ly,
+if~implemented \naive ly,
 take exponential time.
 But like the Fibonacci function, Viterbi's functions can be
 \emph{memoized}.
@@ -765,15 +771,17 @@ the terms are computed by \texttt{aScore} and \texttt{vee''}, respectively:
 What about the call to
 \mono{\mbox{fmap (Mat `cons`)}}?
 This call performs a computation \emph{not} shown
-in \figrefpair[or]{viterbi-original}{viterbi-transformed} :
+in \figref{viterbi-transformed}:
 \mrfy\ computes not only the {probability} of the most likely path but 
 also the path itself.
 Function \mono{(Mat `cons`)} adds~$M$ to a path;
 we~avoid \mbox{\mono{(Mat :)}} for reasons explained
 in \secref{performance} below. 
 
-Function~\verb+vee''+ is the {memoized} version of~\verb+vee'+.
-Calling~\verb+vee''+ produces the same result as calling~\verb+vee'+,
+Function~\verb+vee'+ makes a recursive call not to itself but
+to~\verb+vee''+. 
+Function~\verb+vee''+ is the {memoized} version of~\verb+vee'+;
+it~produces the same result as~\verb+vee'+,
 but faster: 
 \smallverbatiminput{memo}
 Functions \texttt{Memo.memo3} and \texttt{Memo.arrayRange} come from
@@ -889,7 +897,7 @@ bonded pair of beta strands is modeled by
  a pair of sequences of match states.
 Between beta strands, the model is structured as before.
 The~combined model, an~example of which is shown in \figref{mrf}, is called a
-\textit{Markov random field}. 
+\textit{Markov random~field}. 
 
 
 %
@@ -938,16 +946,16 @@ good scores.
 \tabcolsep=0.5cm
 \centerline{%
 \begin{tabular}{cc}
-\loadpdf[width=5cm]{search-figs/search-graph1}&
-\loadpdf[width=5cm]{search-figs/search-graph5}\\
+\loadpdf[scale=0.35]{search-figs/search-graph1}&
+\loadpdf[scale=0.35]{search-figs/search-graph5}\\
 \begin{minipage}{4cm}
-\caption{Stochastic search with useful and useless steps}%
-\figlabel{search-steps}
+\caption{Stochastic search with useful and useless moves}%
+\figlabel{search-moves}
 \end{minipage}%
 &
 \begin{minipage}{4cm}
-\caption{Filtering out useless steps could cause nontermination}%
-\figlabel{filtered-search-steps}
+\caption{Filtering out useless moves could cause nontermination}%
+\figlabel{filtered-search-moves}
 \end{minipage}\\
 \end{tabular}%
 }
@@ -983,7 +991,19 @@ at a local optimum.
 if a move is useless, 
 \mrfy\ abandons it and moves again (in a new random direction) from the
 previous point.
-Ideally, \mrfy\ would search by composing a \emph{generator}
+The~search is depicted graphically in \figref{search-moves}.
+The~solid lines represent useful moves; the dotted lines represent
+useless moves.
+The~points are laid out vertically in the order in which they are
+discovered;
+if~you like, time increases as you move downward.
+Horizontally, we~have organized the points into five columns; 
+the bottom point in each column is the result of a useful move, and we
+call it a useful point.
+Any points above it in the same column are useless.
+
+If~\mrfy\ could apply Hughes's technique, it~would search by composing
+a \emph{generator} 
 that produces an infinite sequence of moves, 
 a \emph{filter} that selects the useful moves, and 
 a \emph{test} function that enumerates finitely many useful moves
@@ -993,12 +1013,17 @@ But a generator may produce an infinite sequence of useless moves.
 that point would be useless.)
 Given an infinite sequence of useless inputs, a filter would not
 produce any values, and the search would diverge.
+This situation is depicted graphically in
+\figref{filtered-search-moves}:
+on the left-hand side, 
+the first move is useless; the second move is useful; and all
+subsequent moves are useless.
+Filtering out useless moves would produce the sequence shown on the
+right-hand side, which contains two points followed by a divergent
+computation. 
 
-
-
-
-
-We~address this problem by combining ``generate and filter'' into a
+We~avoid the possibility of divergence by combining ``generate and
+filter'' into a 
 single abstraction, which has type \mono{SearchGen pt r}.
 Type variable~\texttt{pt} is a point in the search
 space, and \texttt{r} is a
