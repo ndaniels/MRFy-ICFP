@@ -1,0 +1,15 @@
+We primarily benchmarked MRFy's run-time performance using a test case that
+mimics real-world use of MRFy, but focuses on the implementation of the Viterbi
+algorithm.
+This ``medium-sized'' benchmark consists of computing the Viterbi score for
+each of a set of protein sequences against each of a set of hidden Markov model
+templates.
+The medium-sized benchmark comprises 56 protein sequences from the deep-sea 
+bacterium \emph{Thermotoga maritima},
+ranging in length from 80 to approximately 1200 residues, and 9 hidden Markov
+models, each built from a multiple structure alignment of the proteins in
+a $\beta$-structural protein superfamily.
+A single invocation of MRFy results from each hidden Markov model in the 
+benchmark, and that invocation aligns each of the 56 protein sequences in the 
+input file to that model. Thus, time spent in I/O and parsing of the model
+is amortized over all protein sequences.
