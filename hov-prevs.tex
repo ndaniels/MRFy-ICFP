@@ -1,9 +1,11 @@
-prevs preceders stateHat fj fi =
- internal [ edge score state (vee'' state pj pi)
-          | state <- preceders
-          , let pi = fi state
-          , pj >= 0, pi >= 0
-          , let score = transition (node pj) state stateHat
-                        + emission (node pj) state (residue pi)
-          ]
- where pj = fj stateHat
+       prevs predecessors stateHat fj fi =
+        internal [ edge score state (vee'' state pj pi)
+                 | state <- predecessors
+                 , let pi = fi state
+                 , pj >= 0, pi >= 0
+                 , let score = transition (node pj) state stateHat
+                               + emission (node pj) state (residue pi)
+                 ]
+        where pj = fj stateHat
+prevs :: [StateLabel] -> StateLabel
+      -> (StateLabel -> NodeIndex) -> (StateLabel -> ResidueCount) -> a
