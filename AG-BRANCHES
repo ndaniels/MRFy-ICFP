@@ -93,6 +93,29 @@ flailing
 UNKN.
 
 
+old-mrfy-simplified
+===================
+An older version of mrfy that performed well, simplified a bit for our
+paper submission.  Spawns off of one of the nr-jfp branches, either
+goodness or refactor.  There's an important tag in there
+'last-efficient-mrfy'.  This branch (as of commit 1792c45) performs
+just about as well as the last efficient mrfy.
+
+
+implicit-cumulative-costs
+=========================
+Contains the version of the code intended to be presented in the
+paper.  Includes a bunch of improvements to lazy search, not related
+to Viterbi's algorithm.
+
+Something here has gone wrong with Viterbi's algorithm, and for some
+unknown reason, although V4.hs looks nearly identical to the
+old-mrfy-simplified branch, this one is slower.  I'M TEARING MY HAIR
+ABOUT THIS.
+
+
+
+
 ---------------------------------
 
 master
