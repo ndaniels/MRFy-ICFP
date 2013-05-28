@@ -168,3 +168,68 @@ make Scored lazy in first argument
 
 lazy-scored 7f8607b        7.14s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
 mrfy 78018d6               7.08s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+--------------------------------------
+Monday refactoring for paper
+
+mrfy 51be03e               7.98s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp c8bdee3             7.84s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b           6.79s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-27 17:30   Running med(vpasses=1): mrfy nr-jfp old-mrfy
+mrfy 51be03e              47.95s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp c8bdee3            46.16s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b          42.19s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+-----------------------------------
+weirdness with prevs special cases; mrfy branch is old-mrfy-simplified
+### 2013-05-27 19:21   Running short(vpasses=1): mrfy old-mrfy
+mrfy 5c32cf8               6.75s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*          6.72s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-27 19:21   Running med(vpasses=1): mrfy old-mrfy
+mrfy 5c32cf8              42.01s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*         41.93s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+
+... new-prevs is old-mrfy-simplified; mrfy is implicit-cumulative-costs:
+### 2013-05-27 19:35   Running short(vpasses=1): mrfy new-prevs old-mrfy
+mrfy be8ccba               7.13s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+new-prevs beb4d68          6.72s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*          6.75s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+
+
+mrfy is now implicit-cumulative-costs
+### 2013-05-27 20:13   Running short: icfp-branch mrfy new-prevs nr-jfp old-mrfy
+icfp-branch faab8dc        8.66s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp c8bdee3             8.02s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 32cd9b5               7.26s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+new-prevs 1792c45          6.93s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*          6.83s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+### 2013-05-27 20:15   Running med: icfp-branch mrfy new-prevs nr-jfp old-mrfy
+icfp-branch faab8dc       52.99s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp c8bdee3            46.88s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 32cd9b5              44.52s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+new-prevs 1792c45         41.96s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*         41.74s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+-- changed nr-jfp *not* to have no special functions for the special
+   states; there's just a case for zero residues, and the others go
+   into the general pot
+
+icfp-branch faab8dc        8.65s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy 32cd9b5*              7.11s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+new-prevs 1792c45          6.74s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+nr-jfp f966849             8.99s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+old-mrfy aec6c0b*          6.71s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+
+
+icfp-unpack 2c16463       48.69s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+mrfy with unpack 
+mrfy 32cd9b5*             48.41s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz

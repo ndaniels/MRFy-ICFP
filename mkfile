@@ -22,14 +22,14 @@ ICFPCODES=strategy search viterbi scoredecl vscore vfix edge memo gen utility mo
       strat stop history statelabel hmmnode aa score tprob-tprobs
 
 CODES=$ICFPCODES hoviterbi aa model3-mstate model3-node hov4 hov-prevs list-viterbi \
-	  v4aux
+	  v4aux hosigs
 
 
 $TGT.dvi: $TGT.tex ${CODES:%=%.tex}
 	# latexmk $TGT.tex
     latex '\scrollmode \input '"$TGT"
 	ltxcount=3
-	while egrep -s 'Rerun (LaTeX|to get cross-references right|to get citations correct)' $stem.log &&
+	while egrep -s 'Rerun (LaTeX|to get cross-references right|to get citations correct)' $TGT.log &&
 	      [ $ltxcount -gt 0 ]
 	do
 	  latex '\scrollmode \input '"$TGT"
@@ -108,7 +108,7 @@ model3-mstate.tex model3-node.tex:D: ./xsource mrfy/Model3.hs
 hov4.tex:D: ./xsource nr-jfp/V4.hs
 	lua $prereq
 
-hov-prevs.tex v4aux.tex:D: ./xsource mrfy/V4.hs
+hov-prevs.tex v4aux.tex hosigs.tex:D: ./xsource mrfy/V4.hs
 	lua $prereq
 
 list-viterbi.tex:D: ./xsource mrfy/V2.hs

@@ -1,0 +1,13 @@
+vee' :: StateLabel -> NodeIndex -> ResidueCount -> a
+vee' Del (NI 1) (RC 0) = leaf (transition (node 0) Mat Del)
+vee' Ins (NI 0) (RC 0) = leaf (transition (node 0) Mat Ins)
+vee' Mat (NI 1) (RC 0) = leaf (transition (node 0) Mat Mat)
+vee' stateHat j i = 
+  internal [ edge score state (vee'' state pj pi)
+           | state <- preceders stateHat
+           , let pi = predUnless i Del state
+           , pj >= 0, pi >= 0
+           , let score = transition (node pj) state stateHat
+                         + emission (node pj) state (residue pi)
+           ]
+  where pj = predUnless j Ins stateHat

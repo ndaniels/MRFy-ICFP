@@ -70,6 +70,7 @@
 \newcommand\figrefpair[3][and]{Figures \ref{fig:#2}~#1~\ref{fig:#3}}
 \newcommand\figlabel[1]{\label{fig:#1}}
 \newcommand\secref[1]{Section~\ref{sec:#1}}
+\newcommand\secrefpair[3][and]{Sections \ref{sec:#2}~#1~\ref{sec:#3}}
 \newcommand\seclabel[1]{\label{sec:#1}}
 
 \usepackage{verbatim}
@@ -232,7 +233,7 @@ create and experiment with new stochastic-search algorithms
 \item
 Haskell slowed us down in only one area:  understanding and
 improving
-performance (\secref{awkward-profiling}).
+performance (\secrefpair{improving-viterbi}{awkward-profiling}).
 %%  \item
 %%  The only significant impediment that Haskell presented to our
 %%  research was the difficulty of understanding and improving the
@@ -261,15 +262,19 @@ would be which
 experience we were likely to have
 \fi
  (\secref{penumbra}).
-\item
-\emph{[POTENTIAL BULLETS ABOUT SPEED AND ``MORE FUNCTIONAL'']}
 \end{itemize}
 A~preliminary version of this
 paper \citep{daniels:haskell-in-bio:2012} was presented as 
 an \emph{Experience Report} in ICFP~2012.
-This~paper adds to the original paper by describing our experience in
-trying to simplify and speed up the central algorithm.
-AND FIX THE CODE AND...
+This~paper adds a new technical section (\secref{improving-viterbi})
+which describes our experience 
+refactoring and improving our implementation of Viterbi's 
+\citeyearpar{Viterbi:1967hq}
+algorithm.
+We~have also simplified the stochastic search as well as other elements of
+the code.
+Finally, we~have improved and added to the figures and diagrams.
+
 
 
 
@@ -444,7 +449,7 @@ the begin and end states are known by their positions:
 in a $\alignwidth$-column model, the begin state is the only state in
 column~0 and the end state is the only state in column~$\alignwidth$.
 Every other state is referred to by its column~$j$
-and by one of these labels:
+and by one of these labels:\label{code:state-label}
 \smallverbatiminput{statelabel}
 We~group states that share a column~$j$; these states are referred
 to collectively as ``node~$j$,'' as shown in \figref{plan7}.
@@ -709,7 +714,7 @@ we~have defined a small abstraction:
 \smallfuzzverbatiminput{10.8pt}{vscore}
 Think of a value of type \mono{Scored~a} as a container holding
  an~``\texttt a'' with a score written on the side.
-\remark{Lazy in the first arg is about 1\%~slower}
+%% \remark{Lazy in the first arg is about 1\%~slower}
 The \texttt{/+/} function adds to the score without touching the
  container.
 Function \texttt{fmap} is also defined; it~applies a function to a
@@ -1289,7 +1294,7 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 
 
 \begin{figure}%%%[h!]
-\centerline{\includegraphics{speedup}}
+\centerline{\loadpdf[]{speedup}}
 \medskip
 \caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
 \figlabel{speedup}
@@ -1306,6 +1311,9 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 
 
 \subsection{Improving \mrfy's sequential performance}
+
+\seclabel{better-viterbi}
+\seclabel{improving-viterbi}
 
 Research software for
 computational biology doesn't have to be fast to be useful.
@@ -1337,9 +1345,9 @@ assigning each such combination the largest representable score, which
 corresponds to the smallest representable probability.
 \end{itemize}
 Before trying to speed up the code, we~simplified~it.
-
-
-Our first step in simplification was to start thinking like Haskell
+%
+%
+Our first step was to start thinking like Haskell
 programmers and use types:
 \begin{itemize}
 \item
@@ -1355,7 +1363,7 @@ We~observed that the main algorithm where \mrfy\ spends all its time
 uses only match, insertion, and deletion states, so we removed the
 \texttt{StateLabel} value constructors corresponding to begin and end
 states, leaving only the three constructors shown on
-page~\ref{code:state-label}. 
+page~\pageref{code:state-label}. 
 (We~moved the begin and end labels to another type, which is used only
 to prettyprint models.) 
 \end{itemize}
@@ -1484,58 +1492,144 @@ shown in \figref{viterbi-hov4}.
 
 
 The version of \verb+vee'+ shown in  \figref{viterbi-hov4} is abstract
-in another way: the type of the result is the unknown type~\texttt{a}.
-Type~\texttt{a} represents
+in another way: the type of the result is an unknown type~\texttt{a}.
+Type~\texttt{a} represents a tree-node in an abstract ``cost~tree;''
+we~instantiate it as a score, as a \mono{Scored~[StateLabel]},
+and as an explicit tree used to visualize and debug the computation.
+Values of type~\texttt{a} are built using three functions that are
+passed as parameters:
+\smallverbatiminput{hosigs}
+The \texttt{internal} function must treat an empty list of edges as an
+unreachable tree-node; for~example, if \texttt{a} is instantiated
+to \texttt{Score}, then \mono{internal~[]} must produce an infinite
+score (corresponding to zero probability).
 
-
-\figref{viterbi-abstracted} doesn't deal with the begin state.
-In~our legacy file format, and also in our code, the begin state is
-represented as a match state inside an ordinary node.
-In~a perfect world, then, we would add one case to say that the match
-state with $i=j=0$ is reachable at zero cost, and we'd be finished.
-But the world is imperfect, because although the begin state is
-represented as a match state, unlike a match state, the begin state
-does not emit.
-We~therefore need a special case for each of the three states that can
+\figref{viterbi-hov4} is the first example in this paper that
+shows \emph{all} the cases for~\verb+vee'+.
+We~have reduced the original 25~cases to just~4.
+The~general case, which was shown in other examples, appears last.
+The three special cases above it handle the three states that can
 follow the begin state.
+In~our legacy file format, and also in our code, the begin state is
+identified with the match state in node~$j=0$.
+But although it is
+identified with a match state, the begin state does not behave like a
+match state: it~does not emit a residue.
+Therefore the three states that can follow it can be entered only when the
+count of residues emitted is~$i=0$.
+
+Using the code in \figref{viterbi-hov4}, plus the auxiliary functions
+shown above, the implementation of Viterbi's algorithm is just
+25~lines of code, of which 2~lines are type signatures.
+That's four times smaller than our original code.
+But~while we've gained something, we've also lost something---it's not
+at all obvious that the code in \figref{viterbi-hov4}  implements
+Viterbi's equations.
 
 
-Here is the code:
-NEED TO EXPLAIN INTERNAL, EDGE, AND LEAF.
-NEED TO EXPLAIN [[transition]] and [[emission]]
-
-
-As a result of these changes, in the revised code,
+Although the~new code is about 3\%~slower than our original code, 
+it~turned out to a good starting point for experiments.
+Of~the myriad variations we tried, 
+the best involved two transformations:
 \begin{itemize}
 \item
-Only array index~0 is used to indicate a special
-condition: the transition from the leftmost middle node to the unique
-begin node.
+We~abstracted the call to \texttt{internal} over the state~$\hat s$,
+the list of preceding states, and functions that
+compute \texttt{pi}~and~\texttt{pj}.
 \item
+We~then added a fourth case to \verb+vee'+, which handles the match
+state in node~1 when the residue count is nonzero.
 \end{itemize}
+For reasons we don't understand, GHC specializes the resulting code
+very effectively, leading to 30\%~faster performance on our
+UNCHARACTERIZED MEDIUM benchmark.
+The~result is 26\%~faster than our original code.
 
-
-
-
-
-\begin{verbatim}
-### 2013-05-27 01:23   Running med(vpasses=1): icfp-branch mrfy nr-jfp
-icfp-branch faab8dc       54.07s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
-mrfy d5604bc*             44.90s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
-nr-jfp 00ef54e*           47.59s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
-\end{verbatim}
-
-
-
-
-\smallverbatiminput{hov-prevs}
-
-
-The main benefit is that the Viterbi function is reduced from 90~lines
-of code to just 38~lines, of which 8~lines are type signatures.
 This change laid the groundwork for more experiments.
+The most interesting of these experiments was to follow the advice of
+\citet{tibell:high-performance} and use GHC's UNPACK pragma on scalar
+values---in our case, scores.
+Using the UNPACK pragma made our original code 7\%~faster but our new
+code 9\%~slower.
+
+We~then turned to GHC's profiler, running Viterbi's algorithm on a
+model of 343~nodes and a query of 592~residues.
+We~expect the memo table to have about 600,000 entries,
+and the profiler says that the program allocates 531MB, or 7.85KB
+per~entry.
+This seems excessive.
+\begin{itemize}
+\item
+One culprit is the function \verb+vee''+, which is charged with
+allocating about 66MB.
+To~estimate the amount of memory consumed by
+an entry, we~imagine that representing a boxed
+score on the heap might require three 32-bit words.
+A~thunk involving three parameters might be a bit like a four-element
+list, taking perhaps 12~words for the cons cells and another 8~words
+for the values?
+And then the pointer in the memo table itself would occupy a word.
+So~24~words per entry times 4~bytes per word would be 96B per
+entry for a total of about 59MB?
+Because the actual memo table involves arrays of arrays of arrays,
+we~won't quibble about a discrepancy of~10\%.
+\item
+The computation of \texttt{score} (the sum of transition 
+and emission scores) is charged with allocating 45MB total, or about
+4.5~words for each transition in the computation tree.
+We~have no idea why this combination is allocating, and various
+attempts to make the sum strict (e.g., by using a bang pattern in 
+\mono{let~!score = }\ldots) either have no effect or actually make
+performance worse.
+\item
+There is also some significant allocation in the parser, but the
+elephant in the room is the function \verb+vee'+ itself, which
+allocates 258MB, which is half the memory allocated by the entire
+program.
+We~have no idea what is happening.
+A~graphical heap profile shows a large amount of memory initially
+charged to \verb+vee''+ (the memo table), which then shrinks
+gradually, presumably as large thunks are replaced with smaller
+scores.
+The~amount of memory charged to \verb+vee'+
+increases roughly linearly with time, 
+so~perhaps we have a space leak, but even given the various profiling
+tools available, we~are not competent to find~it.
+\end{itemize}
+In~principle, we~could have diagnosed our problems by reading 
+GHC Core output from the compiler.
+We~found guidance in Don Stewart's invaluable blog posts,
+and we also used his \texttt{ghc-core} tool.
+But it wasn't enough.
+Even though one of us has worked on several optimizing compilers, 
+we~just don't have enough experience to use GHC Core to diagnose
+allocation problems in a 25-line function.
 
 
+
+
+
+%%\begin{verbatim}
+%%### 2013-05-27 01:23   Running med(vpasses=1): icfp-branch mrfy nr-jfp
+%%icfp-branch faab8dc       54.07s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+%%mrfy d5604bc*             44.90s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+%%nr-jfp 00ef54e*           47.59s    i686  GHC 7.4.1  Core i5-3570 @ 3.40GHz
+%%\end{verbatim}
+
+
+
+
+%%\smallverbatiminput{hov-prevs}
+
+
+We~succeeded in making Viterbi's algorithm a lot simpler and somewhat
+faster, but our original goal was to make it competetive with~C.
+The measurements using SMURF are depressing, and the SMURF code is
+even more depressing, so we reimplement Viterbi's algorithm from
+scratch in a clean C~program.
+To~avoid writing a parser, we extend \mrfy\ with code that reads a
+model and a query sequence and emits a C~file containing that model
+and query as initialized data.
 
 
 If~we look not at the whole package but just at Viterbi's algorithm,
@@ -1543,21 +1637,22 @@ the~performance story is even more grim:
 we~wrote a custom C~program that computes a score using Viterbi's
 algorithm and does nothing else, and it runs about a hundred times
 faster than \mrfy's implementation.
+Ironically, we've~had a lot of trouble getting the code right, but it
+allocates only one double-precision floating-point number for each
+entry in the memo table; Haskell allocates about 30~times more.
+
+It's depressing to think that a language with a mature, optimizing,
+native-code compiler might not be usable for performance-critical
+work, but the difficulty of diagnosing allocation problems is a real
+obstacle.
+We~were lucky that we could get new results (CITE NOAH'S LATEST PAPER
+HERE?) even though our core algorithm is 100~times slower than the
+same algorithm written in~C.
+You~might not be so lucky.
 
 
 
-
-
-
-
-BENCHMARK RESULTS WERE WILDLY INCONSISTENT.
-
-
-
-
-THE STORY OF THE UNPACK PRAGMAS; CITING JOHAN TIBELL
-
-\subsection{Awkward debugging and testing}
+\subsection{Debugging and testing: awkward, then  less awkward}
 
 \seclabel{awkward-profiling}
 
@@ -1565,9 +1660,10 @@ Our experience writing code and trying new ideas was excellent, as~was
 the ease of parallelizing \mrfy.
 Higher-order functions, memoization, laziness, and parallel strategies
 really worked.
-But~we also encountered obstacles that prevented functional
+But~as discussed above, profiling didn't really work for~us.
+And we also encountered other obstacles that prevented functional
 programming from working as well as we would have liked.
-The~most significant obstacles were in debugging and testing.
+The~most significant such obstacles were in debugging and testing.
 
 We had a hard time diagnosing run-time errors.
 We~expected some run-time errors;
@@ -1576,7 +1672,7 @@ format is poorly documented and hard to deal with.
 (When beta
 strands overlap and are doubly paired, even the invariants of the
 format are unclear.)
-But using Haskell, we~found the errors hard to diagnose.
+But~using Haskell, we~found the errors hard to diagnose.
 Calls to
 \texttt{trace} 
 littered our code,
@@ -1595,9 +1691,10 @@ or at specific column/line positions, which made debugging the memoized
 In~August~2011, 
 Lennart Augustsson said that the biggest advantage of Strict
 Haskell is getting a stack trace on error,
-and Simon Marlow said that he may have figured out how to track call
-stacks properly in a lazy functional language.
-We~can't wait.
+and when GHC~7.4 was released in early~2012, it~included support for
+stack traces. 
+We~have used the stack-trace feature a couple of times, and it helps.
+
 
 Our difficulties with debugging led to internal disagreements.
 The~junior members of our team wanted to apply the debugging
@@ -1617,7 +1714,7 @@ QuickCheck.
 \begin{itemize}
 \item
 The examples and tutorials we found focused 
-predominantly on writing and testing properties using data types that
+on writing and testing properties using data types that
 already implemented class \texttt{Arbitrary}.
 We~didn't understand the \texttt{Arbitrary} class very well, 
 perhaps because the overloaded \texttt{arbitrary} value is not a
@@ -1635,6 +1732,10 @@ We~continually overlooked the critical role of \emph{shrinking}.
 As~a result, on the one or two occasions we did 
 use QuickCheck, the counterexamples were too large to be
 informative. 
+(To~be fair to ourselves, the \texttt{shrink} method is barely
+mentioned in the original 
+paper on QuickCheck.
+It~shows up under another name, as~an improvement made by Andy Gill.)
 \end{itemize}
 Because of these obstacles, 
 we wrote thousands of lines of code without ever defining an instance
@@ -1645,15 +1746,27 @@ involved in writing and testing instances
 of
 \texttt{Arbitrary}.
 The work got done only when the whole team pitched in to
-meet the deadlines for this paper.
+meet deadlines for ICFP~2012.
 
-At the last minute, QuickCheck did find
-a bug in our implementation of Viterbi's algorithm: we had omitted
-the score for the transition from the final node of the hidden
-Markov model to the special ``end'' state.
-Without QuickCheck, we~probably wouldn't have known anything was wrong.
-%it is unlikely that we would have found this bug,
-%and if we had, determining the cause would have required much time.
+After ICFP, 
+QuickCheck played a central role in further developments.
+Most important was the testing of the variations on Viterbi's
+algorithm described in \secref{better-viterbi}.
+We~used QuickCheck not only to shrink sequences of nodes and of amino
+acids, but also to shrink the number of nonzero transmission and
+emission probabilities in the models.
+We~were able to confirm that each new implementation computed the same
+paths with the same score as our original implementation.
+Almost all counterexamples were shrunk to include just two nodes 
+(the smallest model supported by our original implementation)
+and two or three amino acids.
+Moreover, the models contained just a handful of nonzero
+probabilities.
+QuickCheck played an invaluable role in helping us get edge cases
+right, and in confirming that most of the cases in the original code
+could be eliminated.
+
+
 
 %%  At~that point, we were quickly about to write QuickCheck
 %%  specifications for several properties of the Viterbi algorithm:
@@ -1815,32 +1928,27 @@ Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
 Ramsey is a professor who has used Haskell 
 for medium-sized projects,
-but his contributions to MRFy have been limited, mostly to \emph{post hoc}
-refactoring and testing.
+but he has played a secondary role, primarily refactoring and testing
+others' code. 
 
 
 \subsection{Obstacles to be overcome}
 
-We~had quite some difficulty profiling, but we hope that
-this difficulty may be mitigated by new profiling tools released early
-in~2012 with
+Using GHC versions through~7.2, 
+we~had quite some difficulty profiling.
+These difficulties were technical in nature, and they have been
+completely mitigated by the new profiling tools released 
+with
 GHC~7.4.
-GHC assigns costs to ``cost centers'' \cite{sansom-pj},
-and
-in GHC~7.0, which we used 
-for most of MRFy's development, 
-cost-center annotations had to be added manually
-to nested functions.
-Although these annotations
-made our code so ugly that we felt compelled to
-remove them, they did enable us to improve the performance of~\verb+vee'+ as
-discussed in \secref{perf}.
-%We~miss valgrind, whose profiler gives useful information
-%without \emph{any} annotations.
-GHC~7.4 provides 
-more sophisticated profiling tools, which we look forward to using.
-Difficulties using Cabal to enable profiling of installed libraries
-may remain.
+The~most useful new feature is the automatic annotation of ``cost
+centers'' \cite{sansom-pj}. 
+Some technical difficulties remain, particularly with installation:
+the only reliable way we have found to enable compilation with
+profiling is to destroy all existing compiled libraries, 
+update our Cabal configuration to ask for libraries to be compiled
+with profiling, and reinstall all needed Cabal packages.
+As~of early 2013, the process of reinstallation, although not
+difficult, is time-consuming and tedious.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
@@ -1857,12 +1965,12 @@ but one of the biggest obstacles we encountered to using Haskell is
 that we have had to abandon our old approaches to debugging.
 
 Ideally we would use QuickCheck to find bugs, but as we mention in
-\secref{awkward-quickcheck}, we found obstacles.
+\secref{awkward-quickcheck}, there are obstacles.
 We~have now overcome these obstacles, but
 we~sorely regret not doing so earlier.
-In~light of our experience, we will institute a new programming practice:
+In~light of our experience, we~have instituted a new programming practice:
 whenever we introduce a new data type,
-we~will write the instance of
+we~write the instance of
 \texttt{Arbitrary} right away, while
 relevant invariants are still fresh in memory.
 When invariants are not enforced by Haskell's static type system,
@@ -1871,7 +1979,7 @@ We can then immediately run QuickCheck on each predicate, to verify
 that our Arbitrary instance agrees with the predicate.
 For each predicate~\texttt{p} we can also check
 \mono{fmap (all p . shrink) arbitrary}.
-
+We~cannot overemphasize the value of QuickCheck!
 
 
 
@@ -1884,12 +1992,19 @@ have enough experience with functional programming that you can build
 \emph{all} the code you need, not only the code that is easy to write
 in a functional language.
 Implementing Viterbi's equations in Haskell was pure joy.
+And boiling down the code to just four cases, with the help of
+QuickCheck, was also tremendous~fun.
 Writing an iterative search in purely functional style was~easy.
 Transforming data in the HMMER file format, \emph{without}
 using mutable state the way the C++ code does, was difficult.
 
-NEW PARAGRAPH: STEP SLOWLY AWAY FROM YOUR CODE, AND SEE IF YOU THINK
-IT RESEMBLES ANYTHING A HASKELL PROGRAMMER WOULD HAVE WRITTEN.
+On~reviewing our work, we~observed that we were a little too ready to
+use types and data structures better suited to C++ programming than to
+Haskell programming.
+Eventually we learned to step slowly away from the code and to seek
+out opportunities for abstraction and simplification.
+The~abstract, simple versions---supported by QuickCheck tests---are a
+lot more likely to be useful to the next generation of graduate students.
 
 
 \seclabel{penumbra}
@@ -1952,15 +2067,16 @@ and stream fusion, which led us eventually to the \texttt{Utility} type.
 Koen Claessen instantly diagnosed an inappropriately strict
 implementation of the \texttt{Rand} monad.
 John Tibell taught us the \texttt{UNPACK} pragma.
-We also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
+For~support and discussions 
+we also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci.
 
 This work was funded in part by NIH grant 1R01GM080330.
 
 
-\section{THIS SECTION WILL BE DELETED.  SAUVE QUI PEUT!}
+%\section{THIS SECTION WILL BE DELETED.  SAUVE QUI PEUT!}
 
-\input{jfpnotes}
+%\input{jfpnotes}
 
 
 
