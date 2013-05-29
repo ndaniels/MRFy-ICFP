@@ -1,0 +1,16 @@
+Richard Senington proposed and prototyped a ``local search'' model of
+stochastic search, using his \texttt{local-search} library~\cite{}.
+This library did not fit well with our stochastic search abstraction, and
+thus we wrote an alternative MRFy implementation using \texttt{local-search}
+as well as the majority of the MRFy modules.
+While reconciling these two codebases will constitute a tedious task, and we are
+not happy with this current state of MRFy, the results were terrific.
+The local search approach outperformed random hill-climbing, simulated
+annealing, and the genetic algorithm.
+
+Our hasty modifications to MRFy, in order to incorporate local search, led to
+good results quickly.
+We did not need to change any interfaces in the various MRFy modules, though in
+the interim, we have a separate \texttt{main} for local search.
+This stands in contrast to our experiences modifying our C and C++-based
+software, which inevitably led to headaches.
