@@ -11,3 +11,8 @@ vee' stateHat j i =
                          + emission (node pj) state (residue pi)
            ]
   where pj = predUnless j Ins stateHat
+
+node       :: NodeIndex -> Node
+residue    :: ResidueCount -> AA
+transition :: Node -> StateLabel -> StateLabel -> Score
+emission   :: Node -> StateLabel -> AA -> Score
