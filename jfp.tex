@@ -628,6 +628,9 @@ V_{j}^{\prime D}(i) &=& \min \left\{
 
 
 
+\ifpagetuning\enlargethispage{1.2\baselineskip}\fi
+
+
 The~most likely path through a model is the one with the
 smallest score.
 The~score of each path is computed by dynamic programming; the score associated with
@@ -650,8 +653,6 @@ Haskell made it possible for us to write code that looks like the
 math,
 which made the code easy to write and gives us confidence that it is
 correct.
-
-\ifpagetuning\enlargethispage{1.2\baselineskip}\fi
 
 Our code represents a query sequence as an immutable array of residues.
 In~idiomatic Haskell, 
@@ -1941,7 +1942,7 @@ Like much research software, all three tools were written
  in~haste.
 And all three have later been modified.
 
-\ifpagetuning\enlargethispage{\baselineskip}\fi
+% \ifpagetuning\enlargethispage{\baselineskip}\fi
 
 
 We~modified Matt to use information about sequences as well as structure.
@@ -2011,6 +2012,8 @@ But despite being hasty programmers, we produced code
 that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
+
+\ifpagetuning\enlargethispage{\baselineskip}\fi
 
 
 Looking beyond our research group to computational biology more
