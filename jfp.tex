@@ -1937,7 +1937,7 @@ and \path{Data.Vector}.
 \end{itemize}
 Like much research software, all three tools were written
  in~haste.
-We~have experience modifying all three tools.
+And all three have later been modified.
 
 \ifpagetuning\enlargethispage{\baselineskip}\fi
 
@@ -1981,13 +1981,15 @@ was based on
 Richard Senington's model of \emph{local
 search} \cite{senington:combinators-local}, 
 which does not fit our abstraction of stochastic search.
-We~wound up writing a new program that combines parts
-of MRFy with Senington's  \texttt{local-search} package.
-This~task took only three weeks, and the technical results were terrific.
+We~wound up writing a new program that adapts parts
+of MRFy to work with Senington's  \texttt{local-search} package.
+We're~disappointed that such similar algorithms have entirely
+different interfaces,
+but the adaptation took only three weeks, and the
+technical results were terrific. 
 Local search outperforms random hill-climbing, simulated
 annealing, and the genetic algorithm.
-Even though we're not entirely happy with the
-state of the resulting code, we~count the story as a success.
+We~therefore count the story as a success.
 
 
 
