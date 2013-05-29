@@ -374,6 +374,7 @@ it~is considered a \emph{non-consensus column},
 and the few proteins without gaps probably gained amino acids via
 \emph{insertions}. 
 
+
 Once a protein alignment is constructed, it~is used to train a
 \emph{hidden Markov model}. 
 A~hidden Markov model is a probabilistic finite-state machine which 
@@ -383,10 +384,11 @@ be homologous to the proteins in the alignment.
 We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
 an amino-acid \emph{residue}.\footnote
-{In~biology, when an amino acid enters a protein, it often loses a few
-atoms, and so within the protein, what's left of the amino acid is called
+{When an amino acid combines with other amino acids to form a protein, it gives up
+two hydrogen atoms and an oxygen atom.
+What's left is called
 a \emph{residue}.
-In~this paper we use the terms ``amino acid'' and ``residue''
+In~this paper we use the terms ``residue'' and ``amino acid'' 
 interchangeably.
 }
 The number of residues, $N$, can differ from the number of columns
