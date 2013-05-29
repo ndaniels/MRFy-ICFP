@@ -1,6 +1,6 @@
 \newif\ifpagetuning
 
-\pagetuningfalse % trying to get page breaks in the best spots
+\pagetuningtrue % trying to get page breaks in the best spots
 
 \newif\ifnotcutting \notcuttingtrue % set if not cutting down to size
 
@@ -219,20 +219,8 @@ clearly implements the underlying mathematics
  was easy to parallelize,
 and performs well enough
 (\secref{perf}).
-\ifpagetuning
   And our new tool solves a problem that could not be solved by
   the~C++ tool which preceded~it.
-\else
-  \ifpagetuning
-  And overall,
-  \else
-  Moreover, measured as a whole, 
-  \fi
-  the software that incorporates our new
-  code 
-  performs significantly
-  better than the~C++ software that preceded~it.
-\fi
 \item
 Higher-order functions made it unusually easy to
 create and experiment with new stochastic-search algorithms
@@ -263,11 +251,7 @@ Some kept the promise, saved us lots of effort, and were a pleasure
 to~use.
 Others, not so much.
 We couldn't tell in advance which 
-\ifpagetuning
 would be which
-\else
-experience we were likely to have
-\fi
  (\secref{penumbra}).
 \end{itemize}
 A~preliminary version of this
@@ -665,6 +649,8 @@ math,
 which made the code easy to write and gives us confidence that it is
 correct.
 
+\ifpagetuning\enlargethispage{1.2\baselineskip}\fi
+
 Our code represents a query sequence as an immutable array of residues.
 In~idiomatic Haskell, 
 we might represent an individual residue~$x_i$
@@ -947,7 +933,7 @@ Given a placement, the maximum likelihood of the rest of
 the query sequence, between and around beta strands,
 is computed quickly and exactly 
 using Viterbi's algorithm.
-\ifpagetuning
+\iffalse
 This likelihood is \emph{conditioned} on the placement.
 \else
 The exact result is a probability that is
@@ -1195,7 +1181,6 @@ functions, except for \texttt{nextPt}:
 recombination of parent
 placements took forty lines of code
 and a full day to implement.
-{\ifpagetuning\looseness=1 \par\fi}
 
 We're not entirely happy with the way we're writing all the individual
 functions.
@@ -1265,7 +1250,6 @@ Even with this trick,
 MRFy's implementation of Viterbi's algorithm is much
 slower than the C++ version in \mrfy's predecessor,
 SMURF.
-\ifpagetuning\vadjust{\break}\fi
 For example, on a microbenchmark that searches for a
 structural motif of 343~nodes in a protein of 2000 amino acids
 using only Viterbi's algorithm and no beta-strand information,
@@ -1289,6 +1273,14 @@ The~model contains 252~nodes,
 but SMURF allocates
 over 16GB of memory and does not terminate even after eight hours.
 
+
+\begin{figure}%%%[h!]
+\centerline{\loadpdf[]{speedup}}
+\medskip
+\caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
+\figlabel{speedup}
+\end{figure}
+
 We also benchmarked \mrfy\ using a model of an ``8-bladed beta propeller.''
 The model has 343~nodes, of which 178 appear in 40~beta strands.
 The segments between beta strands typically have at most 10~nodes.
@@ -1297,7 +1289,7 @@ the sequence into 41~pieces, each of which typically has at most 20 amino
 acids.
 Because \mrfy\ can solve the models between the beta strands independently,
 this benchmark has a lot of parallelism,
-which Haskell made it easy to exploit.
+which Haskell made easy to exploit.
 Using
 \texttt{Control.Parallel}, parallelizing the computation was as easy
 as  substituting
@@ -1320,13 +1312,6 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 %%  \end{figure}
 
 
-\begin{figure}%%%[h!]
-\centerline{\loadpdf[]{speedup}}
-\medskip
-\caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
-\figlabel{speedup}
-\end{figure}
-
 %%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
 %%% would be unacceptable.
 %%% However, for the algorithm underlying MRFy, we are satisfied with the runtime
@@ -1342,10 +1327,10 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 \seclabel{better-viterbi}
 \seclabel{improving-viterbi}
 
-Research software for
-computational biology doesn't have to be fast to be useful.
-But~seeing \mrfy\ solve some problems 8~times slower then
-SMURF felt like a poor showing for Haskell.
+Software for
+computational-biology research doesn't have to be fast to be useful.
+But~if \mrfy\ solves some problems 8~times slower then
+SMURF, that's a poor showing for Haskell.
 \mrfy\ spends 98\%\ of its time running Viterbi's algorithm, and
 we~felt sure that with some love and attention, we could make it
 more competitive with~C++.
@@ -1439,7 +1424,8 @@ of amino acids in the sequence~\texttt{aas},
 but we want $j$ to \emph{index} into an array of nodes.
 \item
 From
-the \texttt{next} function, we~got the idea that Viterbi's algorithm
+\figref{list-viterbi}'s \texttt{next} function, we~got the idea that
+Viterbi's algorithm 
 computes a minimum edit 
 distance.
 This idea didn't affect the code directly, but as we experimented with
@@ -1622,18 +1608,21 @@ makes the new
 code 9\%~slower.
 
 To~develop a more detailed understanding of performance, we~turned
-to GHC's profiler, running Viterbi's algorithm on a single query sequence
+to GHC's profiler.
+We ran Viterbi's algorithm on a single query sequence
 of 592~residues, against a
 model of 343~nodes.
-To~help you understand the results, we~observe that the memo table
-for \verb+vee''+ has 610,197 entries: one for each combination of
-$\hat s$, $j$, and~$i$.
 The~profiler told us that a lot of time was spent in memory
-management, and that \mrfy\ allocated 531MB, or 7.85KB
-per~entry.
-This seems excessive.
-%
-The profile contained some information we
+management, and that \mrfy\ allocated a total of 531MB.
+\mrfy's main data structure is the memo table used for \verb+vee''+, 
+which has one entry for each combination of
+$\hat s$, $j$, and~$i$.
+In~this run, that's 610,197 entries.
+We~expected \mrfy\ to use an amount of memory proportional to the
+size of the memo table.
+But the constant of proportionality is 7.85KB, which seems excessive.
+We~hoped that the detailed profile would explain, but it
+contained some information we
 understood and some we didn't.
 \begin{itemize}
 \item
@@ -1697,10 +1686,10 @@ increases roughly linearly with time,
 so~perhaps we have a space leak, but even given the various profiling
 tools available, we~were not able to find~it.
 
-To~try to understand and eliminate the unwanted allocations,
-we~explored a many variations on the code, of~which the most ambitious (and
+To~try to eliminate the unwanted allocations,
+we~explored many variations on the code, of~which the most ambitious (and
 most tedious) was to desugar the list comprehension by~hand and to
-replace the standard list operations with operations that participate
+replace standard list operations with counterparts that participate
 in stream fusion \cite{coutts:fusion}.
 Nothing~helped.
 \end{itemize}
@@ -1945,13 +1934,12 @@ the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
 \mrfy's initial development took about three months.
 %%%% \remark{Others were mostly full-time work, but no need to distinguish.}
-{\ifpagetuning\looseness=1 \par\fi}
 \end{itemize}
 Like much research software, all three tools were written
  in~haste.
-We~have experience modifying the older tools.
-ALL THESE TOOLS
+We~have experience modifying all three tools.
 
+\ifpagetuning\enlargethispage{\baselineskip}\fi
 
 
 We~modified Matt to use information about sequences as well as structure.
@@ -1965,7 +1953,6 @@ It~uses clever pointer arithmetic.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was \emph{too} clever: 
 nearly every change resulted in new~segfaults.
-{\ifpagetuning\looseness=1 \par\fi}
 
 We~had hoped to extend Matt further, with support for partial alignments,
 which we~expected to require only 
@@ -1985,11 +1972,25 @@ Although simulated evolution represents a relatively minor
 enhancement,
 just understanding the existing code took several months.
 
-We~built MRFy quickly, and we expect that
-higher-order functions will make MRFy easy to extend.
-Each new addition to MRFy's stochastic search has taken at most a day
+We~built MRFy quickly, and we expected that
+higher-order functions would make MRFy easy to extend.
+Each new addition to MRFy's stochastic search took at most a day
 to implement.
-TALK ABOUT RICHARD SENINGTON'S STUFF HERE.
+However, the next extension we wished to make
+was based on
+Richard Senington's model of \emph{local
+search} \cite{senington:combinators-local}, 
+which does not fit our abstraction of stochastic search.
+We~wound up writing a new program that combines parts
+of MRFy with Senington's  \texttt{local-search} package.
+This~task took only three weeks, and the technical results were terrific.
+Local search outperforms random hill-climbing, simulated
+annealing, and the genetic algorithm.
+Even though we're not entirely happy with the
+state of the resulting code, we~count the story as a success.
+
+
+
 
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
@@ -2006,7 +2007,6 @@ But despite being hasty programmers, we produced code
 that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
-{\ifpagetuning\looseness=1 \par\fi}
 
 
 Looking beyond our research group to computational biology more
