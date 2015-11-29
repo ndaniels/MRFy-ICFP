@@ -1827,7 +1827,8 @@ for which MRFy relies on stochastic search.
 As a result, in the presence of complex beta-strand topologies, SMURF is
 computationally intractable.
 \item
-MRFy is used to detect homologous proteins in the presence of paired
+MRFy~\cite{daniels2015mrfy} is used to detect homologous proteins in the 
+presence of paired
 beta strands; it effectively supplants SMURF.
 It~comprises about 2,500 lines of~Haskell, about 500 of which are devoted
 to tests, QuickCheck properties, and generators.
@@ -2066,7 +2067,7 @@ Josef Svenningsson suggested a correspondence between \mrfy's search
 and stream fusion, which led us eventually to the \texttt{Utility} type.
 Koen Claessen instantly diagnosed an inappropriately strict
 implementation of the \texttt{Rand} monad.
-John Tibell taught us the \texttt{UNPACK} pragma.
+Johan Tibell taught us the \texttt{UNPACK} pragma.
 For~support and discussions 
 we also thank Lenore Cowen, Kathleen Fisher, Ben Hescott, Brad
 Larsen, and Nathan Ricci.
