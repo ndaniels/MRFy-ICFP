@@ -1,6 +1,6 @@
 \newif\ifpagetuning
 
-\pagetuningfalse % trying to get page breaks in the best spots
+\pagetuningtrue % trying to get page breaks in the best spots
 
 \newif\ifnotcutting \notcuttingtrue % set if not cutting down to size
 
@@ -124,11 +124,14 @@
   \newcommand\finalremark[1]{\relax}
 \fi
 
+
 \usepackage[authoryear]{natbib}
 \bibpunct();A{},
 \let\cite\citep
 \let\citeyearnopar=\citeyear
 \let\citeyear=\citeyearpar
+
+\renewcommand\bibsection{\section*{\refname}}
 
 
 
@@ -168,18 +171,22 @@
 %functional programming from working.   
 Haskell gives computational biologists
 the flexibility and rapid prototyping of a scripting
-language, plus the performance of native code.
-In~our experience, higher-order functions, lazy evaluation, and
-monads really worked, but
+language, and it compiles to native code.
+From experience using Haskell to implement new algorithms for
+computational biology, we~report where Haskell really worked for us
+and what obstacles prevented it from working better.
+Higher-order functions, lazy evaluation, and
+monads worked well, but
 profiling and debugging presented obstacles.
-Also, Haskell libraries vary greatly:
+And~because allocation costs are difficult to predict and control,
+compilation to native code did not guarantee great performance.
+Finally, our experience with Haskell libraries varied greatly:
 memoization combinators and parallel-evaluation
 strategies helped us a lot,
 but other, nameless libraries mostly got in our way.
 Despite the obstacles and the uncertain quality of some libraries,
 Haskell's ecosystem
-made it easy for us to develop new algorithms in computational
-biology.
+made it easy for us to explore and run new algorithms.
 \end{abstract}
 
 
@@ -212,20 +219,8 @@ clearly implements the underlying mathematics
  was easy to parallelize,
 and performs well enough
 (\secref{perf}).
-\ifpagetuning
   And our new tool solves a problem that could not be solved by
   the~C++ tool which preceded~it.
-\else
-  \ifpagetuning
-  And overall,
-  \else
-  Moreover, measured as a whole, 
-  \fi
-  the software that incorporates our new
-  code 
-  performs significantly
-  better than the~C++ software that preceded~it.
-\fi
 \item
 Higher-order functions made it unusually easy to
 create and experiment with new stochastic-search algorithms
@@ -256,11 +251,7 @@ Some kept the promise, saved us lots of effort, and were a pleasure
 to~use.
 Others, not so much.
 We couldn't tell in advance which 
-\ifpagetuning
 would be which
-\else
-experience we were likely to have
-\fi
  (\secref{penumbra}).
 \end{itemize}
 A~preliminary version of this
@@ -273,7 +264,7 @@ refactoring and improving our implementation of Viterbi's
 algorithm.
 We~have also simplified the stochastic search as well as other elements of
 the code.
-Finally, we~have improved and added to the figures and diagrams.
+Finally, we~have improved and added to explanations, figures, and diagrams.
 
 
 
@@ -317,6 +308,14 @@ different amino-acid sequences, which are not close in edit distance.
 Our~research software, MRFy (pronounced
 ``Murphy''), can detect homologies 
 in amino-acid sequences that are only distantly related.
+
+A~paper for the computational biology community, based on MRFy, has been
+submitted to the ACM Conference on Bioinformatics, Computational Biology, and 
+Biomedical Informatics.
+That paper explores the effectiveness of various search strategies,
+and it also
+compares MRFy with several other software tools.
+MRFy is more accurate than the other software tested.
 MRFy is available at \url{mrfy.cs.tufts.edu}.
 %
 %We will explain an 
@@ -375,6 +374,7 @@ it~is considered a \emph{non-consensus column},
 and the few proteins without gaps probably gained amino acids via
 \emph{insertions}. 
 
+
 Once a protein alignment is constructed, it~is used to train a
 \emph{hidden Markov model}. 
 A~hidden Markov model is a probabilistic finite-state machine which 
@@ -383,8 +383,15 @@ A~protein whose query sequence has a higher probability is more likely to %
 be homologous to the proteins in the alignment.
 We~write a query sequence as $x_1, \ldots, x_{\scriptscriptstyle N}$,
 where each $x_i$~is 
-an amino acid.
-The number of amino acids, $N$, can differ from the number of columns
+an amino-acid \emph{residue}.\footnote
+{When an amino acid combines with other amino acids to form a protein, it gives up
+two hydrogen atoms and an oxygen atom.
+What's left is called
+a \emph{residue}.
+In~this paper we use the terms ``residue'' and ``amino acid'' 
+interchangeably.
+}
+The number of residues, $N$, can differ from the number of columns
 in the alignment,~\alignwidth. 
 
 
@@ -409,19 +416,19 @@ Both the probabilities and the states are determined by the alignment:
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{match state}~$M_j$.
 The match state contains a table $e_{M_j}(x)$ which gives the
- probability that a homologous protein has amino acid~$x$ in
+ probability that a homologous protein has residue~$x$ in
  column~$j$.
 \item 
 For each column~$j$ of the alignment, the hidden Markov model has an
 \emph{insertion state}~$I_j$.
 The insertion state contains a table $e_{I_j}(x)$ which gives the
-probability that a homologous protein has gained amino acid~$x$ by
+probability that a homologous protein has gained residue~$x$ by
 insertion at column~$j$.
 \item
 For each column~$j$ of the alignment, the hidden Markov model has a
 \emph{deletion state}~$D_j$.
 The deletion state determines the probability that a homologous protein
-has lost an amino acid by deletion from column~$j$.
+has lost a~residue by deletion from column~$j$.
 A~deletion state contains no tables of probabilities.
 \hfuzz=1.5pt % fix blot
 \end{itemize}
@@ -431,36 +438,40 @@ one~way to keep them straight is to imagine that the model of the
 alignment describes a prototype sequence of length~$\alignwidth$,
 and that each state describes an action used to build the query
 sequence from the prototype: 
-match a prototypical amino~acid,
-insert an unexpected amino~acid,
+match a prototypical residue,
+insert an unexpected residue,
 or
-delete a prototypical amino~acid.
+delete a prototypical residue.
 
 
-A~full hidden Markov model also has distinguished ``begin'' and ``end''
+A~hidden Markov model also has distinguished ``begin'' and ``end''
 states; begin and end states are like match states, but they
-correspond to no amino acids and contain no emission probabilities.
+correspond to no residues and contain no emission probabilities.
 %%
 %% for consistency with the text above 'begin' and 'end' are neither
 %% capitalized nor italicized.
 %%
 In~our representation, 
 the begin and end states are known by their positions:
-in a $\alignwidth$-column model, the begin state is the only state in
-column~0 and the end state is the only state in column~$\alignwidth$.
+in a $\alignwidth$-column model, the begin state shares
+column~0 with an insertion state, and the end state is the only state
+in column~$\alignwidth$. 
 Every other state is referred to by its column~$j$
 and by one of these labels:\label{code:state-label}
 \smallverbatiminput{statelabel}
 We~group states that share a column~$j$; these states are referred
 to collectively as ``node~$j$,'' as shown in \figref{plan7}.
 This model
-has begin and end states $B$~and~$E$,
-as well as four
-nodes, each containing 
+has begin and end states $B$~and~$E$;
+an~insertion state in node~0; and
+four
+full nodes, each containing 
 an insertion state~$I$, 
 a match state~$M$, and a
 deletion state~$D$.
-\remark{We need to figure out if the begin state is really node 0}
+(Node~0 may also be viewed as a full node, but its deletion state is
+not reachable from the begin state, so it is shown with only two
+states.) 
 
 \begin{figure} 
 \centerline{\loadpdf[width=11cm]{Plan7_emit}} 
@@ -477,8 +488,8 @@ but forbids
 direct
 transitions between insertion 
 states and deletion states  \cite{Eddy:1998ut}. 
-The family is called the ``Plan7'' family because
-every model in the family has 7~transitions per node.
+Models in this family are called ``Plan7'' models because
+every full node has 7~transitions.
 Each transition has its own probability; the probabilities for
 transitions leaving states in node~$j$ are
 $\txprobjj I I$,
@@ -493,13 +504,13 @@ $\txprobxj D D$.
 insertion leave states in 
 node~$j$ but also enter states in node~$j$.
 The other transitions enter states in node~$j+1$.)
-When column $j+1$ is a consensus column, the transitions that enter
+When column $j+1$ is a consensus column, transitions that enter
 its match state 
 %($\txprobxj I M$,
 %$\txprobxj M M$,
 %$\txprobxj D M$)
 are more likely.
-When column $j+1$ is a non-consensus column, the transitions that enter
+When column $j+1$ is a non-consensus column, transitions that enter
 its insertion and deletion states are more likely.
 
 
@@ -521,28 +532,26 @@ that a new protein shares structure
 with the proteins used to train the model.
 The computation finds the most likely matching path through the hidden Markov model.
 In~any matching path, each match state and insertion state corresponds to a
-unique amino acid in the query sequence.
+unique residue in the query sequence.
 The probability of the path is the product of all of the corresponding
 emission probabilities, together with the product of the transition
 probabilities along the edges of the path.
 
-Probabilities are small, and multiplying small numbers makes smaller
-numbers.
-Using floating-point arithmetic, multiplying probabilities amounts to
-storing data in the exponent of a floating-point number, which holds
-only 11~bits.
-In~order to store data in the significand, which holds 53~bits,
-we~instead sum the logarithms of probabilities \cite{Viterbi:1967hq}.
-Moreover, 
- our models use a
-legacy file format which
-\emph{negates}
-the logarithm of each probability, making it a positive number.
-%%To~make these numbers more pleasant to read, we negate them,
-%%which eliminates hordes of minus signs from our file formats.
-The negated logarithm of a probability is called a \emph{score}.
+Probabilities are small, and products of small numbers can become very
+small indeed.
+If~we were to multiply probabilities represented as floating-point
+numbers, all the useful information would wind up in exponents,
+and an exponent holds only
+11~bits.
+In~order to store useful information in the significand, which holds 53~bits,
+we~follow standard practice: instead of multiplying probabilities,
+we~add logarithms of probabilities \cite{Viterbi:1967hq}.
+Also following standard practice, we~work with
+\emph{negated}
+logarithms of probabilities, which are  positive numbers.
+The negated logarithm of a probability is called a \emph{score}:
 \smallverbatiminput{score}
-Type \texttt{Score} has a limited \texttt{Num} instance which permits
+We~have given type \texttt{Score} a limited \texttt{Num} instance which permits
 scores to be added and subtracted but not multiplied.
 
 
@@ -619,6 +628,9 @@ V_{j}^{\prime D}(i) &=& \min \left\{
 
 
 
+\ifpagetuning\enlargethispage{1.2\baselineskip}\fi
+
+
 The~most likely path through a model is the one with the
 smallest score.
 The~score of each path is computed by dynamic programming; the score associated with
@@ -626,8 +638,8 @@ a path to a state~$s$ ($M$, $I$, or~$D$) at node~$j$ and position~$i$ in
 the query sequence is written $V_j^{\prime s}(i)$.
 For~example, 
 score~$V_j^{\prime M}(i)$ represents the probability of the most
-likely path of the first~$i$ amino acids in the query sequence,
-terminating with placement of amino acid $x_i$ in state~$M_j$.
+likely path of the first $i$~residues in the query sequence,
+terminating with placement of residue~$x_i$ in state~$M_j$.
 Scores $V_j^{\prime I}(i)$~and~$V_j^{\prime D}(i)$ are similar.
 Scores are specified by Viterbi's equations, which are shown
 in \figref{viterbi-transformed}. 
@@ -635,26 +647,27 @@ The~equations (expressed using probabilities) are explained very clearly by
 \citet[Chapter~5]{Durbin:1998wz}
 
 
-To~be able to use Haskell, we had to reimplement the standard
+To~use Haskell, we had to reimplement the standard
 algorithm for solving Viterbi's equations.
 Haskell made it possible for us to write code that looks like the
 math,
 which made the code easy to write and gives us confidence that it is
 correct.
 
-Our code represents a query sequence as an immutable array of amino
-acids.
+Our code represents a query sequence as an immutable array of residues.
 In~idiomatic Haskell, 
-we might represent an individual amino acid~$x_i$
-using a value of algebraic data type:
+we might represent an individual residue~$x_i$
+using a value of algebraic data type with constructors named for
+amino acids:
 \begin{smallverbatim}
 data Amino = Ala | Cys | Asp | Glu | ...   -- not used
 \end{smallverbatim}
 But in our
-legacy file format, each amino acid is a small integer
+legacy file format, each amino acid (residue) is a small integer
 used only to index arrays.
 %which we use only as an array index.
-We therefore chose 
+We therefore chose a representation that is easier to make consistent
+with query sequences as represented on~disk:
 \smallverbatiminput{aa}
 
 %%  \remark{I'm not sure if this is the whole story, since the reader might simply
@@ -680,13 +693,13 @@ function \texttt{aScore},
 %which is given states $s$~and~$\hat s$ and a node index~$j$; its
 whose
 specification is
-\mbox{$\mathtt{aScore}\;s\;\hat s\;j = \txprobxj s {\hat s}$}.
+\mbox{$\mathtt{aScore}\;s\;\hat s\;j = \txprobxj s {\hat s}$}.\seclabel{aScore}
 The
 emission table is read by 
 \texttt{eScore}, whose specification
 is % parallel structure for line breaking below
 \mbox{$\mathtt{eScore}\;s\;j\;i = e'_{s_j}(x_i)$},
-where $x_i$ is the amino acid located at position~$i$ in the query
+where $x_i$ is the residue located at position~$i$ in the query
 sequence. 
 %
 %%  We place the transition probabilities 
@@ -790,7 +803,7 @@ Function~\verb+vee'+ makes a recursive call not to itself but
 to~\verb+vee''+. 
 Function~\verb+vee''+ is the {memoized} version of~\verb+vee'+;
 it~produces the same result as~\verb+vee'+,
-but faster: 
+but repeated calls return in constant time:
 \smallverbatiminput{memo}
 Functions \texttt{Memo.memo3} and \texttt{Memo.arrayRange} come from
 Luke Palmer's
@@ -861,7 +874,7 @@ richer models of protein structure.
 When column~$j$ of an alignment is part of a beta strand and is paired
 with another column  $\pairedwith j$,
 the probability of finding amino acid~$x_i$ in column~$j$ 
-\ifpagetuning
+\iffalse
 depends on the amino acid~$x'$ in column~${\pairedwith i}$.
 \else
 depends on whatever amino acid~$x'$  is in column~${\pairedwith i}$.
@@ -923,7 +936,7 @@ Given a placement, the maximum likelihood of the rest of
 the query sequence, between and around beta strands,
 is computed quickly and exactly 
 using Viterbi's algorithm.
-\ifpagetuning
+\iffalse
 This likelihood is \emph{conditioned} on the placement.
 \else
 The exact result is a probability that is
@@ -981,15 +994,14 @@ if a move is useless,
 \mrfy\ abandons it and moves again (in a new random direction) from the
 previous point.
 The~search is depicted graphically in \figref{search-moves}.
-The~solid lines represent useful moves; the dotted lines represent
+Solid lines represent useful moves; dashed lines represent
 useless moves.
 The~points are laid out vertically in the order in which they are
 discovered;
-if~you like, time increases as you move downward.
+as you move downward, time increases.
 Horizontally, we~have organized the points into five columns; 
-the bottom point in each column is the result of a useful move, and we
-call it a useful point.
-Any points above it in the same column are useless.
+the bottom point in each column is useful, and
+any points above it in the same column are useless.
 
 
 \begin{figure}
@@ -1018,14 +1030,14 @@ a~\emph{filter} that selects the useful moves, and
 a~\emph{test} function that enumerates finitely many useful moves
 and returns the final destination.
 But~a~generator may produce an infinite sequence of useless moves.
-(For example, if \mrfy\ should stumble upon a global optimum, every move from
-that point would be useless.)
+For example, if \mrfy\ should stumble upon a global optimum, every move from
+that point would be useless.
 Given an infinite sequence of useless inputs, a~filter would not
 produce any values, and the search would diverge.
 This situation is depicted graphically in
 \figref{filtered-search-moves}:
 on the left-hand side, 
-the first move is useless; the second move is useful; and all
+the first move is useless, the second move is useful, and all
 subsequent moves are useless.
 Filtering out useless moves would produce the sequence shown on the
 right-hand side, which contains two points followed by a divergent
@@ -1065,7 +1077,7 @@ To~attach a cumulative cost to a point, we use type \texttt{CCosted}:
 
 Using these pieces, function \texttt{everyPt} produces an infinite
 sequence containing a mix of useful and useless points.
-Each useful point is tagged with cumulated cost and its score:
+Each useful point is tagged with cumulative cost and its score:
 \smallfuzzverbatiminput{6pt}{everygen}
 Both \texttt{nextPt} and \texttt{utility} are monadic, but 
 we can still exploit laziness:
@@ -1080,34 +1092,38 @@ swapped.
 
 
 If \mrfy\ used Hughes's classic model of lazy search,
-we~could possibly expect to see an infinite sequence of points obtained by
+we~might expect to see an infinite sequence of points obtained by
 applying \texttt{nextPt} to many points in succession, as~done by
 the Prelude function \texttt{iterate}.
 But~that's not how \mrfy\ works;
 instead, 
 the~infinite list \texttt{successors}
 is computed by applying \texttt{nextPt} to
-the \emph{single} initial point \texttt{startPt}, \mbox{using} infinitely
-many distinct sources of random variation.
+the \emph{single} initial point \texttt{startPt}, 
+repeated infinitely many times.
+Each repetition uses a
+distinct source of random variation.
+
 To~understand the structure of
  \mrfy's more complex search, it~may help to
 relate the code to \figref{search-moves}.
 Please assume that \texttt{startPt} is the point in the upper left
 corner of \figref{search-moves}.
 Then the first part of the \texttt{successors} list appears in the
-next column of \figref{search-moves}:
+next column:
 the~first four elements are \texttt{useless};
 the next element, which is the first useful point, is~\texttt{pt};
-and~the remaining elements, which are never evaluated,
+and~the remaining elements, which are never evaluated and are not
+shown in the figure,
 match the
 underscore.
-The first useful point is located by \mono{span~isUseless}.
+The first useful point \texttt{pt} is located by \mono{span~isUseless}.
 After the search reaches~\texttt{pt},
 we~start the search anew with a recursive 
-call to \mono{everypt~sg}, 
+call to \mono{everyPt~sg}, 
 passing~\texttt{pt}.
 %
-The most informative part of \texttt{everyPt} is last expression of
+The~most informative part of \texttt{everyPt} is last expression of
 the \texttt{do} block,
 which shows that the result begins with a useful point,
 is followed by a (possibly infinite, possibly empty) list of useless
@@ -1168,7 +1184,6 @@ functions, except for \texttt{nextPt}:
 recombination of parent
 placements took forty lines of code
 and a full day to implement.
-{\ifpagetuning\looseness=1 \par\fi}
 
 We're not entirely happy with the way we're writing all the individual
 functions.
@@ -1238,7 +1253,6 @@ Even with this trick,
 MRFy's implementation of Viterbi's algorithm is much
 slower than the C++ version in \mrfy's predecessor,
 SMURF.
-\ifpagetuning\vadjust{\break}\fi
 For example, on a microbenchmark that searches for a
 structural motif of 343~nodes in a protein of 2000 amino acids
 using only Viterbi's algorithm and no beta-strand information,
@@ -1262,6 +1276,14 @@ The~model contains 252~nodes,
 but SMURF allocates
 over 16GB of memory and does not terminate even after eight hours.
 
+
+\begin{figure}%%%[h!]
+\centerline{\loadpdf[]{speedup}}
+\medskip
+\caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
+\figlabel{speedup}
+\end{figure}
+
 We also benchmarked \mrfy\ using a model of an ``8-bladed beta propeller.''
 The model has 343~nodes, of which 178 appear in 40~beta strands.
 The segments between beta strands typically have at most 10~nodes.
@@ -1270,7 +1292,7 @@ the sequence into 41~pieces, each of which typically has at most 20 amino
 acids.
 Because \mrfy\ can solve the models between the beta strands independently,
 this benchmark has a lot of parallelism,
-which Haskell made it easy to exploit.
+which Haskell made easy to exploit.
 Using
 \texttt{Control.Parallel}, parallelizing the computation was as easy
 as  substituting
@@ -1293,13 +1315,6 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 %%  \end{figure}
 
 
-\begin{figure}%%%[h!]
-\centerline{\loadpdf[]{speedup}}
-\medskip
-\caption{\mrfy's parallel speedup on an 8-bladed beta propeller}
-\figlabel{speedup}
-\end{figure}
-
 %%% Had we implemented the SMURF algorithm in Haskell, we believe that performance
 %%% would be unacceptable.
 %%% However, for the algorithm underlying MRFy, we are satisfied with the runtime
@@ -1315,23 +1330,26 @@ we~hope to be able to use all 48~cores with about 50\%~efficiency.
 \seclabel{better-viterbi}
 \seclabel{improving-viterbi}
 
-Research software for
-computational biology doesn't have to be fast to be useful.
-But~when we say that \mrfy\ solves some problems 8~times slower then
-SMURF, we~felt it wasn't a good showing for Haskell.
+Software for
+computational-biology research doesn't have to be fast to be useful.
+But~if \mrfy\ solves some problems 8~times slower then
+SMURF, that's a poor showing for Haskell.
 \mrfy\ spends 98\%\ of its time running Viterbi's algorithm, and
 we~felt sure that with some love and attention, we could make it
 more competitive with~C++.
+But~before we could try to make \mrfy\ faster, we~had to make it simpler.
 
 The code example for \verb+vee'+ on page~\pageref{code:vee-prime}
 shows the computation of the general case of~$V^{\prime M}_j(i)$ from 
 \figref{viterbi-transformed}.
-But the full story is not nearly as nice at one could hope for:
+But the full story is not as nice at one could hope for:
 in~the code that accompanies our 2012 ICFP paper,
 \verb+vee'+ has 25~cases overall.
-Many of these cases exist because we~did not have enough insight into
-Haskell, and we made some decisions that might have been more
-appropriate to a FORTRAN program:
+Many of these cases exist because when we first wrote the code, we~did
+not have enough insight into 
+Haskell.
+We~made some decisions that might have been more
+appropriate to FORTRAN:
 \begin{itemize}
 \item
 Recursive computations were done on smaller array indices, not smaller
@@ -1344,11 +1362,11 @@ Senseless combinations of array indices and states were handled by
 assigning each such combination the largest representable score, which
 corresponds to the smallest representable probability.
 \end{itemize}
-Before trying to speed up the code, we~simplified~it.
 %
 %
-Our first step was to start thinking like Haskell
-programmers and use types:
+To~simplify this code, we started thinking more like Haskell
+programmers.
+In~particular, we used types more effectively:
 \begin{itemize}
 \item
 We~refactored the single, flat \texttt{Node} type from our ICFP paper
@@ -1367,14 +1385,14 @@ page~\pageref{code:state-label}.
 (We~moved the begin and end labels to another type, which is used only
 to prettyprint models.) 
 \end{itemize}
-The immediate effect of these changes was to reduce case analysis on
+The immediate effect of these changes was to reduce case analysis along
 two dimensions:
 instead of five state labels, we got three;
 and instead of three special array indices, we got just one special
 list (the empty list).
 
 \begin{figure}
-\noindent\hspace*{1.5cm}\begin{minipage}{9cm}
+\noindent\hspace*{1.5cm}\begin{minipage}{11cm}
 \smallverbatiminput{list-viterbi}
 \smallskip
 \end{minipage}
@@ -1383,29 +1401,41 @@ list (the empty list).
 \figlabel{list-viterbi}
 \end{figure}
 
-Our~next step was to use more abstraction---in~particular, to abstract
-over state labels.
-However, after abstracting over state labels, we~abandoned lists and
-went back to arrays.
-An~excerpt from our list-based code appears in \figref{list-viterbi}.
-The~problem is defining \verb+vee''+ as a memoized version
-of~\verb+vee'+.
-Although we experimented with specialized memo combinators that work
-with list prefixes, 
-we~were never confident that we could easily, efficiently, and
-correctly memoize~\verb+vee'+.
-Instead, we~wrote a new version, still using integer arithmetic, but
-guides by the idea $i$~is a \emph{count} of the number
-of amino acids in list~\texttt{aas}, but $j$~is the \emph{index}
-of~\texttt{node}.
-(We~also got
-an
-insight we got from
-the \texttt{next} function: Viterbi's algorithm is a form of minimum edit
+To~reduce case analysis even more, we~abstracted over state labels.
+\figref{list-viterbi} sketches the structure of the algorithm.
+\figref{viterbi-hov4} is the first example in this paper that
+shows \emph{all} the cases for~\verb+vee'+.
+It~reduces the original 25~cases to just~4.
+We~show only a sketch because we didn't use this version in
+production.
+The difficulty was in memoizing a \verb+vee'+ that takes lists as
+arguments. 
+We~built and tested specialized memo combinators that work
+with list prefixes, but 
+we~were never confident that the resulting code would be simple,
+correct, and efficient.
+Instead, we~used insights from the list-based code to create a new
+array-based version:
+\begin{itemize}
+\item
+We~kept the abstraction over \texttt{stateHat}, which we explain
+below.
+\item
+We~got the idea that if we have to compute with integers, we~want
+$i$ to \emph{count} the number
+of amino acids in the sequence~\texttt{aas}, 
+but we want $j$ to \emph{index} into an array of nodes.
+\item
+From
+\figref{list-viterbi}'s \texttt{next} function, we~got the idea that
+Viterbi's algorithm 
+computes a minimum edit 
 distance.
-As~we were trying to improve the code, this insight helped keep us on track.)
-Armed with this new, better way of thinking about $i$~and~$j$,
-we~turned back to arrays.
+This idea didn't affect the code directly, but as we experimented with
+new variations, it~helped us keep track of the big picture.
+\end{itemize}
+Armed with these ideas, we~turned back to computing with arrays and
+integers. 
 
 
 \def\p#1{\mathit{p#1}}
@@ -1416,12 +1446,12 @@ we~turned back to arrays.
 \multicolumn3{c}{
   V_{j}^{\prime \hat s}(i) = e^{\prime}_{\hat s_{j}}(x_{i}) 
     + \min\limits_s \big\{
-         \vsum{V_{\mathit{\p j}}^{\prime s}(\p i\; s)} 
+         \vsum{V_{\mathit{\p j}}^{\prime s}(\p i)} 
      {a^{\prime}_{s_{\p j} \,\hat s_j}}, 
-      \mbox{ where $s$ can precede $\hat s$}  \big\}
+      \mbox{ where $s$ can precede $\hat s$ and $\p i = \widetilde{\p i}\; s$}  \big\}
 }
 \\[10pt]
-\mbox{where }\p i\; s&{} = {}& 
+\mbox{where }\widetilde{\p i}\; s&{} = {}& 
   \left\{ \begin{array}{l}
           i \mbox{, if $s=D$}\\
           i-1 \mbox{, otherwise}\\
@@ -1443,28 +1473,28 @@ defining $e^{\prime}_{D_j}(x) = 0$}
 \figlabel{viterbi-abstracted}
 \end{figure}
 
-Our final code, like the code in \figref{list-viterbi}, is abstracted
-over state labels.
-We~now turn your attention to that abstraction.
+\figref{list-viterbi} shows a sketch in which the state
+label \texttt{stateHat} is abstract.
+We~kept that abstraction, and
+we~now turn your attention to how it works.
 In~Viterbi's equations,
-$V'$ is indexed by a residue count~$i$,\footnote
-{In~biology, when an amino acid enters a protein, it often loses a few
-atoms, and so within the protein, the amino acid is often called
-a \emph{residue}.}
+$V'$ is indexed by a residue count~$i$,
 a~node index~$j$,
 and
-a state $M$, $I$, or~$D$.
+a state label $M$, $I$, or~$D$.
 Each state uses a slightly different equation, but it is possible to
 combine them.
 \figref{viterbi-abstracted} shows a single equation which, when
-state $\hat s$ is specialized to state $M$, $I$, or~$D$, recovers the
+state $\hat s$ is specialized to state $M$, $I$, or~$D$, becomes one of the
 original three equations from \figref{viterbi-transformed}.
-The figure sums the cost of emitting an amino acid at state~$\hat s$
-lowest of the costs of the paths entering~$\hat s$ from predecessor
+The figure adds the cost of emitting an amino acid at state~$\hat s$
+to the lowest of the costs of the paths entering~$\hat s$ from predecessor
 state~$s$.
 Index~$\p j$ is the index of the node containing the predecessor
-state, and $\p i; s$ is the index of the amino acid, if~any, to be
-emitted at state~$s$.
+state.
+Integer $\p i$~counts the number of amino acids emitted before~$\hat
+s$ and so is the index of the amino acid, if~any, to be
+emitted at state~$\hat s$.
 
 To~implement \figref{viterbi-abstracted}, we~define several
 auxiliary functions.
@@ -1476,8 +1506,13 @@ We~also use \texttt{newtype} to define
 a value constructor~\texttt{RC} for a residue count~$i$
 and
 a value constructor~\texttt{NI} for a node index~$j$.
-We~can then deliver the more abstract version of Viterbi's algorithm
+Given these tools, we~built the abstract, array-based version of
+Viterbi's algorithm 
 shown in \figref{viterbi-hov4}.
+Auxiliary functions \texttt{node} and \texttt{residue} do array
+indexing, and functions \texttt{transmission} and \texttt{emission}
+are variations of the functions \texttt{aScore} and \texttt{eScore}
+mentioned in \secref{aScore}.
 
 
 \begin{figure}
@@ -1486,7 +1521,8 @@ shown in \figref{viterbi-hov4}.
 \smallskip
 \end{minipage}
 
-\caption{Viterbi's algorithm abstracted over~$\hat s$}
+\caption{Viterbi's algorithm abstracted over~$\hat s$, with signatures
+of auxiliary functions}
 \figlabel{viterbi-hov4}
 \end{figure}
 
@@ -1504,11 +1540,10 @@ unreachable tree-node; for~example, if \texttt{a} is instantiated
 to \texttt{Score}, then \mono{internal~[]} must produce an infinite
 score (corresponding to zero probability).
 
-\figref{viterbi-hov4} is the first example in this paper that
-shows \emph{all} the cases for~\verb+vee'+.
-We~have reduced the original 25~cases to just~4.
-The~general case, which was shown in other examples, appears last.
-The three special cases above it handle the three states that can
+The~three base cases in \figref{viterbi-hov4} are not exactly the same
+as the base cases in \figref{list-viterbi}.
+In~\figref{viterbi-hov4}, the base cases
+handle the three states that can
 follow the begin state.
 In~our legacy file format, and also in our code, the begin state is
 identified with the match state in node~$j=0$.
@@ -1523,69 +1558,127 @@ shown above, the implementation of Viterbi's algorithm is just
 25~lines of code, of which 2~lines are type signatures.
 That's four times smaller than our original code.
 But~while we've gained something, we've also lost something---it's not
-at all obvious that the code in \figref{viterbi-hov4}  implements
+obvious that the code in \figref{viterbi-hov4}  implements
 Viterbi's equations.
 
+Our~original goal was to make Viterbi's algorithm faster.
+To~measure its speed, we~created a benchmark that runs only Viterbi's
+algorithm, but on inputs that mimic the way \mrfy\ is intended to be used.
+The benchmark contains 56 protein sequences and 9 hidden Markov
+models.
+The query sequences are taken from the from the deep-sea 
+bacterium \emph{Thermotoga maritima}, and they 
+range in length from 80 to 1200 residues.
+The models are each built from a multiple-structure alignment of the
+proteins in 
+a $\beta$-structural protein superfamily.
+To~run the benchmark, we read in the query sequences and the models,
+and we compute the score of the best alignment of each sequence
+against each model.
+Using GHC~7.4 on~an Intel Ivy Bridge Core i5-3570 CPU clocked at
+3.4GHz, this benchmark takes about 45~seconds to~run.
+\mrfy\ spends most of its time garbage collecting and 99\%\ of the
+remaining time running Viterbi's algorithm.
+Time~spent in I/O and parsing is only about 0.2\%~of the
+total.
 
-Although the~new code is about 3\%~slower than our original code, 
-it~turned out to a good starting point for experiments.
-Of~the myriad variations we tried, 
-the best involved two transformations:
+Using this benchmark, the new code wasn't much different from the old
+code---just about 3\%~slower.
+But it 
+was a good starting point for experiments.
+We~tried myriad variations, 
+the best of which involved two transformations:
 \begin{itemize}
 \item
 We~abstracted the call to \texttt{internal} over the state~$\hat s$,
 the list of preceding states, and functions that
 compute \texttt{pi}~and~\texttt{pj}.
 \item
-We~then added a fourth case to \verb+vee'+, which handles the match
+We~added a fourth case to \verb+vee'+, which handles the match
 state in node~1 when the residue count is nonzero.
 \end{itemize}
 For reasons we don't understand, GHC specializes the resulting code
 very effectively, leading to 30\%~faster performance on our
-UNCHARACTERIZED MEDIUM benchmark.
+benchmark.
 The~result is 26\%~faster than our original code.
 
-This change laid the groundwork for more experiments.
-The most interesting of these experiments was to follow the advice of
+One of the variations that didn't help, surprisingly, was
+to follow
 \citet{tibell:high-performance} and use GHC's UNPACK pragma on scalar
 values---in our case, scores.
-Using the UNPACK pragma made our original code 7\%~faster but our new
+Although using the UNPACK pragma made our original code 7\%~faster, it
+makes the new
 code 9\%~slower.
 
-We~then turned to GHC's profiler, running Viterbi's algorithm on a
-model of 343~nodes and a query of 592~residues.
-We~expect the memo table to have about 600,000 entries,
-and the profiler says that the program allocates 531MB, or 7.85KB
-per~entry.
-This seems excessive.
+To~develop a more detailed understanding of performance, we~turned
+to GHC's profiler.
+We ran Viterbi's algorithm on a single query sequence
+of 592~residues, against a
+model of 343~nodes.
+The~profiler told us that a lot of time was spent in memory
+management, and that \mrfy\ allocated a total of 531MB.
+\mrfy's main data structure is the memo table used for \verb+vee''+, 
+which has one entry for each combination of
+$\hat s$, $j$, and~$i$.
+In~this run, that's 610,197 entries.
+We~expected \mrfy\ to use an amount of memory proportional to the
+size of the memo table.
+But the constant of proportionality is 7.85KB, which seems excessive.
+We~hoped that the detailed profile would explain, but it
+contained some information we
+understood and some we didn't.
 \begin{itemize}
 \item
-One culprit is the function \verb+vee''+, which is charged with
+The most easily understood source of allocation
+is the function \verb+vee''+, which is charged with
 allocating about 66MB.
-To~estimate the amount of memory consumed by
-an entry, we~imagine that representing a boxed
-score on the heap might require three 32-bit words.
-A~thunk involving three parameters might be a bit like a four-element
+What \verb+vee''+ does is call memo combinators,
+so the 66MB might be the memo table.
+To~evaluate this hypothesis, we~estimated the amount of memory that
+might be consumed by a memo-table entry.
+
+Once evaluated, a memo-table entry will contain a pointer to a
+double-precision floating point number allocated on the heap.
+The~pointer itself should occupy a word, and representing a
+boxed \texttt{Double} on the heap might
+require three 32-bit words.
+
+Before it is evaluated, a memo-table entry should contain a thunk
+involving the parameters $\hat s$, $j$, and~$i$.
+Such 
+a~thunk might be a bit like a four-element
 list, taking perhaps 12~words for the cons cells and another 8~words
-for the values?
-And then the pointer in the memo table itself would occupy a word.
-So~24~words per entry times 4~bytes per word would be 96B per
-entry for a total of about 59MB?
+for  values.
+
+By this estimate we could expect
+24~words per entry times 4~bytes per word, which would be 96B per
+entry and a total of about 59MB.
 Because the actual memo table involves arrays of arrays of arrays,
-we~won't quibble about a discrepancy of~10\%.
+we~won't quibble about a discrepancy of~10\%; 
+our estimate of the memory taken by the memo table seems accurate
+enough, and we~can think of nothing we can do to improve it.
 \item
-The computation of \texttt{score} (the sum of transition 
-and emission scores) is charged with allocating 45MB total, or about
+Another source of allocation---one that surprised us---is the 
+computation of \texttt{score}, which is the let-bound sum of transition 
+and emission scores in \figref{viterbi-hov4}.
+This binding is charged with allocating 45MB total, or about
 4.5~words for each transition in the computation tree.
-We~have no idea why this combination is allocating, and various
-attempts to make the sum strict (e.g., by using a bang pattern in 
-\mono{let~!score = }\ldots) either have no effect or actually make
-performance worse.
+The~\texttt{edge} function is strict in the first argument, which
+is \texttt{score}, and we don't know why the computation is allocating.
+As~an experiment, we tried to make
+the sum strict by using a bang pattern in 
+``\mono{let~!score = }\ldots''
+While this change eliminated \texttt{score} as a source of allocation,
+the allocations moved somewhere else, because the total number of
+bytes allocated increased very slightly, by just 12B.
 \item
-There is also some significant allocation in the parser, but the
-elephant in the room is the function \verb+vee'+ itself, which
-allocates 258MB, which is half the memory allocated by the entire
-program.
+On~this much smaller input, 16\%\ of the allocation is done by the
+code that reads and parses the model and the query sequence.
+We~don't care about improving that part.
+\item
+The single most expensive part of the program
+is the function \verb+vee'+ itself, which
+allocates 258MB---half of all memory allocated.
 We~have no idea what is happening.
 A~graphical heap profile shows a large amount of memory initially
 charged to \verb+vee''+ (the memo table), which then shrinks
@@ -1594,13 +1687,20 @@ scores.
 The~amount of memory charged to \verb+vee'+
 increases roughly linearly with time, 
 so~perhaps we have a space leak, but even given the various profiling
-tools available, we~are not competent to find~it.
+tools available, we~were not able to find~it.
+
+To~try to eliminate the unwanted allocations,
+we~explored many variations on the code, of~which the most ambitious (and
+most tedious) was to desugar the list comprehension by~hand and to
+replace standard list operations with counterparts that participate
+in stream fusion \cite{coutts:fusion}.
+Nothing~helped.
 \end{itemize}
-In~principle, we~could have diagnosed our problems by reading 
-GHC Core output from the compiler.
-We~found guidance in Don Stewart's invaluable blog posts,
-and we also used his \texttt{ghc-core} tool.
-But it wasn't enough.
+In~desperation, we~tried to diagnose our problems by reading 
+Core output from~GHC.
+We~were guided by Don Stewart's invaluable blog posts,
+and we also used his \texttt{ghc-core} tool, 
+but it wasn't enough.
 Even though one of us has worked on several optimizing compilers, 
 we~just don't have enough experience to use GHC Core to diagnose
 allocation problems in a 25-line function.
@@ -1621,80 +1721,78 @@ allocation problems in a 25-line function.
 
 %%\smallverbatiminput{hov-prevs}
 
-
-We~succeeded in making Viterbi's algorithm a lot simpler and somewhat
-faster, but our original goal was to make it competetive with~C.
-The measurements using SMURF are depressing, and the SMURF code is
-even more depressing, so we reimplement Viterbi's algorithm from
-scratch in a clean C~program.
-To~avoid writing a parser, we extend \mrfy\ with code that reads a
+Our efforts to improve \mrfy's sequential
+performance concluded unhappily.
+Although we made Viterbi's algorithm a lot simpler and somewhat
+faster, it~is still nowhere near competetive with~C++.
+The measurements using SMURF are depressing enough, but because we were
+not entirely sure what SMURF was doing, we wrote a fresh,
+``cleanroom'' implementation of Viterbi's algorithm in~C, using
+forward dynamic programming.
+To~avoid writing a parser, we extended \mrfy\ with a function that reads a
 model and a query sequence and emits a C~file containing that model
 and query as initialized data.
-
-
-If~we look not at the whole package but just at Viterbi's algorithm,
-the~performance story is even more grim:
-we~wrote a custom C~program that computes a score using Viterbi's
-algorithm and does nothing else, and it runs about a hundred times
-faster than \mrfy's implementation.
-Ironically, we've~had a lot of trouble getting the code right, but it
+On~a synthetic benchmark involving all pairs of three models and three
+query sequences, our new C~code runs about 45~times faster than \mrfy.
+Ironically, we've~had a lot of trouble getting the C~code right, but it
 allocates only one double-precision floating-point number for each
-entry in the memo table; Haskell allocates about 30~times more.
+entry in the memo table.
+Haskell allocates about 30~times more.
 
 It's depressing to think that a language with a mature, optimizing,
 native-code compiler might not be usable for performance-critical
 work, but the difficulty of diagnosing allocation problems is a real
 obstacle.
-We~were lucky that we could get new results (CITE NOAH'S LATEST PAPER
-HERE?) even though our core algorithm is 100~times slower than the
+We~were lucky that we could get new results
+even though our core algorithm is 45~times slower than the
 same algorithm written in~C.
 You~might not be so lucky.
 
 
 
-\subsection{Debugging and testing: awkward, then  less awkward}
+\subsection{Debugging and testing: awkward at first, but then  less awkward}
 
 \seclabel{awkward-profiling}
 
-Our experience writing code and trying new ideas was excellent, as~was
-the ease of parallelizing \mrfy.
-Higher-order functions, memoization, laziness, and parallel strategies
-really worked.
-But~as discussed above, profiling didn't really work for~us.
-And we also encountered other obstacles that prevented functional
+Because we got lucky, the difficulty of understanding Haskell's
+allocation behavior didn't present the obstacle it might have.
+But we did encounter other obstacles that prevented functional
 programming from working as well as we would have liked.
 The~most significant such obstacles were in debugging and testing.
 
-We had a hard time diagnosing run-time errors.
-We~expected some run-time errors;
+We~started \mrfy's development using GHC~7.0, and
+we had a hard time diagnosing run-time errors.
+Run-time errors were something we expected to deal with;
 our~group's legacy file
-format is poorly documented and hard to deal with.
+format is poorly documented, and code that reads it usually contains
+faults. 
 (When beta
 strands overlap and are doubly paired, even the invariants of the
 format are unclear.)
-But~using Haskell, we~found the errors hard to diagnose.
-Calls to
-\texttt{trace} 
-littered our code,
-even when relegated to wrapper functions.
+But~even though we expected run-time errors, we~found them hard to diagnose.
+Our code became littered with
+calls to
+\texttt{trace}, 
+even when we relegated \texttt{trace} to wrapper functions.
 We~didn't know about the backtrace feature of GHC's profiler,
 and even after we learned about it, it didn't help:
-the profiler can be used only on very small test cases,
+that profiler could be used only on very small test cases,
 which didn't always trigger the errors.
-This same limitation affected GHCi's debugger; 
+
+The problems with run-time errors and profiling were all fixed in
+February~2012, when GHC~7.4 was released.
+By~that time our code had matured, and run-time errors were no longer
+a significant issue, but occasionally we still appreciate the ability 
+to get a stack trace on error.
+
+While we were wrestling with run-time errors, we~also tried to use
+GHCi's debugger, but it was too limited:
 in~GHCi, our \texttt{vee'} function
 is too slow to be runnable on nontrivial
 inputs.
 Moreover,  GHCi's debugger can set breakpoints only at top-level functions
 or at specific column/line positions, which made debugging the memoized
 \texttt{vee''} function impractical.
-In~August~2011, 
-Lennart Augustsson said that the biggest advantage of Strict
-Haskell is getting a stack trace on error,
-and when GHC~7.4 was released in early~2012, it~included support for
-stack traces. 
-We~have used the stack-trace feature a couple of times, and it helps.
-
 
 Our difficulties with debugging led to internal disagreements.
 The~junior members of our team wanted to apply the debugging
@@ -1732,10 +1830,11 @@ We~continually overlooked the critical role of \emph{shrinking}.
 As~a result, on the one or two occasions we did 
 use QuickCheck, the counterexamples were too large to be
 informative. 
-(To~be fair to ourselves, the \texttt{shrink} method is barely
+To~be fair to ourselves, the \texttt{shrink} method is barely
 mentioned in the original 
-paper on QuickCheck.
-It~shows up under another name, as~an improvement made by Andy Gill.)
+paper on QuickCheck \cite{claessen:quickcheck};
+it~shows up under another name and is described as~an improvement made
+by Andy Gill. 
 \end{itemize}
 Because of these obstacles, 
 we wrote thousands of lines of code without ever defining an instance
@@ -1759,7 +1858,7 @@ We~were able to confirm that each new implementation computed the same
 paths with the same score as our original implementation.
 Almost all counterexamples were shrunk to include just two nodes 
 (the smallest model supported by our original implementation)
-and two or three amino acids.
+and two or three residues.
 Moreover, the models contained just a handful of nonzero
 probabilities.
 QuickCheck played an invaluable role in helping us get edge cases
@@ -1839,12 +1938,12 @@ the libraries \path{Data.MemoCombinators}, \path{Control.Parallel},
 and \path{Data.Vector}.
 \mrfy's initial development took about three months.
 %%%% \remark{Others were mostly full-time work, but no need to distinguish.}
-{\ifpagetuning\looseness=1 \par\fi}
 \end{itemize}
 Like much research software, all three tools were written
  in~haste.
-We~have experience modifying the older tools.
+And all three have later been modified.
 
+% \ifpagetuning\enlargethispage{\baselineskip}\fi
 
 
 We~modified Matt to use information about sequences as well as structure.
@@ -1858,7 +1957,6 @@ It~uses clever pointer arithmetic.
 The mutable data structures were difficult to 
 repurpose, and the pointer arithmetic was \emph{too} clever: 
 nearly every change resulted in new~segfaults.
-{\ifpagetuning\looseness=1 \par\fi}
 
 We~had hoped to extend Matt further, with support for partial alignments,
 which we~expected to require only 
@@ -1868,8 +1966,9 @@ But
 this feature wound up
 requiring deep information about Matt's data structures,
 and we had to give~up.
-We~believe we could write an equivalent tool in~Haskell,
-with most of Matt's performance, in at most nine months.
+We~believe we could write an equivalent tool in~Haskell
+% with most of Matt's performance, % HA!
+in at most nine months.
 
 Our most painful experience was adding ``simulated evolution''
 to~SMURF \cite{Daniels:2012}. 
@@ -1877,10 +1976,27 @@ Although simulated evolution represents a relatively minor
 enhancement,
 just understanding the existing code took several months.
 
-We~built MRFy quickly, and we expect that
-higher-order functions will make MRFy easy to extend.
-Each new addition to MRFy's stochastic search has taken at most a day
+We~built MRFy quickly, and we expected that
+higher-order functions would make MRFy easy to extend.
+Each new addition to MRFy's stochastic search took at most a day
 to implement.
+However, the next extension we wished to make
+was based on
+Richard Senington's model of \emph{local
+search} \cite{senington:hybrid}, 
+which does not fit our abstraction of stochastic search.
+We~wound up writing a new program that adapts parts
+of MRFy to work with Senington's  \texttt{local-search} package.
+We're~disappointed that such similar algorithms have entirely
+different interfaces,
+but the adaptation took only three weeks, and the
+technical results were terrific. 
+Local search outperforms random hill-climbing, simulated
+annealing, and the genetic algorithm.
+We~therefore count the story as a success.
+
+
+
 
 Haskell encourages hasty programmers to slow down.
 We~have to get the types right,
@@ -1897,7 +2013,8 @@ But despite being hasty programmers, we produced code
 that is easy to understand and easy to extend.
 Our hastily written Haskell beats
 our hastily written Ruby and~C++.
-{\ifpagetuning\looseness=1 \par\fi}
+
+\ifpagetuning\enlargethispage{\baselineskip}\fi
 
 
 Looking beyond our research group to computational biology more
@@ -1929,7 +2046,8 @@ Gallant has taken a programming-languages course which included
 significant functional programming but no Haskell.
 Ramsey is a professor who has used Haskell 
 for medium-sized projects,
-but he has played a secondary role, primarily refactoring and testing
+but he has played a secondary role in \mrfy's development, primarily
+refactoring and testing 
 others' code. 
 
 
@@ -1944,38 +2062,36 @@ GHC~7.4.
 The~most useful new feature is the automatic annotation of ``cost
 centers'' \cite{sansom-pj}. 
 Some technical difficulties remain, particularly with installation:
-the only reliable way we have found to enable compilation with
-profiling is to destroy all existing compiled libraries, 
+the only reliable way we have found to compile code with support for
+profiling is first to destroy all existing compiled libraries, 
 update our Cabal configuration to ask for libraries to be compiled
 with profiling, and reinstall all needed Cabal packages.
 As~of early 2013, the process of reinstallation, although not
-difficult, is time-consuming and tedious.
+intellectually challenging, is time-consuming and tedious.
 
 Like other functional programmers, we~have found that 
 once we have our types right, our code is often right.
 But~MRFy computes with arrays and array indices,
 and in that domain, types don't help much.
 Bounds violations lead to run-time errors, which we have not been able
-to identify any systematic way to~debug.
-GHC's profiler can provide stack traces, but we~found this information
-difficult to discover, and as noted above,
-there are obstacles to profiling.
+to identify any systematic way to~debug, although the new stack traces help.
 We're~aware that debugging lazy functional programs has been a topic
 of some research,
 but one of the biggest obstacles we encountered to using Haskell is
 that we have had to abandon our old approaches to debugging.
 
-Ideally we would use QuickCheck to find bugs, but as we mention in
+We~recommend that everyone learn to use QuickCheck to find bugs, but
+as we mention in 
 \secref{awkward-quickcheck}, there are obstacles.
 We~have now overcome these obstacles, but
-we~sorely regret not doing so earlier.
+we~regret not having done so earlier.
 In~light of our experience, we~have instituted a new programming practice:
 whenever we introduce a new data type,
 we~write the instance of
 \texttt{Arbitrary} right away, while
 relevant invariants are still fresh in memory.
 When invariants are not enforced by Haskell's static type system,
-we~will write them as Haskell predicates.
+we~write them as Haskell predicates.
 We can then immediately run QuickCheck on each predicate, to verify
 that our Arbitrary instance agrees with the predicate.
 For each predicate~\texttt{p} we can also check
@@ -2002,7 +2118,7 @@ using mutable state the way the C++ code does, was difficult.
 On~reviewing our work, we~observed that we were a little too ready to
 use types and data structures better suited to C++ programming than to
 Haskell programming.
-Eventually we learned to step slowly away from the code and to seek
+Eventually we learned to step away from the code and to seek
 out opportunities for abstraction and simplification.
 The~abstract, simple versions---supported by QuickCheck tests---are a
 lot more likely to be useful to the next generation of graduate students.
@@ -2012,7 +2128,7 @@ lot more likely to be useful to the next generation of graduate students.
 
 While the Haskell community offers many
 enticing tools, libraries, and packages,
-not all of them are worth using.
+not all are worth using.
 Some are not ready for prime time, and some were once great but are
 no~longer maintained.
 The great packages, like \texttt{Data.MemoCombinators} and Parallel
@@ -2083,8 +2199,11 @@ This work was funded in part by NIH grant 1R01GM080330.
 
 
 
+%\begingroup
+%\tracingall
 \bibliography{mrfy_experience_report}
-\bibliographystyle{jfp}
+\bibliographystyle{plainnatx}
+%\endgroup
 
 
 %%  \iffinaldraft

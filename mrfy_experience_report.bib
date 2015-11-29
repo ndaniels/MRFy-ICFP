@@ -4,6 +4,7 @@
 %% Created using Papers on Fri, 09 Mar 2012.
 %% http://mekentosj.com/papers/
 
+@string{icfp07="Proceedings of the Twelfth {ACM} {SIGPLAN} International Conference on Functional Programming (ICFP'07)"}
 @string{insigplan=", {\em in} SIGPLAN Notices"}
                   
 @book{Durbin:1998wz,
@@ -49,16 +50,19 @@ year = {2008}
 @article{Cowen:2002p588,
 author = {Cowen, Lenore and Bradley, Philip and Menke, Matt and King, Jonathan and Berger, Bonnie},
 title = {{Predicting the beta-helix fold from protein sequence data}},
+volume=9, number=2, pages={261--276},
 journal = {Journal of Computational Biology},
-year = {2002}
+year = 2002
 }
 
 @article{Daniels:2012,
 author = {Daniels, Noah M. and Hosur, Raghavendra and Berger, Bonnie and Cowen, Lenore J.},
 title = {{SMURFLite: combining simplified Markov random fields with simulated evolution improves remote homology detection for beta-structural proteins into the twilight zone}},
 journal = {Bioinformatics},
+ volume = 28, number = 9, pages = "1216-1222",
+
 doi = {10.1093/bioinformatics/bts110}, 
-URL = {http://bioinformatics.oxfordjournals.org/content/early/2012/03/09/bioinformatics.bts110.abstract}, 
+xxxURL = {http://bioinformatics.oxfordjournals.org/content/early/2012/03/09/bioinformatics.bts110.abstract}, 
 eprint = {http://bioinformatics.oxfordjournals.org/content/early/2012/03/09/bioinformatics.bts110.full.pdf+html}, 
 year = {2012}
 }
@@ -156,6 +160,42 @@ pages = {85--94}
   howpublished="Tutorial delivered at the Workshop for Commerical Users of Functional Programming (CUFP)",
   month=oct,
   year="2010"}
+
+@article{coutts:fusion,
+ author = {Coutts, Duncan and Leshchinskiy, Roman and Stewart, Don},
+ title = {Stream Fusion: From Lists to Streams to Nothing At All},
+ path = {duncan-coutts/stream-fusion.pdf},
+ journal = icfp07 # insigplan,
+ year = {2007},
+ xxxisbn = {978-1-59593-815-2},
+ volume = 42, number = 8,
+ pages = {315--326},
+ location = {Freiburg, Germany},
+ doi = {http://doi.acm.org/10.1145/1291151.1291199},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+ }
+
+
+@unpublished{senington:combinators-meta,
+  month=may,
+  author="Richard Senington and David Duke",
+  title="Combinators for Meta-heuristic Search",
+  note="Unpublished manuscript",
+  year="2012"}
+
+@unpublished{senington:combinators-local,
+  author="Richard Senington and David Duke",
+  title="Combinators for Local Search in {Haskell}",
+  note="Unpublished manuscript",
+  year="2010"}
+
+@phdthesis{senington:hybrid,
+  address="UK",
+  author="Richard Senington",
+  title="Hybrid Meta-heuristic Frameworks: A~Functional Approach",
+  school="University of Leeds",
+  year="2013"}
 
 @article{daniels2015mrfy,
   title={MRFy: remote homology detection for beta-structural proteins using Markov random fields and stochastic search},
